@@ -1,0 +1,15 @@
+/* Icon-only Edit/Delete buttons (RowActions.tsx) — a small fixed-size
+   circle instead of CustomButton's default pill-with-text padding, so a
+   single icon sits centered. Imported directly by RowActions.tsx so it
+   applies regardless of which page renders it (table cell, timeline card,
+   or grid card). */
+.admin-row-action-btn.btn {
+  width: 30px;
+  height: 30px;
+  padding: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  line-height: 1;
+}

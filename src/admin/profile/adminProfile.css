@@ -1,0 +1,225 @@
+/* Bold profile page: a gradient hero (avatar + identity + Save) followed by
+   a responsive grid of sectioned cards, in the same vivid theme language as
+   the login screen (see ../dms/css/Login.css). */
+
+.admin-profile-page {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.admin-profile-hero {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 28px 32px;
+  border-radius: 24px;
+  overflow: hidden;
+  background: linear-gradient(120deg, var(--primary-dark-2) 0%, var(--primary) 55%, var(--secondary) 100%);
+  box-shadow: 0 20px 45px rgba(var(--primary-rgb), 0.28);
+  margin-bottom: 24px;
+}
+
+.admin-profile-hero-top {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+}
+
+.admin-profile-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.admin-profile-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  border: 4px solid rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.15);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.admin-profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-profile-avatar i {
+  font-size: 2.1rem;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.admin-profile-avatar-edit {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: var(--primary-dark-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.admin-profile-avatar-edit:hover {
+  transform: scale(1.08);
+  background: var(--secondary-light-6);
+}
+
+.admin-profile-hero-info h1 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #ffffff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.admin-profile-hero-info p {
+  margin: 4px 0 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Higher-specificity override so this beats CustomButton's own
+   `!important`-heavy .btn-custom-primary base/hover rules regardless of
+   CSS import order. */
+.admin-profile-hero .admin-profile-save-btn.btn-custom-primary {
+  background-color: #ffffff !important;
+  color: var(--primary-dark-1) !important;
+  font-weight: 700 !important;
+  flex-shrink: 0;
+}
+
+.admin-profile-hero .admin-profile-save-btn.btn-custom-primary:hover {
+  background-color: var(--secondary-light-6) !important;
+}
+
+.admin-profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.admin-profile-section {
+  padding: 24px;
+}
+
+.admin-profile-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--primary-dark-1);
+}
+
+.admin-profile-section-header i {
+  color: var(--primary);
+  font-size: 0.95rem;
+}
+
+.admin-signature-preview-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 90px;
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 1.5px dashed var(--border-color);
+  border-radius: 12px;
+  background: var(--background-color);
+}
+
+.admin-signature-preview {
+  max-height: 80px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.admin-signature-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted-color);
+  font-size: 0.85rem;
+}
+
+.admin-signature-placeholder i {
+  font-size: 1.4rem;
+  opacity: 0.5;
+}
+
+.admin-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border: 1.5px solid var(--primary);
+  border-radius: 999px;
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.admin-upload-btn:hover {
+  background: var(--primary);
+  color: var(--theme-text-light);
+}
+
+.admin-signature-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.admin-remove-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border: 1.5px solid #d92d20;
+  border-radius: 999px;
+  background: transparent;
+  color: #d92d20;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.admin-remove-btn:hover {
+  background: #d92d20;
+  color: #ffffff;
+}
+
+@media (max-width: 576px) {
+  .admin-profile-hero {
+    padding: 22px 20px;
+  }
+
+  .admin-profile-hero .admin-profile-save-btn {
+    width: 100%;
+  }
+}

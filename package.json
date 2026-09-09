@@ -1,0 +1,50 @@
+{
+  "name": "portfolio-client",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "oxlint",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^7.3.1",
+    "@hookform/resolvers": "^5.9.1",
+    "@tanstack/react-query": "^5.102.8",
+    "axios": "^1.20.0",
+    "bootstrap": "^5.3.8",
+    "bootstrap-icons": "^1.13.1",
+    "dom-to-image-more": "^3.10.2",
+    "framer-motion": "^13.2.0",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
+    "react": "^19.2.8",
+    "react-data-table-component": "^8.10.0",
+    "react-dom": "^19.2.8",
+    "react-hook-form": "^7.87.0",
+    "react-icons": "^5.7.0",
+    "react-loading-skeleton": "^3.5.0",
+    "react-router-dom": "^7.18.3",
+    "react-select": "^5.10.2",
+    "react-slick": "^0.31.0",
+    "react-toastify": "^11.1.0",
+    "slick-carousel": "^1.8.1",
+    "sweetalert2": "^11.26.25",
+    "tsparticles": "^4.4.0",
+    "xlsx": "^0.18.5",
+    "yet-another-react-lightbox": "^3.32.2",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@types/react-slick": "^0.23.13",
+    "@vitejs/plugin-react": "^6.1.0",
+    "oxlint": "^1.79.0",
+    "typescript": "~6.0.2",
+    "vite": "^8.2.2"
+  }
+}

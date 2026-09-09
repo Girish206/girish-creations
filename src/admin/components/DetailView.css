@@ -1,0 +1,31 @@
+.admin-detail-view {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-detail-row {
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.admin-detail-row:last-child {
+  border-bottom: none;
+}
+
+.admin-detail-label {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted-color);
+}
+
+.admin-detail-value {
+  font-size: 0.92rem;
+  color: var(--theme-text-dark);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}

@@ -1,0 +1,66 @@
+/* Ported from the reference DMS app's src/index.css :root block — same
+   variable names/structure (so every other ported DMS component/CSS file
+   works unmodified), only the actual color VALUES are changed to this
+   site's theme (orange/black instead of DMS's maroon/gold). */
+:root {
+  /* Primary (was DMS maroon #a51b24 — now this site's orange) */
+  --primary: #d6430e;
+  /* Same as --primary, as an "r, g, b" triplet for rgba(var(--primary-rgb), alpha) */
+  --primary-rgb: 214, 67, 14;
+
+  /* Lighter shades (tints) */
+  --primary-light-1: #dc5f32;
+  --primary-light-2: #e37f5b;
+  --primary-light-3: #eba187;
+  --primary-light-4: #f2c3b2;
+  --primary-light-5: #f8ddd4;
+  --primary-light-6: #fcf0ec;
+  --primary-light-7: #fef7f5;
+
+  /* Darker shades (shades) */
+  --primary-dark-1: #ab360b;
+  --primary-dark-2: #802808;
+  --primary-dark-3: #561b06;
+  --primary-dark-4: #2b0d03;
+
+  /* Secondary (was DMS gold #fdb913 — now a warm amber accent) */
+  --secondary: #f5a623;
+  /* Same as --secondary, as an "r, g, b" triplet for rgba(var(--secondary-rgb), alpha) */
+  --secondary-rgb: 245, 166, 35;
+
+  /* Lighter shades (tints) */
+  --secondary-light-1: #f7b344;
+  --secondary-light-2: #f8c269;
+  --secondary-light-3: #fad391;
+  --secondary-light-4: #fce3b9;
+  --secondary-light-5: #fdefd7;
+  --secondary-light-6: #fef8ed;
+
+  /* Darker shades (shades) */
+  --secondary-dark-1: #c4851c;
+  --secondary-dark-2: #936415;
+  --secondary-dark-3: #62420e;
+  --secondary-dark-4: #312107;
+
+  /* Common */
+  --theme-text-dark: #1a1f2c;
+  --muted-color: #576076;
+  --border-color: #dbdfe5;
+  --background-color: #f0f2f5;
+  --theme-text-light: #ffffff;
+
+  /* Sampled directly from public/logo/logo.png (the brain/lightbulb mark)
+     for the login screen's gradient, which is meant to echo the logo's own
+     palette rather than just the flat primary/secondary theme colors. */
+  --logo-navy: #001446;
+  --logo-crimson: #e10050;
+  --logo-orange: #f36a22;
+  --logo-gold: #ffb308;
+
+  /* Same 4 logo colors, mixed ~18% into white for a soft pastel background
+     wash (used by the login screen's backdrop, not the vivid tones above). */
+  --logo-navy-light: #d1d5de;
+  --logo-crimson-light: #fad1e0;
+  --logo-orange-light: #fde4d7;
+  --logo-gold-light: #fff1d3;
+}
