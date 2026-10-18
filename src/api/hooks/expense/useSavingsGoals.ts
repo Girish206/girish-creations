@@ -56,6 +56,17 @@ export function useUpdateSavingsGoal() {
   });
 }
 
+export function useSetSavingsGoalClosed() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, closed }: { id: number; closed: boolean }) => {
+      const { data } = await apiClient.put<ApiEnvelope<SavingsGoal>>(`/admin/savings-goals/${id}/status`, { closed });
+      return data.data;
+    },
+    onSuccess: () => invalidate(queryClient),
+  });
+}
+
 export function useDeleteSavingsGoal() {
   const queryClient = useQueryClient();
   return useMutation({

@@ -1,6 +1,7 @@
-/* Bold profile page: a gradient hero (avatar + identity + Save) followed by
-   a responsive grid of sectioned cards, in the same vivid theme language as
-   the login screen (see ../dms/css/Login.css). */
+/* Profile page: a header card (thin brand accent line, ringed avatar beside
+   name + current role, then a meta strip for email/experience) followed by
+   a responsive grid of sectioned cards. Saving is automatic; the status
+   line sits just below the header card. */
 
 .admin-profile-page {
   max-width: 980px;
@@ -9,42 +10,52 @@
 
 .admin-profile-hero {
   position: relative;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 28px 32px;
-  border-radius: 24px;
   overflow: hidden;
-  background: linear-gradient(120deg, var(--primary-dark-2) 0%, var(--primary) 55%, var(--secondary) 100%);
-  box-shadow: 0 20px 45px rgba(var(--primary-rgb), 0.28);
-  margin-bottom: 24px;
+  padding: 0;
+  margin-bottom: 10px;
 }
 
-.admin-profile-hero-top {
+.admin-profile-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-dark-2), var(--primary), var(--secondary));
+}
+
+.admin-profile-hero-body {
   display: flex;
   align-items: center;
-  gap: 18px;
-  min-width: 0;
+  gap: 20px;
+  padding: 28px 28px 22px;
+  /* Soft brand tints: a warm glow behind the avatar fading to an amber
+     wash on the right, light enough to keep the text crisp. */
+  background:
+    radial-gradient(circle at 12% 30%, var(--primary-light-5), transparent 45%),
+    radial-gradient(circle at 95% 0%, var(--secondary-light-5), transparent 50%),
+    linear-gradient(120deg, var(--primary-light-7) 0%, #ffffff 50%, var(--secondary-light-6) 100%);
 }
 
+/* The padding + gradient background draw a brand-coloured ring around the
+   avatar's white border. */
 .admin-profile-avatar-wrap {
   position: relative;
   flex-shrink: 0;
+  padding: 3px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-dark-2), var(--primary), var(--secondary));
 }
 
 .admin-profile-avatar {
   width: 96px;
   height: 96px;
   border-radius: 50%;
-  border: 4px solid rgba(255, 255, 255, 0.85);
-  background: rgba(255, 255, 255, 0.15);
+  border: 3px solid #ffffff;
+  background: var(--primary-light-6);
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
 .admin-profile-avatar img {
@@ -54,62 +65,189 @@
 }
 
 .admin-profile-avatar i {
-  font-size: 2.1rem;
-  color: rgba(255, 255, 255, 0.75);
+  font-size: 2.4rem;
+  color: var(--primary-light-3);
 }
 
 .admin-profile-avatar-edit {
   position: absolute;
-  bottom: -2px;
-  right: -2px;
+  bottom: 0;
+  right: 0;
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #ffffff;
-  color: var(--primary-dark-1);
+  border: 2px solid #ffffff;
+  background: var(--primary);
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   transition: transform 0.15s ease, background 0.15s ease;
 }
 
 .admin-profile-avatar-edit:hover {
   transform: scale(1.08);
-  background: var(--secondary-light-6);
+  background: var(--primary-dark-1);
+}
+
+/* min-width: 0 lets a long name or role wrap beside the avatar instead of
+   overflowing. */
+.admin-profile-hero-info {
+  min-width: 0;
 }
 
 .admin-profile-hero-info h1 {
   margin: 0;
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: 800;
-  color: #ffffff;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  color: var(--theme-text-dark);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
-.admin-profile-hero-info p {
+.admin-profile-role {
   margin: 4px 0 0;
-  color: rgba(255, 255, 255, 0.88);
-  font-size: 0.9rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--primary-dark-1);
+  line-height: 1.35;
+}
+
+.admin-profile-role span {
+  display: inline;
+  font-weight: 500;
+  color: var(--muted-color);
+}
+
+/* Email + experience as plain text separated by dividers. */
+.admin-profile-meta {
+  display: flex;
+  flex-wrap: wrap;
+  list-style: none;
+  margin: 0;
+  padding: 14px 28px;
+  border-top: 1px solid var(--border-color);
+  background: var(--primary-light-7);
+}
+
+.admin-profile-meta li {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  min-width: 0;
+  padding: 2px 20px;
+  font-size: 0.88rem;
+  color: var(--muted-color);
 }
 
-/* Higher-specificity override so this beats CustomButton's own
-   `!important`-heavy .btn-custom-primary base/hover rules regardless of
-   CSS import order. */
-.admin-profile-hero .admin-profile-save-btn.btn-custom-primary {
-  background-color: #ffffff !important;
-  color: var(--primary-dark-1) !important;
-  font-weight: 700 !important;
-  flex-shrink: 0;
+.admin-profile-meta li:first-child {
+  padding-left: 0;
 }
 
-.admin-profile-hero .admin-profile-save-btn.btn-custom-primary:hover {
-  background-color: var(--secondary-light-6) !important;
+.admin-profile-meta li + li {
+  border-left: 1px solid var(--border-color);
+}
+
+.admin-profile-meta li > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-profile-meta i {
+  color: var(--primary);
+  font-size: 0.82rem;
+}
+
+.admin-profile-meta a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.admin-profile-meta a:hover {
+  color: var(--primary-dark-1);
+  text-decoration: underline;
+}
+
+.admin-profile-meta strong {
+  color: var(--theme-text-dark);
+  font-weight: 700;
+}
+
+/* Autosave status, a quiet line right under the header card. */
+.admin-profile-status {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  margin: 0 6px 18px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--muted-color);
+}
+
+.admin-profile-status i {
+  font-size: 0.78rem;
+}
+
+.admin-profile-status-saved i {
+  color: #12805c;
+}
+
+.admin-profile-status-invalid,
+.admin-profile-status-error {
+  color: #b42318;
+  font-weight: 600;
+}
+
+.admin-profile-status button {
+  margin-left: 2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (max-width: 576px) {
+  .admin-profile-hero-body {
+    padding: 22px 18px 18px;
+    gap: 14px;
+  }
+
+  .admin-profile-avatar {
+    width: 76px;
+    height: 76px;
+  }
+
+  .admin-profile-avatar-edit {
+    width: 28px;
+    height: 28px;
+    font-size: 0.7rem;
+  }
+
+  .admin-profile-hero-info h1 {
+    font-size: 1.2rem;
+  }
+
+  /* Stack the meta items; side-by-side dividers don't fit. */
+  .admin-profile-meta {
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 18px;
+  }
+
+  .admin-profile-meta li {
+    padding: 0;
+  }
+
+  .admin-profile-meta li + li {
+    border-left: 0;
+  }
 }
 
 .admin-profile-grid {
@@ -212,14 +350,4 @@
 .admin-remove-btn:hover {
   background: #d92d20;
   color: #ffffff;
-}
-
-@media (max-width: 576px) {
-  .admin-profile-hero {
-    padding: 22px 20px;
-  }
-
-  .admin-profile-hero .admin-profile-save-btn {
-    width: 100%;
-  }
 }

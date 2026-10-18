@@ -64,12 +64,8 @@ const Layout = ({
         <div
             className={`layout-wrapper ${mainBg} ${isSidebarOpen ? "sidebar-open" : "sidebar-closed"}`}
         >
-            <div className="admin-bg-shape admin-bg-shape-1" aria-hidden="true">
-                <img src="/assets/img/bg/banner-shape-1.png" alt="" />
-            </div>
-            <div className="admin-bg-shape admin-bg-shape-2" aria-hidden="true">
-                <img src="/assets/img/bg/banner-shape-1.png" alt="" />
-            </div>
+            <div className="admin-bg-shape admin-bg-shape-1" aria-hidden="true" />
+            <div className="admin-bg-shape admin-bg-shape-2" aria-hidden="true" />
 
             <Navbar
                 toggleSidebar={toggleSidebar}

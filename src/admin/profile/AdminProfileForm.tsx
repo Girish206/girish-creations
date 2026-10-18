@@ -1,15 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Link } from "react-router-dom";
 import { useProfile } from "../../api/hooks/useProfile";
-import { useUpdateProfile } from "../../api/hooks/admin/useAdminProfile";
+import { useExperience } from "../../api/hooks/useExperience";
+import { useUpdateProfile, type ProfileFormInput } from "../../api/hooks/admin/useAdminProfile";
 import { uploadUrl } from "../../api/client";
 import { useImageLightbox } from "../../components/lightbox/useImageLightbox";
-import { Banner } from "../components/Banner";
 import InputComp from "../dms/components/InputComp";
 import TextareaInput from "../dms/components/TextareaInput";
-import CustomButton from "../dms/components/CustomButton";
 import "../admin.css";
 import "./adminProfile.css";
 
@@ -28,27 +28,116 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-// A bold hero header (gradient banner + floating avatar + always-visible
-// Save button) followed by sectioned cards, instead of one long stacked
-// form. Fields still use DMS's InputComp/TextareaInput via react-hook-form's
-// <Controller> (those components are controlled, with no ref-forwarding).
+type PendingFiles = Pick<ProfileFormInput, "profilePictureFile" | "signatureFile" | "removeSignature">;
+
+type SaveStatus = "idle" | "pending" | "saving" | "saved" | "invalid" | "error";
+
+// How long typing has to pause before the change is saved.
+const AUTOSAVE_DELAY_MS = 800;
+
+// A profile header (cover band + overlapping avatar + identity/meta line)
+// followed by sectioned cards. There's no Save button: text edits autosave
+// after a short pause and image changes save immediately, with the status
+// shown in the header. Fields still use DMS's InputComp/TextareaInput via
+// react-hook-form's <Controller> (those components are controlled, with no
+// ref-forwarding).
 export function AdminProfileForm() {
   const { data: profile, isLoading } = useProfile();
-  const updateProfile = useUpdateProfile();
+  const { data: experience } = useExperience();
+  const { mutateAsync: updateProfile } = useUpdateProfile();
+  // These only drive the previews; what still has to be uploaded lives in
+  // pendingFiles, so a preview survives the save instead of flashing back to
+  // the old image until the profile refetch lands.
   const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null);
   const [signatureFile, setSignatureFile] = useState<File | null>(null);
   const [removeSignature, setRemoveSignature] = useState(false);
-  const [savedMessage, setSavedMessage] = useState(false);
+  const [status, setStatus] = useState<SaveStatus>("idle");
 
   const {
     control,
-    handleSubmit,
     reset,
-    formState: { errors, isSubmitting },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) });
+    watch,
+    trigger,
+    getValues,
+    formState: { errors },
+  } = useForm<FormValues>({ resolver: zodResolver(schema), mode: "onChange" });
 
+  const pendingFiles = useRef<PendingFiles>({});
+  const saveQueue = useRef<Promise<void>>(Promise.resolve());
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const formInitialized = useRef(false);
+
+  // Saves run one at a time so a slow request can't land after (and
+  // overwrite) a newer one. An invalid form (e.g. an emptied name) isn't
+  // sent; the next valid edit saves everything, pending images included.
+  const save = useCallback(() => {
+    saveQueue.current = saveQueue.current.then(async () => {
+      if (!(await trigger())) {
+        setStatus("invalid");
+        return;
+      }
+      const files = pendingFiles.current;
+      pendingFiles.current = {};
+      setStatus("saving");
+      try {
+        await updateProfile({ ...getValues(), ...files });
+        // A newer edit may have started its pause meanwhile; keep showing that.
+        setStatus((current) => (current === "saving" ? "saved" : current));
+      } catch {
+        pendingFiles.current = { ...files, ...pendingFiles.current };
+        setStatus("error");
+      }
+    });
+  }, [trigger, getValues, updateProfile]);
+
+  const scheduleSave = useCallback(
+    (delay: number) => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      setStatus("pending");
+      saveTimer.current = setTimeout(() => {
+        saveTimer.current = null;
+        save();
+      }, delay);
+    },
+    [save],
+  );
+
+  // Only user edits count; reset() fires watch without a `type`.
   useEffect(() => {
-    if (profile) {
+    const subscription = watch((_values, { type }) => {
+      if (type === "change") scheduleSave(AUTOSAVE_DELAY_MS);
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, scheduleSave]);
+
+  // Leaving the page mid-pause still saves the last edit.
+  useEffect(() => {
+    return () => {
+      if (saveTimer.current) {
+        clearTimeout(saveTimer.current);
+        save();
+      }
+    };
+  }, [save]);
+
+  // A full page unload can't wait for the request, so warn instead.
+  useEffect(() => {
+    if (status !== "pending" && status !== "saving") return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [status]);
+
+  function queueFiles(files: PendingFiles) {
+    pendingFiles.current = { ...pendingFiles.current, ...files };
+    scheduleSave(0);
+  }
+
+  // Fill the form once. Every save refetches the profile, and resetting on
+  // that would wipe whatever was typed while the request was in flight.
+  useEffect(() => {
+    if (profile && !formInitialized.current) {
+      formInitialized.current = true;
       reset({
         fullName: profile.fullName,
         email: profile.email,
@@ -90,15 +179,6 @@ export function AdminProfileForm() {
     signaturePreview ? [signaturePreview] : [],
   );
 
-  async function onSubmit(values: FormValues) {
-    await updateProfile.mutateAsync({ ...values, profilePictureFile, signatureFile, removeSignature });
-    setProfilePictureFile(null);
-    setSignatureFile(null);
-    setRemoveSignature(false);
-    setSavedMessage(true);
-    setTimeout(() => setSavedMessage(false), 2000);
-  }
-
   if (isLoading) {
     return (
       <div className="card">
@@ -115,10 +195,12 @@ export function AdminProfileForm() {
     );
   }
 
+  const currentRole = experience?.find((exp) => !exp.endDate) ?? experience?.[0];
+
   return (
-    <form className="admin-profile-page" onSubmit={handleSubmit(onSubmit)} noValidate>
-      <div className="admin-profile-hero">
-        <div className="admin-profile-hero-top">
+    <form className="admin-profile-page" onSubmit={(e) => e.preventDefault()} noValidate>
+      <div className="card admin-profile-hero">
+        <div className="admin-profile-hero-body">
           <div className="admin-profile-avatar-wrap">
             <div className="admin-profile-avatar">
               {avatarPreview ? (
@@ -138,31 +220,30 @@ export function AdminProfileForm() {
                 type="file"
                 accept="image/*"
                 hidden
-                onChange={(e) => setProfilePictureFile(e.target.files?.[0] ?? null)}
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null;
+                  e.target.value = "";
+                  if (!file) return;
+                  setProfilePictureFile(file);
+                  queueFiles({ profilePictureFile: file });
+                }}
               />
             </label>
           </div>
           {avatarLightbox}
           <div className="admin-profile-hero-info">
             <h1>{profile.fullName}</h1>
-            <p>
-              <i className="fa-solid fa-envelope"></i> {profile.email}
-            </p>
+            {currentRole && (
+              <p className="admin-profile-role">
+                {currentRole.jobTitle} <span>at {currentRole.companyName}</span>
+              </p>
+            )}
           </div>
         </div>
-
-        <CustomButton
-          type="submit"
-          className="admin-profile-save-btn"
-          disabled={isSubmitting}
-          loading={isSubmitting}
-          loadingLabel="Saving..."
-        >
-          <i className="fa-solid fa-check"></i> Save Changes
-        </CustomButton>
+        <ProfileMeta email={profile.email} experience={profile.formattedExperience} />
       </div>
 
-      {savedMessage && <Banner variant="success">Saved.</Banner>}
+      <SaveStatusIndicator status={status} onRetry={save} />
 
       <div className="admin-profile-grid">
         <section className="card admin-profile-section">
@@ -283,8 +364,11 @@ export function AdminProfileForm() {
                 hidden
                 onChange={(e) => {
                   const file = e.target.files?.[0] ?? null;
+                  e.target.value = "";
+                  if (!file) return;
                   setSignatureFile(file);
-                  if (file) setRemoveSignature(false);
+                  setRemoveSignature(false);
+                  queueFiles({ signatureFile: file, removeSignature: false });
                 }}
               />
             </label>
@@ -295,6 +379,7 @@ export function AdminProfileForm() {
                 onClick={() => {
                   setSignatureFile(null);
                   setRemoveSignature(true);
+                  queueFiles({ signatureFile: null, removeSignature: true });
                 }}
               >
                 <i className="fa-solid fa-trash"></i> Remove signature
@@ -305,5 +390,49 @@ export function AdminProfileForm() {
         </section>
       </div>
     </form>
+  );
+}
+
+// Email and experience as a quiet meta strip along the bottom of the
+// header, separated by dividers rather than pills. Experience links to its
+// admin page.
+function ProfileMeta({ email, experience }: { email: string; experience: string }) {
+  return (
+    <ul className="admin-profile-meta">
+      <li>
+        <i className="fa-solid fa-envelope" aria-hidden="true"></i>
+        <span>{email}</span>
+      </li>
+      <li>
+        <i className="fa-solid fa-hourglass-half" aria-hidden="true"></i>
+        <Link to="/admin/experience">
+          <strong>{experience}</strong> experience
+        </Link>
+      </li>
+    </ul>
+  );
+}
+
+const STATUS_LABELS: Record<SaveStatus, { icon: string; text: string }> = {
+  idle: { icon: "fa-solid fa-cloud", text: "Changes save automatically" },
+  pending: { icon: "fa-solid fa-pen", text: "Editing…" },
+  saving: { icon: "fa-solid fa-spinner fa-spin", text: "Saving…" },
+  saved: { icon: "fa-solid fa-circle-check", text: "All changes saved" },
+  invalid: { icon: "fa-solid fa-circle-exclamation", text: "Fix the highlighted fields to save" },
+  error: { icon: "fa-solid fa-triangle-exclamation", text: "Couldn't save" },
+};
+
+function SaveStatusIndicator({ status, onRetry }: { status: SaveStatus; onRetry: () => void }) {
+  const { icon, text } = STATUS_LABELS[status];
+  return (
+    <div className={`admin-profile-status admin-profile-status-${status}`} role="status" aria-live="polite">
+      <i className={icon} aria-hidden="true"></i>
+      <span>{text}</span>
+      {status === "error" && (
+        <button type="button" onClick={onRetry}>
+          Retry
+        </button>
+      )}
+    </div>
   );
 }

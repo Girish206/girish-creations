@@ -19,7 +19,7 @@ export function AdminExpenseBulkMoveForm({ count, onMove, onDone }: AdminExpense
   const [target, setTarget] = useState<number | string>("");
   const [submitting, setSubmitting] = useState(false);
 
-  const groupOptions = (groups ?? []).map((g) => ({ value: g.id, label: g.name }));
+  const groupOptions = (groups ?? []).filter((g) => !g.closedAt).map((g) => ({ value: g.id, label: g.name }));
 
   async function handleSubmit() {
     if (target === "") return;

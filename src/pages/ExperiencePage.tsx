@@ -45,7 +45,7 @@ export function ExperiencePage() {
         }
       />
 
-      <section className="gc-section-tight">
+      <section className="gc-section-tight gc-tl-section">
         <div className="gc-container">
           <SectionHead eyebrow="Work" title="Where I've worked" />
           {isLoading && !experience ? (
@@ -57,23 +57,23 @@ export function ExperiencePage() {
                 return (
                   <Reveal as="li" key={exp.id} delay={i * 60} className={`gc-tl-item gc-glass gc-spot${exp.endDate ? "" : " is-current"}`}>
                     <span className="gc-tl-node" aria-hidden="true" />
-                    <div className="gc-tl-head">
-                      <div>
-                        <span className="gc-tl-when">
-                          {formatFullDate(exp.startDate)} — {exp.endDate ? formatFullDate(exp.endDate) : "Present"}
-                        </span>
-                        <h3 className="gc-tl-title">{exp.jobTitle}</h3>
-                        <span className="gc-tl-sub">
-                          <FaBuilding aria-hidden="true" /> {exp.companyName}
-                          {exp.location && (
-                            <>
-                              <span aria-hidden="true">·</span>
-                              <FaLocationDot aria-hidden="true" /> {exp.location}
-                            </>
-                          )}
-                        </span>
-                      </div>
+                    <div className="gc-tl-top">
+                      <span className="gc-tl-when">
+                        {!exp.endDate && <span className="gc-status-dot" aria-hidden="true" />}
+                        {formatFullDate(exp.startDate)} — {exp.endDate ? formatFullDate(exp.endDate) : "Present"}
+                      </span>
                       <span className="gc-chip gc-chip-accent">{formatDuration(exp.startDate, exp.endDate)}</span>
+                    </div>
+                    <h3 className="gc-tl-title">{exp.jobTitle}</h3>
+                    <div className="gc-tl-sub">
+                      <span>
+                        <FaBuilding aria-hidden="true" /> {exp.companyName}
+                      </span>
+                      {exp.location && (
+                        <span>
+                          <FaLocationDot aria-hidden="true" /> {exp.location}
+                        </span>
+                      )}
                     </div>
                     {points.length > 0 && (
                       <ul className="gc-tl-points">
@@ -91,27 +91,27 @@ export function ExperiencePage() {
       </section>
 
       {education && education.length > 0 && (
-        <section className="gc-section">
+        <section className="gc-section-tight gc-tl-section">
           <div className="gc-container">
             <SectionHead eyebrow="Education" title="Academic background" />
             <ol className="gc-tl">
               {education.map((edu, i) => (
                 <Reveal as="li" key={edu.id} delay={i * 60} className="gc-tl-item gc-glass gc-spot">
                   <span className="gc-tl-node" aria-hidden="true" />
-                  <div className="gc-tl-head">
-                    <div>
-                      <span className="gc-tl-when">
-                        {yearOf(edu.startDate)} — {endYearOrPresent(edu.endDate)}
-                      </span>
-                      <h3 className="gc-tl-title">
-                        {edu.course}
-                        {edu.specialization ? <span className="gc-muted"> · {edu.specialization}</span> : null}
-                      </h3>
-                      <span className="gc-tl-sub">
-                        <FaGraduationCap aria-hidden="true" /> {edu.institutionName}
-                      </span>
-                    </div>
+                  <div className="gc-tl-top">
+                    <span className="gc-tl-when">
+                      {yearOf(edu.startDate)} — {endYearOrPresent(edu.endDate)}
+                    </span>
                     <span className="gc-chip">{Number(edu.grade)}%</span>
+                  </div>
+                  <h3 className="gc-tl-title">
+                    {edu.course}
+                    {edu.specialization ? <span className="gc-muted"> · {edu.specialization}</span> : null}
+                  </h3>
+                  <div className="gc-tl-sub">
+                    <span>
+                      <FaGraduationCap aria-hidden="true" /> {edu.institutionName}
+                    </span>
                   </div>
                 </Reveal>
               ))}

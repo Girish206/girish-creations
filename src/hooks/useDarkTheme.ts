@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 
 const STORAGE_KEY = "darkMode";
 
@@ -7,17 +7,18 @@ function initialIsDark(): boolean {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored !== null) return stored === "true";
   } catch {
-    // Storage unavailable (private mode etc.) — fall back to the OS setting.
+    // Storage unavailable (private mode etc.) — fall back to the default.
   }
-  return window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
+  return true;
 }
 
 // Toggles `body.dark-theme`, which the public site's palette (site.css) keys
-// off. With no saved choice yet, follows the operating system's setting.
+// off. Dark by default; a visitor's toggle choice is remembered.
 export function useDarkTheme() {
   const [isDark, setIsDark] = useState(initialIsDark);
 
-  useEffect(() => {
+  // Before paint, so a dark visit never flashes the light palette first.
+  useLayoutEffect(() => {
     document.body.classList.toggle("dark-theme", isDark);
   }, [isDark]);
 

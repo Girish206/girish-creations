@@ -6,6 +6,8 @@ import { RowActions } from "../../components/RowActions";
 import { confirmDelete } from "../../components/confirmDelete";
 import DefaultModal from "../../dms/components/DefaultModal";
 import { AdminExpenseCategoryForm } from "./AdminExpenseCategoryForm";
+import { CategoryIcon } from "./CategoryIcon";
+import { resolveCategoryIcon } from "./categoryIcons";
 import "../../dms/css/adminDisplays.css";
 import "../../admin.css";
 
@@ -41,9 +43,7 @@ export function AdminExpenseCategoriesList() {
             <div className="card admin-item-card admin-item-card-compact" key={item.id}>
               <div className="admin-item-card-header">
                 <div className="admin-item-card-heading">
-                  <div className="admin-item-card-icon">
-                    <i className="fa-solid fa-tags"></i>
-                  </div>
+                  <CategoryIcon name={item.name} {...resolveCategoryIcon(item)} />
                   <h3 className="admin-item-card-title">{item.name}</h3>
                 </div>
                 <div className="admin-item-card-actions">

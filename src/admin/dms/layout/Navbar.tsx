@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAdminAuth, type AdminModule } from "../../../context/AdminAuthContext";
+import { useAdminTheme } from "../../useAdminTheme";
 import "../css/Navbar.css";
 
 interface NavbarProps {
@@ -27,11 +28,12 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const [scrolled, setScrolled] = useState(false);
+    const { isDark, toggle: toggleTheme } = useAdminTheme();
 
     const { logout, admin, setActiveModule } = useAdminAuth();
     const canSwitchModules = Boolean(
         admin?.hasPortfolioAccess &&
-            (admin?.hasExpensesAccess || admin?.hasInvestmentsAccess || admin?.hasSavingsAccess),
+            (admin?.hasExpensesAccess || admin?.hasSavingsAccess),
     );
     const currentModule: AdminModule = location.pathname.startsWith("/admin/expense") ? "expense" : "portfolio";
 
@@ -113,6 +115,16 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
 
                     {/* Right side: admin identity + direct sign-out (profile
                         sidebar is commented out below for now) */}
+                    <div className="d-flex align-items-center gap-2">
+                    <button
+                        type="button"
+                        className="navbar-theme-btn"
+                        onClick={toggleTheme}
+                        title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+                        aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+                    >
+                        <i className={`fa-solid ${isDark ? "fa-sun" : "fa-moon"}`} aria-hidden="true"></i>
+                    </button>
                     <div className="navbar-user-chip">
                         <div
                             className="user-avatar text-white rounded-circle d-flex align-items-center justify-content-center fw-bold"
@@ -125,6 +137,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
                             <i className="fa-solid fa-right-from-bracket"></i>
                             <span className="d-none d-md-inline">Sign Out</span>
                         </button>
+                    </div>
                     </div>
                 </div>
             </nav>

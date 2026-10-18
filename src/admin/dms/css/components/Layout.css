@@ -45,12 +45,16 @@
    pointer-events: none;
    z-index: 0;
    animation: adminBgShapeRotate 60s infinite linear;
-}
-
-.admin-bg-shape img {
-   width: 100%;
-   height: 100%;
-   object-fit: contain;
+  /* Soft glow in the logo colours (src/styles/brand.css), drawn in CSS
+     instead of the old template's purple banner-shape-1.png. */
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(var(--brand-orange-rgb), 0.32) 0%,
+    rgba(var(--brand-crimson-rgb), 0.18) 38%,
+    rgba(var(--brand-amber-rgb), 0.12) 58%,
+    transparent 72%
+  );
 }
 
 .admin-bg-shape-1 {

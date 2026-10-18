@@ -3,11 +3,12 @@ import {
   useSavingsGoals,
   useDeleteSavingsGoal,
   useDeleteSavingsContribution,
+  useSetSavingsGoalClosed,
 } from "../../../api/hooks/expense/useSavingsGoals";
 import { ListCard } from "../../components/ListCard";
 import { Button } from "../../components/Button";
 import { RowActions } from "../../components/RowActions";
-import { confirmDelete } from "../../components/confirmDelete";
+import { confirmAction, confirmDelete } from "../../components/confirmDelete";
 import { DetailView } from "../../components/DetailView";
 import DefaultModal from "../../dms/components/DefaultModal";
 import CustomButton from "../../dms/components/CustomButton";
@@ -15,6 +16,7 @@ import { AdminSavingsGoalForm } from "./AdminSavingsGoalForm";
 import { AdminSavingsContributionForm } from "./AdminSavingsContributionForm";
 import { formatCurrency } from "../currency";
 import "../../dms/css/adminDisplays.css";
+import type { SavingsGoal } from "../../../api/types";
 import "./savingsGoals.css";
 
 type ModalState = { mode: "new" } | { mode: "edit"; id: number } | null;
@@ -23,10 +25,25 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 }
 
+// Per-person contribution totals, largest first.
+function totalsByContributor(goal: SavingsGoal) {
+  const totals = new Map<number, { name: string; amount: number }>();
+  for (const c of goal.contributions) {
+    const entry = totals.get(c.contributedByAdminUserId) ?? {
+      name: c.contributedBy.name || c.contributedBy.email || "Unknown",
+      amount: 0,
+    };
+    entry.amount += Number(c.amount);
+    totals.set(c.contributedByAdminUserId, entry);
+  }
+  return Array.from(totals.values()).sort((a, b) => b.amount - a.amount);
+}
+
 export function AdminSavingsGoalsList() {
   const { data: items, isLoading } = useSavingsGoals();
   const deleteGoal = useDeleteSavingsGoal();
   const deleteContribution = useDeleteSavingsContribution();
+  const setGoalClosed = useSetSavingsGoalClosed();
   const [modal, setModal] = useState<ModalState>(null);
   const [contributionGoalId, setContributionGoalId] = useState<number | null>(null);
   const [viewId, setViewId] = useState<number | null>(null);
@@ -36,6 +53,20 @@ export function AdminSavingsGoalsList() {
   async function handleDelete(id: number) {
     if (await confirmDelete("savings goal")) {
       deleteGoal.mutate(id);
+    }
+  }
+
+  async function handleToggleClosed(goal: SavingsGoal) {
+    const closing = goal.closedAt === null;
+    const confirmed = closing
+      ? await confirmAction(
+          `Close "${goal.name}"?`,
+          "No more contributions can be added and it won't show up as a \"Spent From\" option. You can reopen it later.",
+          "Yes, close it",
+        )
+      : await confirmAction(`Reopen "${goal.name}"?`, "It will accept contributions again.", "Reopen");
+    if (confirmed) {
+      setGoalClosed.mutate({ id: goal.id, closed: closing });
     }
   }
 
@@ -65,16 +96,24 @@ export function AdminSavingsGoalsList() {
             const hasTarget = goal.targetAmount !== null;
             const target = hasTarget ? Number(goal.targetAmount) : 0;
             const percent = hasTarget && target > 0 ? Math.min(100, Math.round((saved / target) * 100)) : 0;
+            const isClosed = goal.closedAt !== null;
 
             return (
-              <div className="card admin-item-card" key={goal.id}>
+              <div className={`card admin-item-card ${isClosed ? "admin-savings-closed" : ""}`} key={goal.id}>
                 <div className="admin-item-card-header">
                   <div className="admin-item-card-heading">
                     <div className="admin-item-card-icon">
                       <i className="fa-solid fa-piggy-bank"></i>
                     </div>
                     <div>
-                      <h3 className="admin-item-card-title">{goal.name}</h3>
+                      <h3 className="admin-item-card-title">
+                        {goal.name}
+                        {isClosed && (
+                          <span className="admin-closed-badge" title={`Closed ${formatDate(goal.closedAt!)}`}>
+                            <i className="fa-solid fa-lock"></i> Closed
+                          </span>
+                        )}
+                      </h3>
                       {goal.targetDate && (
                         <p className="admin-item-card-subtitle">Target: {formatDate(goal.targetDate)}</p>
                       )}
@@ -93,13 +132,6 @@ export function AdminSavingsGoalsList() {
                       )}
                     </div>
                   </div>
-                  <div className="admin-item-card-actions">
-                    <RowActions
-                      onView={() => setViewId(goal.id)}
-                      onEdit={() => setModal({ mode: "edit", id: goal.id })}
-                      onDelete={() => handleDelete(goal.id)}
-                    />
-                  </div>
                 </div>
 
                 {hasTarget ? (
@@ -113,7 +145,7 @@ export function AdminSavingsGoalsList() {
                   </>
                 ) : (
                   <p className="admin-savings-progress-label">
-                    <i className="fa-solid fa-infinity"></i> {formatCurrency(saved)} saved so far (open-ended)
+                    <i className="fa-solid fa-piggy-bank"></i> {formatCurrency(saved)} saved so far · no target set
                   </p>
                 )}
 
@@ -124,7 +156,7 @@ export function AdminSavingsGoalsList() {
                         <span>
                           {formatCurrency(Number(c.amount))} · {formatDate(c.date)} · {c.contributedBy.name || c.contributedBy.email}
                         </span>
-                        <button
+                        {!isClosed && <button
                           type="button"
                           className="admin-savings-contribution-remove"
                           onClick={() => handleDeleteContribution(goal.id, c.id)}
@@ -132,20 +164,43 @@ export function AdminSavingsGoalsList() {
                           title="Remove"
                         >
                           <i className="fa-solid fa-xmark"></i>
-                        </button>
+                        </button>}
                       </li>
                     ))}
                   </ul>
                 )}
 
-                <CustomButton
-                  size="sm"
-                  variant="outline"
-                  className="m-0"
-                  onClick={() => setContributionGoalId(goal.id)}
-                >
-                  <i className="fa-solid fa-plus"></i> Add Contribution
-                </CustomButton>
+                <div className="admin-savings-card-footer">
+                  {!isClosed && (
+                    <CustomButton
+                      size="sm"
+                      variant="outline"
+                      className="m-0 admin-savings-add-btn"
+                      onClick={() => setContributionGoalId(goal.id)}
+                    >
+                      <i className="fa-solid fa-plus"></i> Add Contribution
+                    </CustomButton>
+                  )}
+                  <div className="admin-savings-card-actions">
+                    <RowActions
+                      onView={() => setViewId(goal.id)}
+                      onEdit={() => setModal({ mode: "edit", id: goal.id })}
+                      onDelete={() => handleDelete(goal.id)}
+                    >
+                      <CustomButton
+                        size="sm"
+                        bg={isClosed ? "success" : "secondary"}
+                        rounded
+                        className="m-0 admin-row-action-btn"
+                        onClick={() => handleToggleClosed(goal)}
+                        title={isClosed ? "Reopen goal" : "Close goal"}
+                        aria-label={isClosed ? "Reopen goal" : "Close goal"}
+                      >
+                        <i className={`fa-solid ${isClosed ? "fa-lock-open" : "fa-lock"}`} aria-hidden="true"></i>
+                      </CustomButton>
+                    </RowActions>
+                  </div>
+                </div>
               </div>
             );
           })}
@@ -171,6 +226,16 @@ export function AdminSavingsGoalsList() {
                   label: "Saved So Far",
                   value: formatCurrency(viewItem.contributions.reduce((sum, c) => sum + Number(c.amount), 0)),
                 },
+                {
+                  label: "By Person",
+                  value:
+                    viewItem.contributions.length > 0
+                      ? totalsByContributor(viewItem)
+                          .map((t) => `${t.name}: ${formatCurrency(t.amount)}`)
+                          .join("\n")
+                      : null,
+                },
+                { label: "Status", value: viewItem.closedAt ? `Closed on ${formatDate(viewItem.closedAt)}` : "Open" },
                 { label: "Bank", value: viewItem.bankName },
                 {
                   label: "Account Holder",

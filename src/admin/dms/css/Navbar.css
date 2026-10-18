@@ -174,7 +174,7 @@
 
 /* ── Sidebar header ── */
 .profile-sidebar-header {
-  background: #80111a;
+  background: var(--primary-dark-2);
   color: #fff;
   padding: 20px 16px 16px;
   display: flex;
@@ -249,13 +249,13 @@
 }
 
 .bg-swatch.selected {
-  border: 2px solid #80111a;
+  border: 2px solid var(--primary-dark-2);
   box-shadow: 0 0 0 2px rgba(128, 17, 26, 0.15);
 }
 
 .bg-swatch .check {
   font-size: 11px;
-  color: #80111a;
+  color: var(--primary-dark-2);
 }
 
 .bg-swatch.bg-white { background-color: #ffffff; }
@@ -344,11 +344,11 @@
 
 .navbar-notif-btn:hover {
   background: rgba(0, 0, 0, 0.05);
-  color: #80111a;
+  color: var(--primary-dark-2);
 }
 
 .navbar-notif-btn.has-unread {
-  color: #80111a;
+  color: var(--primary-dark-2);
 }
 
 .notif-badge {
@@ -409,7 +409,7 @@
 
 .notif-mark-all {
   font-size: 11.5px;
-  color: #80111a;
+  color: var(--primary-dark-2);
   padding: 0;
   border: none;
   background: none;
@@ -579,4 +579,64 @@
 .navbar-module-switcher-btn.active {
   background: var(--primary);
   color: #ffffff;
-}
+}
+/* Keep the navbar on one row. Bootstrap's .navbar and its .container-fluid
+   default to flex-wrap: wrap, which pushed the theme/avatar/sign-out group
+   onto a second line on phones. */
+.navbar,
+.navbar > .container-fluid {
+  flex-wrap: nowrap;
+}
+
+.navbar > .container-fluid {
+  gap: 8px;
+  min-width: 0;
+}
+
+.navbar > .container-fluid > * {
+  flex-shrink: 0;
+}
+
+@media (max-width: 575.98px) {
+  .navbar {
+    padding: 0 10px;
+  }
+
+  .navbar > .container-fluid {
+    padding-left: 0;
+    padding-right: 0;
+    gap: 6px;
+  }
+
+  .navbar .fa-bars {
+    font-size: 1.25rem !important;
+  }
+
+  .navbar-logo-box {
+    width: 36px;
+    height: 36px;
+  }
+
+  .navbar-module-switcher-btn {
+    padding: 6px 10px;
+  }
+
+  .navbar-theme-btn {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .navbar-user-chip {
+    gap: 6px;
+    padding: 3px;
+  }
+
+  .navbar-user-chip .user-avatar {
+    width: 30px !important;
+    height: 30px !important;
+  }
+
+  .navbar-signout-btn {
+    padding: 6px 10px;
+  }
+}

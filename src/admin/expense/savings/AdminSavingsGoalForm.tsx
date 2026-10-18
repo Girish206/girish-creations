@@ -4,10 +4,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useSavingsGoals, useCreateSavingsGoal, useUpdateSavingsGoal } from "../../../api/hooks/expense/useSavingsGoals";
 import { useExpenseMembers } from "../../../api/hooks/expense/useExpenseMembers";
+import { useAdminAuth } from "../../../context/AdminAuthContext";
 import { ModalForm } from "../../components/ModalForm";
 import { SubmitButton } from "../../components/SubmitButton";
 import InputComp from "../../dms/components/InputComp";
 import SelectInput from "../../dms/components/SelectInput";
+import "../../admin.css";
 
 const schema = z.object({
   name: z.string().min(1, "Required"),
@@ -21,6 +23,12 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
+
+// The goal's owner always has access, so they're always in the list (first).
+function withOwnerFirst(ids: number[], ownerId: number | null): number[] {
+  if (ownerId === null) return ids;
+  return [ownerId, ...ids.filter((memberId) => memberId !== ownerId)];
+}
 
 function toDateInputValue(iso: string | null | undefined): string {
   return iso ? iso.slice(0, 10) : "";
@@ -38,12 +46,18 @@ export function AdminSavingsGoalForm({ id, onSaved }: AdminSavingsGoalFormProps)
   const isEdit = id !== undefined;
   const { data: items } = useSavingsGoals();
   const { data: members } = useExpenseMembers();
+  const { admin } = useAdminAuth();
   const existing = isEdit ? items?.find((item) => item.id === id) : undefined;
+  // Owner: whoever created the goal, or the logged-in account for a new one.
+  // Legacy goals have no recorded creator, so nobody is locked in for them.
+  const ownerId = isEdit ? (existing?.createdBy?.id ?? null) : admin?.sub ? Number(admin.sub) : null;
 
   const {
     control,
     handleSubmit,
     reset,
+    setValue,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
 
@@ -61,7 +75,13 @@ export function AdminSavingsGoalForm({ id, onSaved }: AdminSavingsGoalFormProps)
         bankName: existing.bankName ?? "",
         accountHolderAdminUserId: existing.accountHolderAdminUserId ?? "",
         restrictMembers: existing.members.length > 0,
-        memberAdminUserIds: existing.members.map((m) => m.adminUserId),
+        memberAdminUserIds:
+          existing.members.length > 0
+            ? withOwnerFirst(
+                existing.members.map((m) => m.adminUserId),
+                existing.createdBy?.id ?? null,
+              )
+            : [],
       });
     } else {
       reset({
@@ -87,7 +107,7 @@ export function AdminSavingsGoalForm({ id, onSaved }: AdminSavingsGoalFormProps)
       targetDate: values.targetDate || null,
       bankName: values.bankName || null,
       accountHolderAdminUserId: values.accountHolderAdminUserId === "" ? null : values.accountHolderAdminUserId,
-      memberAdminUserIds: values.restrictMembers ? values.memberAdminUserIds : [],
+      memberAdminUserIds: values.restrictMembers ? withOwnerFirst(values.memberAdminUserIds, ownerId) : [],
     };
     if (isEdit && existing) {
       await updateGoal.mutateAsync({ id: existing.id, input });
@@ -100,6 +120,16 @@ export function AdminSavingsGoalForm({ id, onSaved }: AdminSavingsGoalFormProps)
   if (isEdit && !existing) return <p>Loading...</p>;
 
   const memberOptions = (members ?? []).map((m) => ({ value: m.id, label: m.name || m.email }));
+  const sharedOptions = (members ?? []).map((m) => ({
+    value: m.id,
+    label: `${m.name || m.email}${m.id === ownerId ? " (owner)" : ""}`,
+  }));
+  const setVisibility = (restricted: boolean) => {
+    setValue("restrictMembers", restricted);
+    if (restricted) {
+      setValue("memberAdminUserIds", withOwnerFirst(getValues("memberAdminUserIds") ?? [], ownerId));
+    }
+  };
 
   return (
     <ModalForm onSubmit={handleSubmit(onSubmit)}>
@@ -174,63 +204,53 @@ export function AdminSavingsGoalForm({ id, onSaved }: AdminSavingsGoalFormProps)
         )}
       />
 
-      <Controller
-        name="restrictMembers"
-        control={control}
-        render={({ field }) => (
-          <div className="form-check mb-2">
-            <input
-              type="checkbox"
-              className="form-check-input"
-              id="restrictMembers"
-              checked={field.value ?? false}
-              onChange={(e) => field.onChange(e.target.checked)}
-            />
-            <label className="form-check-label" htmlFor="restrictMembers">
-              Restrict this goal to specific people
-            </label>
-          </div>
-        )}
-      />
-      {!restrictMembers && (
-        <p className="text-muted small mb-3">
-          Visible to everyone with Savings access. Check the box above to limit it to only the people you pick.
-        </p>
-      )}
+      <div className="mb-3 m-1">
+        <span className="select-label ps-1 d-block mb-1">Who can see this goal</span>
+        <div className="admin-segmented" role="radiogroup" aria-label="Who can see this goal">
+          <button
+            type="button"
+            role="radio"
+            aria-checked={!restrictMembers}
+            className={!restrictMembers ? "active" : ""}
+            onClick={() => setVisibility(false)}
+          >
+            <i className="fa-solid fa-users" aria-hidden="true"></i> Everyone
+          </button>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={restrictMembers}
+            className={restrictMembers ? "active" : ""}
+            onClick={() => setVisibility(true)}
+          >
+            <i className="fa-solid fa-user-lock" aria-hidden="true"></i> Only selected people
+          </button>
+        </div>
+        <small className="text-muted d-block mt-2 ps-1">
+          {restrictMembers
+            ? memberAdminUserIds.length <= 1
+              ? "Only you can see this goal. Add people to share it with them."
+              : `Shared with ${memberAdminUserIds.length} people, including you.`
+            : "Visible to everyone with Savings access."}
+        </small>
+      </div>
 
       {restrictMembers && (
         <Controller
           name="memberAdminUserIds"
           control={control}
           render={({ field }) => (
-            <div className="mb-3 d-flex flex-column gap-2">
-              {(members ?? []).map((member) => {
-                const checked = field.value.includes(member.id);
-                return (
-                  <div className="form-check" key={member.id}>
-                    <input
-                      type="checkbox"
-                      className="form-check-input"
-                      id={`goal-member-${member.id}`}
-                      checked={checked}
-                      onChange={(e) => {
-                        field.onChange(
-                          e.target.checked
-                            ? [...field.value, member.id]
-                            : field.value.filter((memberId: number) => memberId !== member.id),
-                        );
-                      }}
-                    />
-                    <label className="form-check-label" htmlFor={`goal-member-${member.id}`}>
-                      {member.name || member.email}
-                    </label>
-                  </div>
-                );
-              })}
-              {memberAdminUserIds.length === 0 && (
-                <small className="text-muted">Select at least one person, or uncheck the restriction above.</small>
-              )}
-            </div>
+            /* Removing the owner's chip just puts it straight back. */
+            <SelectInput
+              label="Shared with"
+              isMulti
+              clearable={false}
+              placeholder="Choose people…"
+              options={sharedOptions}
+              value={field.value}
+              onChange={(ids: number[]) => field.onChange(withOwnerFirst(ids, ownerId))}
+              className="mb-3"
+            />
           )}
         />
       )}

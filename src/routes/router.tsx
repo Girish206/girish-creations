@@ -180,20 +180,6 @@ export const router = createBrowserRouter([
                 ],
               },
               {
-                element: <RequireSubModuleAccess subModule="investments" />,
-                children: [
-                  {
-                    path: "investments",
-                    lazy: async () => {
-                      const { AdminInvestmentsList } = await import(
-                        "../admin/expense/investments/AdminInvestmentsList"
-                      );
-                      return { Component: AdminInvestmentsList };
-                    },
-                  },
-                ],
-              },
-              {
                 element: <RequireSubModuleAccess subModule="savings" />,
                 children: [
                   {

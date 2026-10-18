@@ -10,7 +10,6 @@ const LayoutWrapper = () => {
         if (isExpenseModule) {
             if (path.includes("/admin/expense/categories")) return "expense-categories";
             if (path.includes("/admin/expense/expenses")) return "expense-expenses";
-            if (path.includes("/admin/expense/investments")) return "expense-investments";
             if (path.includes("/admin/expense/savings")) return "expense-savings";
             if (path.includes("/admin/expense/admin-users")) return "expense-admin-users";
             return "expense-dashboard";

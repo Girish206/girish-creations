@@ -4,6 +4,7 @@ import { useAdminAuth } from "../context/AdminAuthContext";
 import InputComp from "./dms/components/InputComp";
 import CustomButton from "./dms/components/CustomButton";
 import { useAdminBodyClass } from "./useAdminBodyClass";
+import { useAdminTheme } from "./useAdminTheme";
 import "./dms/global.css";
 import "./dms/css/Login.css";
 
@@ -14,6 +15,7 @@ import "./dms/css/Login.css";
 // ./dms/css/Login.css's styling are new.
 export function AdminLoginPage() {
   useAdminBodyClass();
+  useAdminTheme();
   const { login } = useAdminAuth();
   const navigate = useNavigate();
 
@@ -39,12 +41,8 @@ export function AdminLoginPage() {
 
   return (
     <div className="admin-login-shell">
-      <div className="admin-login-ash admin-login-ash-1" aria-hidden="true">
-        <img src="/assets/img/bg/banner-shape-1.png" alt="" />
-      </div>
-      <div className="admin-login-ash admin-login-ash-2" aria-hidden="true">
-        <img src="/assets/img/bg/banner-shape-1.png" alt="" />
-      </div>
+      <div className="admin-login-ash admin-login-ash-1" aria-hidden="true" />
+      <div className="admin-login-ash admin-login-ash-2" aria-hidden="true" />
 
       <div className="admin-login-card animated fadeInUp">
         <div className="admin-login-logo-ring">

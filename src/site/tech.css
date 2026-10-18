@@ -197,8 +197,8 @@
 
 /* CTA band: dark panel with aurora glow and a grid, in both themes. */
 .gc-cta {
-  background: radial-gradient(90% 140% at 100% 0%, rgba(245, 80, 30, 0.5), transparent 55%),
-    radial-gradient(70% 120% at 0% 100%, rgba(232, 23, 79, 0.35), transparent 55%), #0b0d2a;
+  background: radial-gradient(90% 140% at 100% 0%, rgba(var(--brand-orange-rgb), 0.5), transparent 55%),
+    radial-gradient(70% 120% at 0% 100%, rgba(var(--brand-crimson-rgb), 0.35), transparent 55%), var(--brand-navy);
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.1);
   align-items: center;
@@ -313,7 +313,7 @@
   width: min(290px, 86%);
   border-radius: 14px;
   overflow: hidden;
-  background: rgba(9, 10, 36, 0.92);
+  background: rgba(var(--brand-navy-rgb), 0.94);
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: var(--gc-shadow-lg);
   backdrop-filter: blur(16px);
@@ -351,20 +351,20 @@
   text-overflow: ellipsis;
 }
 .gc-terminal-prompt {
-  color: #ffc23d;
+  color: var(--brand-amber-bright);
 }
 .gc-terminal-cmd {
   color: #fff;
 }
 .gc .gc-terminal-body .gc-terminal-out {
-  color: #ff9a5c;
+  color: var(--brand-orange-bright);
 }
 .gc-caret {
   display: inline-block !important;
   width: 7px;
   height: 14px;
   vertical-align: -2px;
-  background: #ffc23d;
+  background: var(--brand-amber-bright);
   animation: gc-blink 1.1s steps(1) infinite;
 }
 @keyframes gc-blink {
@@ -505,6 +505,13 @@ a.gc-tile:hover .gc-tile-arrow {
 
 /* ---------- Experience timeline ---------- */
 
+/* Work and Education are both tight sections, so each gap between them
+   (and the hero above) matches; the CTA band after the last one drops its
+   own top padding instead of stacking it on the section's bottom padding. */
+.gc-tl-section + .gc-section {
+  padding-top: 0;
+}
+
 .gc-tl {
   position: relative;
   display: flex;
@@ -523,14 +530,16 @@ a.gc-tile:hover .gc-tile-arrow {
   background: linear-gradient(var(--gc-accent), var(--gc-accent-2) 70%, transparent);
 }
 .gc-tl-item {
+  --gc-tl-pad: clamp(20px, 3vw, 32px);
   position: relative;
-  padding: clamp(20px, 3vw, 32px);
+  padding: var(--gc-tl-pad);
   border-radius: var(--gc-radius-lg);
 }
+/* Centred on the date row: its ~30px chip sits at the card's top padding. */
 .gc-tl-node {
   position: absolute;
   left: -36px;
-  top: 34px;
+  top: calc(var(--gc-tl-pad) + 7px);
   width: 16px;
   height: 16px;
   border-radius: 50%;
@@ -543,30 +552,43 @@ a.gc-tile:hover .gc-tile-arrow {
   border-color: transparent;
   box-shadow: 0 0 0 4px var(--gc-accent-soft), 0 0 18px var(--gc-glow);
 }
-.gc-tl-head {
+/* Date range on the left, duration / grade chip on the right. */
+.gc-tl-top {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
+  align-items: center;
+  gap: 12px;
   flex-wrap: wrap;
 }
 .gc-tl-when {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 10px;
   font-family: var(--gc-font-mono);
   font-size: 13px;
   color: var(--gc-muted);
 }
 .gc .gc-tl-title {
   font-size: clamp(1.3rem, 2.2vw, 1.6rem);
-  margin-top: 6px;
+  margin-top: 10px;
 }
 .gc-tl-sub {
-  display: flex !important;
+  display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px 18px;
   flex-wrap: wrap;
-  margin-top: 6px;
+  margin-top: 8px;
   font-size: 15px;
   color: var(--gc-ink-2);
+}
+.gc-tl-sub > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.gc-tl-sub svg {
+  flex-shrink: 0;
+  color: var(--gc-accent);
 }
 .gc .gc-tl-points {
   margin-top: 18px;
@@ -592,15 +614,75 @@ a.gc-tile:hover .gc-tile-arrow {
   transform: rotate(45deg);
   background: var(--gc-grad);
 }
-@media (max-width: 560px) {
+/* Mobile: the side rail eats a tenth of the screen, so drop it and turn
+   each entry into a full-width card. The node becomes an accent bar down
+   the card's left edge (a gradient one for the current role), the date
+   row gets a hairline under it, and the role / company / location stack. */
+@media (max-width: 640px) {
   .gc-tl {
-    padding-left: 28px;
+    padding-left: 0;
+    gap: 14px;
   }
   .gc-tl::before {
-    left: 5px;
+    display: none;
+  }
+  /* Even 18px on all sides; the left adds the 3px accent bar. */
+  .gc-tl-item {
+    padding: 18px 18px 18px 21px;
+    border-radius: var(--gc-radius);
+    overflow: hidden;
   }
   .gc-tl-node {
-    left: -30px;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    height: auto;
+    border: 0;
+    border-radius: 0;
+    background: var(--gc-line-strong);
+    box-shadow: none;
+  }
+  .gc-tl-item.is-current .gc-tl-node {
+    background: var(--gc-grad);
+    box-shadow: none;
+  }
+  .gc-tl-top {
+    padding-bottom: 12px;
+    border-bottom: 1px dashed var(--gc-line-strong);
+  }
+  .gc-tl-when {
+    font-size: 12px;
+  }
+  .gc-tl-top .gc-chip {
+    padding: 4px 10px;
+    font-size: 12.5px;
+  }
+  .gc .gc-tl-title {
+    margin-top: 14px;
+    font-size: 1.2rem;
+    line-height: 1.25;
+  }
+  .gc-tl-sub {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    font-size: 14px;
+  }
+  .gc .gc-tl-points {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--gc-line);
+    gap: 8px;
+  }
+  .gc-tl-points li {
+    padding-left: 18px;
+    font-size: 14.5px;
+    line-height: 1.6;
+  }
+  .gc-tl-points li::before {
+    width: 6px;
+    height: 6px;
   }
 }
 
@@ -882,6 +964,238 @@ a.gc-tile:hover .gc-tile-arrow {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* ---------- Touch devices ----------
+   Hover-only affordances never show without a pointer, so keep them on. */
+
+@media (hover: none) {
+  .gc-work-arrow {
+    opacity: 1;
+    transform: none;
+  }
+  .gc-work-card:hover,
+  .gc-service:hover {
+    transform: none;
+  }
+}
+
+/* ---------- Mobile cards ---------- */
+
+@media (max-width: 640px) {
+  /* Filter tabs: one swipeable row instead of a wall of wrapped pills. */
+  .gc-toolbar {
+    margin-bottom: 20px;
+    gap: 12px;
+  }
+  .gc-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    width: calc(100% + var(--gc-gutter) * 2);
+    margin: 0 calc(var(--gc-gutter) * -1);
+    padding: 2px var(--gc-gutter);
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+  }
+  .gc-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .gc-tab {
+    flex-shrink: 0;
+    height: 36px;
+    padding: 0 14px;
+    font-size: 13.5px;
+    scroll-snap-align: start;
+  }
+  .gc-search {
+    width: 100%;
+  }
+
+  /* Hero metrics: always one tight row of three. */
+  .gc-hero-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .gc-metric {
+    padding: 14px 12px;
+    border-radius: 14px;
+  }
+  .gc-metric strong {
+    font-size: 1.6rem;
+  }
+  .gc-metric span {
+    font-size: 12px;
+    line-height: 1.3;
+  }
+  /* Skills level summary: the page sets an inline column count. */
+  .gc-level-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px;
+  }
+
+  /* Project cards: tighter frame, shorter image, arrow always visible. */
+  .gc-work-card {
+    gap: 14px;
+    padding: 8px 8px 16px;
+    border-radius: calc(var(--gc-radius) + 6px);
+  }
+  .gc-work-media {
+    aspect-ratio: 16 / 10;
+    padding: 16px;
+    border-radius: var(--gc-radius);
+  }
+  .gc-work-arrow {
+    width: 36px;
+    height: 36px;
+    right: 10px;
+    bottom: 10px;
+  }
+  .gc-work-card .gc-work-body {
+    padding: 0 8px;
+    gap: 6px;
+  }
+  .gc-work-title {
+    font-size: 1.15rem;
+  }
+  .gc-work-meta {
+    font-size: 13px;
+    gap: 8px;
+  }
+  .gc-work-meta .gc-chip {
+    padding: 4px 10px;
+    font-size: 12.5px;
+  }
+  .gc-work-desc {
+    font-size: 14px;
+  }
+
+  /* Blog cards: compact rows — thumbnail left, text right. */
+  .gc-post-card {
+    display: grid !important;
+    grid-template-columns: 96px minmax(0, 1fr);
+    align-items: center;
+    gap: 14px;
+    padding: 10px;
+    border-radius: var(--gc-radius);
+    border: 1px solid var(--gc-line);
+    background: var(--gc-glass);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  .gc-post-media {
+    aspect-ratio: 1;
+    border-radius: 12px;
+  }
+  .gc-post-card .gc-work-body {
+    padding: 0;
+    gap: 4px;
+  }
+  .gc-post-card .gc-work-meta {
+    font-size: 12px;
+    gap: 6px;
+  }
+  .gc-post-card .gc-work-meta .gc-chip {
+    padding: 2px 8px;
+    font-size: 11.5px;
+  }
+  .gc-post-card .gc-work-title {
+    font-size: 1rem;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .gc-post-card .gc-work-desc {
+    display: none;
+  }
+
+  /* Skill / tool cards: two-up tiles, monogram above the name. */
+  .gc-skill-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .gc-skill-grid > .gc-reveal,
+  .gc-skill-card {
+    height: 100%;
+  }
+  .gc-skill-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 14px;
+  }
+  .gc-monogram {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    font-size: 13.5px;
+  }
+  .gc-skill-card-body {
+    width: 100%;
+  }
+  .gc-skill-card-name {
+    font-size: 14.5px;
+  }
+  .gc-skill-card-level {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    font-size: 12px;
+  }
+  .gc-level i {
+    width: 14px;
+    height: 4px;
+  }
+
+  /* Services, values, steps, tiles: same look, less padding. */
+  .gc-service,
+  .gc-value {
+    padding: 20px;
+    gap: 10px;
+    border-radius: var(--gc-radius);
+  }
+  .gc-service-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    font-size: 19px;
+  }
+  .gc-step {
+    padding: 18px 20px;
+  }
+  .gc-step::before {
+    font-size: 22px;
+  }
+  .gc-tile {
+    padding: 20px;
+    border-radius: var(--gc-radius);
+  }
+  .gc-skill-group {
+    padding: 18px;
+  }
+  .gc-contact-item {
+    padding: 16px;
+    gap: 14px;
+  }
+  .gc-pager-link {
+    padding: 16px 18px;
+    border-radius: var(--gc-radius);
+  }
+  .gc-pager-link strong {
+    font-size: 1.05rem;
+  }
+  .gc-case-aside {
+    padding: 0 18px;
+  }
+  .gc-cta {
+    border-radius: var(--gc-radius-lg);
+    padding: 32px 22px;
+  }
+  .gc-cta .gc-btn-primary {
+    width: 100%;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

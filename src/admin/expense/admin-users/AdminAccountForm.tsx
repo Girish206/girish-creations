@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,6 +10,7 @@ import {
 import { ModalForm } from "../../components/ModalForm";
 import { SubmitButton } from "../../components/SubmitButton";
 import InputComp from "../../dms/components/InputComp";
+import { messageFor } from "../../../api/mutationErrors";
 
 const schema = z
   .object({
@@ -17,14 +18,14 @@ const schema = z
     wantsLogin: z.boolean(),
     email: z.string().optional(),
     password: z.string().optional(),
+    removeLogin: z.boolean(),
     isActive: z.boolean(),
     hasPortfolioAccess: z.boolean(),
     hasExpensesAccess: z.boolean(),
-    hasInvestmentsAccess: z.boolean(),
     hasSavingsAccess: z.boolean(),
   })
   .superRefine((values, ctx) => {
-    if (!values.wantsLogin) return;
+    if (!values.wantsLogin || values.removeLogin) return;
     if (!values.email || !z.string().email().safeParse(values.email).success) {
       ctx.addIssue({ code: "custom", path: ["email"], message: "Valid email required for login access" });
     }
@@ -37,13 +38,14 @@ type FormValues = z.infer<typeof schema>;
 
 export interface AdminAccountFormProps {
   id?: number;
+  // Opened from a guest's "Grant login" action: start with login ticked.
+  startWithLogin?: boolean;
   onSaved: () => void;
 }
 
 const ACCESS_CHECKBOXES = [
   { name: "hasPortfolioAccess" as const, label: "Portfolio module access" },
   { name: "hasExpensesAccess" as const, label: "Expenses access" },
-  { name: "hasInvestmentsAccess" as const, label: "Investments access" },
   { name: "hasSavingsAccess" as const, label: "Savings access" },
 ];
 
@@ -53,7 +55,7 @@ const ACCESS_CHECKBOXES = [
 // access" reveals email/password to turn them into a real account; once an
 // account already has login, its email is locked (it's the login
 // identifier) but the password can still be rotated (leave blank to keep).
-export function AdminAccountForm({ id, onSaved }: AdminAccountFormProps) {
+export function AdminAccountForm({ id, startWithLogin = false, onSaved }: AdminAccountFormProps) {
   const isEdit = id !== undefined;
   const { data: items } = useAdminUsers();
   const existing = isEdit ? items?.find((item) => item.id === id) : undefined;
@@ -67,35 +69,40 @@ export function AdminAccountForm({ id, onSaved }: AdminAccountFormProps) {
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
 
   const wantsLogin = useWatch({ control, name: "wantsLogin" });
+  const removeLogin = useWatch({ control, name: "removeLogin" });
+  const [showPassword, setShowPassword] = useState(false);
+  // The server's reason a save failed (e.g. the email is taken by a
+  // deactivated account), shown in the form as well as the toast.
+  const [saveError, setSaveError] = useState("");
   const alreadyHasLogin = Boolean(existing?.hasLogin);
 
   useEffect(() => {
     if (existing) {
       reset({
         name: existing.name ?? "",
-        wantsLogin: existing.hasLogin,
+        wantsLogin: existing.hasLogin || startWithLogin,
         email: existing.email ?? "",
         password: "",
+        removeLogin: false,
         isActive: existing.isActive,
         hasPortfolioAccess: existing.hasPortfolioAccess,
         hasExpensesAccess: existing.hasExpensesAccess,
-        hasInvestmentsAccess: existing.hasInvestmentsAccess,
         hasSavingsAccess: existing.hasSavingsAccess,
       });
     } else {
       reset({
         name: "",
-        wantsLogin: false,
+        wantsLogin: startWithLogin,
         email: "",
         password: "",
+        removeLogin: false,
         isActive: true,
         hasPortfolioAccess: false,
         hasExpensesAccess: false,
-        hasInvestmentsAccess: false,
         hasSavingsAccess: false,
       });
     }
-  }, [existing, reset]);
+  }, [existing, startWithLogin, reset]);
 
   const createAccount = useCreateAdminUser();
   const updateAccount = useUpdateAdminUser();
@@ -106,15 +113,25 @@ export function AdminAccountForm({ id, onSaved }: AdminAccountFormProps) {
     // once an account has login, resubmitting with a blank password just
     // keeps the current one.
     const grantingLoginNow = values.wantsLogin && !alreadyHasLogin;
+    // A guest's email may already be stored (login was removed earlier).
     if (grantingLoginNow && !values.password) {
       setError("password", { message: "Required" });
       return;
     }
 
+    setSaveError("");
+    try {
+      await save(values);
+      onSaved();
+    } catch (error) {
+      setSaveError(messageFor(error));
+    }
+  }
+
+  async function save(values: FormValues) {
     const accessFlags = {
       hasPortfolioAccess: values.hasPortfolioAccess,
       hasExpensesAccess: values.hasExpensesAccess,
-      hasInvestmentsAccess: values.hasInvestmentsAccess,
       hasSavingsAccess: values.hasSavingsAccess,
     };
 
@@ -126,7 +143,8 @@ export function AdminAccountForm({ id, onSaved }: AdminAccountFormProps) {
           // Email only changes here when we're granting login for the
           // first time — an already-login account keeps its email fixed.
           email: !alreadyHasLogin && values.wantsLogin ? values.email : undefined,
-          password: values.password || undefined,
+          password: values.removeLogin ? undefined : values.password || undefined,
+          removeLogin: values.removeLogin || undefined,
           isActive: values.isActive,
           ...accessFlags,
         },
@@ -139,7 +157,6 @@ export function AdminAccountForm({ id, onSaved }: AdminAccountFormProps) {
         ...accessFlags,
       });
     }
-    onSaved();
   }
 
   if (isEdit && !existing) return <p>Loading...</p>;
@@ -179,7 +196,28 @@ export function AdminAccountForm({ id, onSaved }: AdminAccountFormProps) {
         </p>
       )}
 
-      {wantsLogin && (
+      {alreadyHasLogin && !existing?.isOwner && (
+        <Controller
+          name="removeLogin"
+          control={control}
+          render={({ field }) => (
+            <div className="form-check mb-2">
+              <input
+                type="checkbox"
+                className="form-check-input"
+                id="removeLogin"
+                checked={field.value ?? false}
+                onChange={(e) => field.onChange(e.target.checked)}
+              />
+              <label className="form-check-label" htmlFor="removeLogin">
+                Remove login access (keep them as a guest in pickers)
+              </label>
+            </div>
+          )}
+        />
+      )}
+
+      {wantsLogin && !removeLogin && (
         <>
           <Controller
             name="email"
@@ -188,6 +226,10 @@ export function AdminAccountForm({ id, onSaved }: AdminAccountFormProps) {
             render={({ field }) => (
               <InputComp
                 label="Email"
+                type="email"
+                inputMode="email"
+                autoCapitalize="none"
+                spellCheck={false}
                 required
                 readOnly={alreadyHasLogin}
                 {...field}
@@ -202,7 +244,11 @@ export function AdminAccountForm({ id, onSaved }: AdminAccountFormProps) {
             render={({ field }) => (
               <InputComp
                 label={alreadyHasLogin ? "New Password (leave blank to keep current)" : "Password"}
-                type="password"
+                type={showPassword ? "text" : "password"}
+                icon={`fa-solid ${showPassword ? "fa-eye-slash" : "fa-eye"}`}
+                iconOnClick={() => setShowPassword((shown) => !shown)}
+                autoCapitalize="none"
+                spellCheck={false}
                 required={!alreadyHasLogin}
                 {...field}
                 error={errors.password?.message}
@@ -245,6 +291,7 @@ export function AdminAccountForm({ id, onSaved }: AdminAccountFormProps) {
                   className="form-check-input"
                   id="isActive"
                   checked={field.value ?? false}
+                  disabled={existing?.isOwner}
                   onChange={(e) => field.onChange(e.target.checked)}
                 />
                 <label className="form-check-label" htmlFor="isActive">
@@ -255,6 +302,13 @@ export function AdminAccountForm({ id, onSaved }: AdminAccountFormProps) {
           />
         )}
       </div>
+
+      {saveError && (
+        <div className="admin-banner admin-banner-error mb-3" role="alert">
+          <i className="fa-solid fa-circle-exclamation me-2" aria-hidden="true"></i>
+          {saveError}
+        </div>
+      )}
 
       <SubmitButton loading={isSubmitting}>Save</SubmitButton>
     </ModalForm>

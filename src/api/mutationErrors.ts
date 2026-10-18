@@ -3,7 +3,7 @@ import { isAxiosError } from "axios";
 // The API's error envelope is { error: { message, code } } (see the server's
 // errorHandler) — prefer its message, e.g. "This record is still in use by
 // other records and can't be deleted", over a generic one.
-function messageFor(error: unknown): string {
+export function messageFor(error: unknown): string {
   if (isAxiosError(error)) {
     const apiMessage = (error.response?.data as { error?: { message?: string } } | undefined)?.error?.message;
     if (apiMessage) return apiMessage;

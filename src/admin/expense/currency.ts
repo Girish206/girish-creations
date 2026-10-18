@@ -1,4 +1,4 @@
-// Shared currency formatter for the expense/investment/savings module —
+// Shared currency formatter for the expense/savings module —
 // Indian Rupee, since this tracker is for a group of people using INR.
 // Whole amounts stay compact ("₹500"); anything with paise shows both
 // digits ("₹45.50") rather than being rounded away.

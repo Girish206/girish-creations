@@ -50,3 +50,22 @@
 .admin-savings-contribution-remove:hover {
   color: #c0392b;
 }
+
+/* Every card action lives here — Add Contribution plus the round icon
+   actions (close/reopen, view, edit, delete), centred as one group.
+   margin-top: auto pins the footer to the bottom so footers line up
+   across cards of different heights in the same grid row. */
+.admin-savings-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-color);
+}
+
+.admin-savings-card-actions > div {
+  justify-content: center;
+}

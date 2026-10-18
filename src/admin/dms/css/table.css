@@ -106,7 +106,7 @@ table {
 
 table th {
   background-color: #fce8e9 !important;
-  color: #84161d !important;
+  color: var(--primary-dark-1) !important;
   padding: 12px !important;
   /* font-weight: 600 !important; */
   text-transform: uppercase;
@@ -180,7 +180,7 @@ table.sticky-header td {
 /* Header cell appearance */
 table.sticky-header thead th {
   background-color: #fce8e9 !important;
-  color: #84161d !important;
+  color: var(--primary-dark-1) !important;
   background-clip: padding-box;
   /* font-weight: 600 !important; */
   text-transform: uppercase;
@@ -381,7 +381,7 @@ table.sticky-header.table-striped>tbody>tr:hover {
 .table-report thead th {
   background-color: #fce8e9 !important;
   /* --primary-light-6 */
-  color: #84161d !important;
+  color: var(--primary-dark-1) !important;
   /* --primary-dark-1 */
   font-weight: 600;
   border-bottom: 2px solid #ebb9bc !important;
@@ -427,7 +427,7 @@ table.sticky-header.table-striped>tbody>tr:hover {
 
 /* Specific styling for Total cells/headers */
 .table-report .report-total-header {
-  color: #84161d !important;
+  color: var(--primary-dark-1) !important;
   z-index: 31 !important;
 }
 

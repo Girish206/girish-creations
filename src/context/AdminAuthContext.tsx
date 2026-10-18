@@ -4,8 +4,8 @@ import type { ApiEnvelope } from "../api/types";
 
 // Top-level shell switch (Portfolio vs. the whole Expense Tracker). Which
 // *sections* of the Expense Tracker a given account can see (Expenses/
-// Investments/Savings) is a separate, more granular concern — see
-// hasExpensesAccess/hasInvestmentsAccess/hasSavingsAccess below and
+// Savings) is a separate, more granular concern — see
+// hasExpensesAccess/hasSavingsAccess below and
 // AdminSubModule in ProtectedRoute.tsx.
 export type AdminModule = "portfolio" | "expense";
 
@@ -16,7 +16,6 @@ interface AdminIdentity {
   isOwner: boolean;
   hasPortfolioAccess: boolean;
   hasExpensesAccess: boolean;
-  hasInvestmentsAccess: boolean;
   hasSavingsAccess: boolean;
 }
 
@@ -32,7 +31,7 @@ interface AdminAuthContextValue {
   mainBg: string;
   setMainBg: (bg: string) => void;
   // Which of the two admin modules (portfolio content vs. expense/
-  // investment/savings tracker) is currently shown — drives which
+  // savings tracker) is currently shown — drives which
   // Sidebar menu + dashboard renders. Defaults to whichever module the
   // account has access to; if it has both, remembers the last choice.
   activeModule: AdminModule;
@@ -41,13 +40,16 @@ interface AdminAuthContextValue {
 
 const AdminAuthContext = createContext<AdminAuthContextValue | undefined>(undefined);
 
-function hasAnyExpenseAccess(admin: Pick<AdminIdentity, "hasExpensesAccess" | "hasInvestmentsAccess" | "hasSavingsAccess">): boolean {
-  return admin.hasExpensesAccess || admin.hasInvestmentsAccess || admin.hasSavingsAccess;
+function hasAnyExpenseAccess(admin: Pick<AdminIdentity, "hasExpensesAccess" | "hasSavingsAccess">): boolean {
+  return admin.hasExpensesAccess || admin.hasSavingsAccess;
 }
 
 function decodeAdminFromToken(token: string): AdminIdentity | null {
   try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
+    // JWT segments are base64url ("-"/"_", no padding); atob() only accepts
+    // standard base64 and throws on those characters.
+    const segment = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    const payload = JSON.parse(atob(segment.padEnd(Math.ceil(segment.length / 4) * 4, "=")));
     return {
       sub: payload.sub,
       email: payload.email,
@@ -55,7 +57,6 @@ function decodeAdminFromToken(token: string): AdminIdentity | null {
       isOwner: Boolean(payload.isOwner),
       hasPortfolioAccess: Boolean(payload.hasPortfolioAccess),
       hasExpensesAccess: Boolean(payload.hasExpensesAccess),
-      hasInvestmentsAccess: Boolean(payload.hasInvestmentsAccess),
       hasSavingsAccess: Boolean(payload.hasSavingsAccess),
     };
   } catch {

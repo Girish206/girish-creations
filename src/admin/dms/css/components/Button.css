@@ -2,19 +2,21 @@
 
 .btn-custom-primary {
   background-color: var(--primary) !important;
+  /* Same crimson → orange gradient as the public site's buttons. */
+  background-image: var(--primary-gradient) !important;
   color: var(--theme-text-light) !important;
   border: none !important;
-  transition: background-color 0.2s ease, transform 0.1s ease;
+  box-shadow: 0 6px 18px -8px rgba(var(--primary-rgb), 0.7);
+  transition: filter 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
 }
 
 .btn-custom-primary:hover {
-  background-color: var(--primary-dark-1) !important;
-  /* transform: translateY(-1px); */
+  filter: brightness(0.92);
+  box-shadow: 0 8px 22px -8px rgba(var(--primary-rgb), 0.8);
 }
 
 .btn-custom-primary:active {
-  background-color: var(--primary-dark-1) !important;
-  /* transform: translateY(0px); */
+  filter: brightness(0.86);
 }
 
 /* Outline */

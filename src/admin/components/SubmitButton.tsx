@@ -1,14 +1,17 @@
-import type { ButtonHTMLAttributes } from "react";
+import { useContext, type ButtonHTMLAttributes } from "react";
 import CustomButton from "../dms/components/CustomButton";
+import { FormIdContext, useModalSlot } from "../dms/components/modalContext";
+import { ModalActions } from "./ModalActions";
 
 export interface SubmitButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "type"> {
   loading?: boolean;
   loadingLabel?: string;
 }
 
-// The full-width form-submit button — used at the bottom of every admin
-// form, rendered through the ported DMS CustomButton so it picks up the
-// theme's --primary color automatically.
+// The form-submit button used at the bottom of every admin form, rendered
+// through the ported DMS CustomButton so it picks up the theme's --primary
+// color. Inside a DefaultModal it moves into the modal's footer, right-aligned
+// next to a Cancel button; elsewhere it sits right-aligned under the form.
 export function SubmitButton({
   loading = false,
   loadingLabel = "Saving...",
@@ -17,10 +20,14 @@ export function SubmitButton({
   disabled,
   ...rest
 }: SubmitButtonProps) {
-  return (
+  const modal = useModalSlot();
+  const formId = useContext(FormIdContext);
+
+  const submit = (
     <CustomButton
       type="submit"
-      className={`w-100 ${className}`.trim()}
+      form={formId}
+      className={`admin-form-submit ${className}`.trim()}
       disabled={disabled}
       loading={loading}
       loadingLabel={loadingLabel}
@@ -28,5 +35,16 @@ export function SubmitButton({
     >
       {children}
     </CustomButton>
+  );
+
+  return (
+    <ModalActions>
+      {modal && (
+        <CustomButton bg="custom-secondary" onClick={modal.close} disabled={loading}>
+          Cancel
+        </CustomButton>
+      )}
+      {submit}
+    </ModalActions>
   );
 }

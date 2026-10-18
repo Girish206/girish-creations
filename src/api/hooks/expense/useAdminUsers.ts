@@ -9,7 +9,6 @@ export interface AdminUserCreateInput {
   name?: string | null;
   hasPortfolioAccess: boolean;
   hasExpensesAccess: boolean;
-  hasInvestmentsAccess: boolean;
   hasSavingsAccess: boolean;
 }
 
@@ -19,10 +18,11 @@ export interface AdminUserUpdateInput {
   // login member's email.
   email?: string;
   password?: string;
+  // Back to a guest: password cleared, email kept.
+  removeLogin?: boolean;
   isActive?: boolean;
   hasPortfolioAccess?: boolean;
   hasExpensesAccess?: boolean;
-  hasInvestmentsAccess?: boolean;
   hasSavingsAccess?: boolean;
 }
 
@@ -67,6 +67,18 @@ export function useDeactivateAdminUser() {
   return useMutation({
     mutationFn: async (id: number) => {
       await apiClient.delete(`/admin/admin-users/${id}`);
+    },
+    onSuccess: () => invalidate(queryClient),
+  });
+}
+
+// Removes the account entirely — the server only allows it when nothing
+// (expenses, savings, splits…) points at this person.
+export function useDeleteAdminUserPermanently() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await apiClient.delete(`/admin/admin-users/${id}`, { params: { permanent: true } });
     },
     onSuccess: () => invalidate(queryClient),
   });

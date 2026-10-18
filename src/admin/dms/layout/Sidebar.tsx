@@ -147,17 +147,6 @@ const Sidebar = ({
                           },
                       ]
                     : []),
-                ...(admin?.hasInvestmentsAccess
-                    ? [
-                          {
-                              id: "expense-investments",
-                              label: "Investments",
-                              icon: "fa-solid fa-chart-line",
-                              link: "/admin/expense/investments",
-                              submenu: [],
-                          },
-                      ]
-                    : []),
                 ...(admin?.hasSavingsAccess
                     ? [
                           {

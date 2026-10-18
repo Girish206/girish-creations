@@ -1,11 +1,28 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
-import DataTable, { type TableColumn } from "react-data-table-component";
+import DataTable, { createTheme, type TableColumn } from "react-data-table-component";
 import * as XLSX from "xlsx";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import ExportToImage from "./ExportToImage";
 import InputComp from "./InputComp";
 import CustomButton from "./CustomButton";
+import { useIsAdminDark } from "../../useAdminTheme";
+
+// Navy surfaces for the admin dark theme (see ../css/dark.css).
+createTheme(
+    "admin-dark",
+    {
+        text: { primary: "#c9c7de", secondary: "#a3a2bf", disabled: "rgba(255,255,255,0.3)" },
+        background: { default: "#0e1030" },
+        context: { background: "#171a42", text: "#f1eff9" },
+        divider: { default: "rgba(255,255,255,0.09)" },
+        button: { default: "#c9c7de", hover: "rgba(255,255,255,0.08)", focus: "rgba(255,255,255,0.12)", disabled: "rgba(255,255,255,0.25)" },
+        selected: { default: "rgba(243,106,34,0.15)", text: "#f1eff9" },
+        highlightOnHover: { default: "#171a42", text: "#f1eff9" },
+        striped: { default: "#11133a", text: "#c9c7de" },
+    },
+    "dark",
+);
 
 interface ExtendedColumn extends TableColumn<any> {
     export?: boolean;
@@ -109,6 +126,7 @@ const VirtualTable: React.FC<VirtualTableProps> = ({
     slno = true,
     onExportExcel,
 }) => {
+    const isDark = useIsAdminDark();
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedRows, setSelectedRows] =
         useState<any[]>(defaultSelectedRows);
@@ -426,6 +444,7 @@ const VirtualTable: React.FC<VirtualTableProps> = ({
                         fixedHeaderScrollHeight="100%" // Important!
                         selectableRows={selectableRows}
                         customStyles={customStyles}
+                        theme={isDark ? "admin-dark" : "default"}
                         onSelectedRowsChange={handleRowSelected}
                         selectableRowSelected={(row) =>
                             selectedRowIds.has(row.id)
@@ -435,6 +454,7 @@ const VirtualTable: React.FC<VirtualTableProps> = ({
                 </div>
             ) : (
                 <div
+                    className="virtual-table-skeleton"
                     style={{
                         borderRadius: "8px",
                         overflowX: "auto",

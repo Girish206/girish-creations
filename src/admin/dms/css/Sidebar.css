@@ -2,7 +2,7 @@
   --sidebar-width: 240px;
   --sidebar-collapsed-width: 80px;
   --sidebar-bg: #ffffff;
-  --sidebar-text: #1e293b;
+  --sidebar-text: var(--theme-text-dark);
   --sidebar-text-muted: #64748b;
   --sidebar-accent: var(--primary);
   --sidebar-shadow: 0 30px 70px rgba(0, 0, 0, 0.12);
@@ -390,7 +390,7 @@
 
 .user-name-highlight {
   font-weight: 800;
-  color: #1e293b;
+  color: var(--theme-text-dark);
   font-size: 1rem;
   line-height: 1.2;
 }

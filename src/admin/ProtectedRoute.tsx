@@ -10,7 +10,7 @@ export function ProtectedRoute() {
 }
 
 function hasAnyExpenseAccess(admin: ReturnType<typeof useAdminAuth>["admin"]): boolean {
-  return Boolean(admin?.hasExpensesAccess || admin?.hasInvestmentsAccess || admin?.hasSavingsAccess);
+  return Boolean(admin?.hasExpensesAccess || admin?.hasSavingsAccess);
 }
 
 // Wraps a top-level module's route tree (Portfolio vs. the whole Expense
@@ -30,26 +30,23 @@ export function RequireModuleAccess({ module }: { module: AdminModule }) {
   return <Outlet />;
 }
 
-export type AdminSubModule = "expenses" | "investments" | "savings";
+export type AdminSubModule = "expenses" | "savings";
 
 function firstAccessibleExpensePath(admin: ReturnType<typeof useAdminAuth>["admin"]): string {
   if (admin?.hasExpensesAccess) return "/admin/expense/expenses";
-  if (admin?.hasInvestmentsAccess) return "/admin/expense/investments";
   if (admin?.hasSavingsAccess) return "/admin/expense/savings";
   return "/admin/expense";
 }
 
-// Wraps one section *within* the Expense Tracker (Expenses/Categories,
-// Investments, or Savings) — independent per-section access, since one
+// Wraps one section *within* the Expense Tracker (Expenses/Categories
+// or Savings) — independent per-section access, since one
 // member might have Savings only while another has Expenses only.
 export function RequireSubModuleAccess({ subModule }: { subModule: AdminSubModule }) {
   const { admin } = useAdminAuth();
   const hasAccess =
     subModule === "expenses"
       ? admin?.hasExpensesAccess
-      : subModule === "investments"
-        ? admin?.hasInvestmentsAccess
-        : admin?.hasSavingsAccess;
+      : admin?.hasSavingsAccess;
 
   if (!hasAccess) {
     return <Navigate to={firstAccessibleExpensePath(admin)} replace />;

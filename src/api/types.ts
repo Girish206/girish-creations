@@ -110,22 +110,50 @@ export interface AdminUserAccount extends AdminUserRef {
   hasLogin: boolean;
   hasPortfolioAccess: boolean;
   hasExpensesAccess: boolean;
-  hasInvestmentsAccess: boolean;
   hasSavingsAccess: boolean;
   createdAt: string;
+  // Expenses, savings etc. pointing at this person. 0 = can be deleted
+  // outright; otherwise they can only be deactivated.
+  linkedRecords: number;
 }
+
+export type CategoryIconType = "icon" | "text" | "image";
 
 export interface ExpenseCategory {
   id: number;
   name: string;
+  // Null on categories saved before icons existed — see categoryIcons.ts.
+  iconType: CategoryIconType | null;
+  // Font Awesome class, short text/emoji, or an uploaded image path.
+  icon: string | null;
   createdAt: string;
+}
+
+// A repayment between two members that settles part of a group's split
+// balances ("Ravi paid Girish back ₹1,200").
+export interface ExpenseGroupSettlement {
+  id: number;
+  amount: string;
+  date: string;
+  createdAt: string;
+  expenseGroupId: number;
+  fromAdminUserId: number;
+  fromAdminUser: AdminUserRef;
+  toAdminUserId: number;
+  toAdminUser: AdminUserRef;
 }
 
 // Ad-hoc bucket for related expenses, e.g. "Goa Trip 2026".
 export interface ExpenseGroup {
   id: number;
   name: string;
+  // Optional trip window — when set, its expenses must be dated inside it.
+  startDate: string | null;
+  endDate: string | null;
+  // Non-null = settled and closed; its expenses are frozen until reopened.
+  closedAt: string | null;
   createdAt: string;
+  settlements: ExpenseGroupSettlement[];
 }
 
 export interface ExpenseGroupRef {
@@ -162,19 +190,6 @@ export interface Expense {
   splitParticipants: ExpenseSplitParticipant[];
 }
 
-export interface Investment {
-  id: number;
-  title: string;
-  type: string;
-  amountInvested: string;
-  currentValue: string | null;
-  date: string;
-  notes: string | null;
-  createdAt: string;
-  investedByAdminUserId: number;
-  investedBy: AdminUserRef;
-}
-
 export interface SavingsContribution {
   id: number;
   amount: string;
@@ -199,6 +214,8 @@ export interface SavingsGoal {
   bankName: string | null;
   accountHolderAdminUserId: number | null;
   accountHolder: AdminUserRef | null;
+  // Non-null = closed: no more contributions, hidden from "Spent From".
+  closedAt: string | null;
   createdAt: string;
   // Null for legacy goals created before per-goal ownership existed.
   createdBy: AdminUserRef | null;

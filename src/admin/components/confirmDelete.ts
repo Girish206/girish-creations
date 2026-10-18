@@ -12,10 +12,27 @@ export async function confirmDelete(itemLabel: string): Promise<boolean> {
     title: `Delete this ${itemLabel}?`,
     text: "This can't be undone.",
     icon: "warning",
+    theme: document.documentElement.getAttribute("data-bs-theme") === "dark" ? "dark" : "light",
     showCancelButton: true,
     confirmButtonColor: themeColor("--primary"),
     cancelButtonColor: themeColor("--muted-color"),
     confirmButtonText: "Yes, delete it",
+  });
+  return result.isConfirmed;
+}
+
+// Same themed dialog for non-destructive-but-significant actions (closing a
+// savings goal or expense group) — confirm text supplied by the caller.
+export async function confirmAction(title: string, text: string, confirmButtonText: string): Promise<boolean> {
+  const result = await Swal.fire({
+    title,
+    text,
+    icon: "question",
+    theme: document.documentElement.getAttribute("data-bs-theme") === "dark" ? "dark" : "light",
+    showCancelButton: true,
+    confirmButtonColor: themeColor("--primary"),
+    cancelButtonColor: themeColor("--muted-color"),
+    confirmButtonText,
   });
   return result.isConfirmed;
 }
