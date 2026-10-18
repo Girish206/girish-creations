@@ -1,34 +1,31 @@
 import { Link, useParams } from "react-router-dom";
-import { ProfileCard } from "../../layouts/ProfileCard";
-import { useProject } from "../../api/hooks/useProjects";
+import { FaArrowLeft, FaArrowRight, FaFolderOpen } from "react-icons/fa6";
+import { useProject, useProjectsList } from "../../api/hooks/useProjects";
 import { uploadUrl } from "../../api/client";
+import { formatDuration } from "../../utils/date";
 import { formatYear } from "../../utils/format";
+import { ArrowUpRight, CtaBand, EmptyState, Reveal } from "../../site/ui";
+import { usePageTitle } from "../../site/usePageTitle";
+import { ALL_PROJECTS } from "../home/constants";
 
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: project, isLoading, isError } = useProject(id);
+  const { data: allProjects } = useProjectsList(1, ALL_PROJECTS);
+  usePageTitle(project?.title ?? "Work");
 
   if (isError) {
     return (
-      <section className="content-box-area mt-4">
-        <div className="container">
-          <div className="row g-4">
-            <div className="col-xl-4">
-              <ProfileCard />
-            </div>
-            <div className="col-xl-8">
-              <div className="card content-box-card">
-                <div className="card-body portfolio-card text-center">
-                  <h4 className="card-title">Project not found</h4>
-                  <p>
-                    The project you're looking for doesn't exist or may have been removed.
-                    <br />
-                    <Link to="/projects">Back to Projects</Link>
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+      <section className="gc-page-hero">
+        <div className="gc-container">
+          <Link to="/projects" className="gc-back">
+            <FaArrowLeft /> All projects
+          </Link>
+          <EmptyState
+            icon={<FaFolderOpen />}
+            title="Project not found"
+            message="The project you're looking for doesn't exist or may have been removed."
+          />
         </div>
       </section>
     );
@@ -36,122 +33,120 @@ export function ProjectDetailPage() {
 
   if (isLoading || !project) {
     return (
-      <section className="content-box-area mt-4">
-        <div className="container">
-          <div className="row g-4">
-            <div className="col-xl-4">
-              <ProfileCard />
-            </div>
-            <div className="col-xl-8">
-              <div className="card content-box-card">
-                <div className="card-body portfolio-card">
-                  <p>Loading...</p>
-                </div>
-              </div>
-            </div>
-          </div>
+      <section className="gc-page-hero" aria-busy="true">
+        <div className="gc-container gc-stack gc-gap-16">
+          <div className="gc-skeleton" style={{ height: 20, width: 120 }} />
+          <div className="gc-skeleton" style={{ height: 56, width: "60%" }} />
+          <div className="gc-skeleton" style={{ height: 380, borderRadius: 28 }} />
         </div>
       </section>
     );
   }
 
+  const image = uploadUrl(project.image);
+  const paragraphs = project.description.split(/\r?\n+/).filter((line) => line.trim());
+  const list = allProjects?.items ?? [];
+  const index = list.findIndex((item) => item.id === project.id);
+  const prev = index > 0 ? list[index - 1] : undefined;
+  const next = index >= 0 && index < list.length - 1 ? list[index + 1] : undefined;
+
+  const facts = [
+    { label: "Stack", value: project.technologiesUsed },
+    { label: "Timeline", value: `${formatYear(project.startDate)} – ${formatYear(project.endDate)}` },
+    { label: "Duration", value: formatDuration(project.startDate, project.endDate) },
+    { label: "Status", value: project.endDate ? "Delivered" : "Ongoing" },
+  ];
+
   return (
-    <section className="content-box-area mt-4">
-      <div className="container">
-        <div className="row g-4">
-          <div className="col-xl-4">
-            <ProfileCard />
-          </div>
-          <div className="col-xl-8">
-            <div className="card content-box-card">
-              <div className="card-body portfolio-card">
-                <div className="portfolio-details-area">
-                  <div className="main-image">
-                    <img src={uploadUrl(project.image)} alt={project.title} style={{ maxHeight: 400 }} />
-                  </div>
-                  <div className="portfolio-details-text">
-                    <div className="short-info">
-                      <div className="info-item">
-                        <p className="subtitle">Title</p>
-                        <h4 className="card-title">{project.title}</h4>
-                        {project.projectUrl && (
-                          <a href={project.projectUrl} className="website" target="_blank" rel="noreferrer">
-                            Visit Site
-                            <svg
-                              className="arrow-up"
-                              width="14"
-                              height="15"
-                              viewBox="0 0 14 15"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                d="M9.91634 4.5835L4.08301 10.4168"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              ></path>
-                              <path
-                                d="M4.66699 4.5835H9.91699V9.8335"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              ></path>
-                            </svg>
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                    <div className="overview">
-                      <h4 className="card-title">Overview</h4>
-                      <p>{project.description}</p>
-                      <p>
-                        <b>Technologies Used:</b> {project.technologiesUsed}
-                      </p>
-                      {project.projectUrl && (
-                        <p>
-                          <b>Actual Site URL:</b> <a href={project.projectUrl}>{project.projectUrl}</a>
-                        </p>
-                      )}
-                      <p>
-                        <b>Duration:</b> {formatYear(project.startDate)}-{formatYear(project.endDate)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="work-together-slider">
-                  <div className="slider-main d-flex gap-4 align-items-center">
-                    <div className="slider-item">
-                      <Link to="/contact">Let's 👋 Work Together</Link>
-                      <Link to="/contact">Let's 👋 Work Together</Link>
-                    </div>
-                    <div className="slider-item">
-                      <Link to="/contact">Let's 👋 Work Together</Link>
-                      <Link to="/contact">Let's 👋 Work Together</Link>
-                    </div>
-                  </div>
-                </div>
+    <>
+      <section className="gc-page-hero">
+        <div className="gc-container">
+          <Link to="/projects" className="gc-back">
+            <FaArrowLeft /> All projects
+          </Link>
+          <Reveal className="gc-stack gc-gap-24">
+            <span className="gc-eyebrow">Case study · {project.technologiesUsed}</span>
+            <h1 className="gc-h1">{project.title}</h1>
+            {project.projectUrl && (
+              <div>
+                <a className="gc-btn gc-btn-primary" href={project.projectUrl} target="_blank" rel="noreferrer">
+                  Visit live site <ArrowUpRight />
+                </a>
               </div>
-            </div>
-          </div>
+            )}
+          </Reveal>
         </div>
-      </div>
+      </section>
 
-      {/* background shape area start */}
-      <div className="background-shapes">
-        <div className="shape-1 common-shape">
-          <img src="/assets/img/bg/banner-shape-1.png" alt="banner-shape-1" />
+      {image && (
+        <section>
+          <div className="gc-container">
+            <Reveal className="gc-case-media">
+              <div className="gc-detail-media">
+                <img src={image} alt={project.title} />
+              </div>
+            </Reveal>
+          </div>
+        </section>
+      )}
+
+      <section className="gc-section">
+        <div className="gc-container gc-case-grid">
+          <Reveal className="gc-case-aside gc-glass" as="dl">
+            {facts.map((fact) => (
+              <div className="gc-fact" key={fact.label}>
+                <dt className="gc-fact-label">{fact.label}</dt>
+                <dd className="gc-fact-value">{fact.value}</dd>
+              </div>
+            ))}
+            {project.projectUrl && (
+              <div className="gc-fact">
+                <dt className="gc-fact-label">Live site</dt>
+                <dd className="gc-fact-value">
+                  <a className="gc-link" href={project.projectUrl} target="_blank" rel="noreferrer">
+                    {project.projectUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                  </a>
+                </dd>
+              </div>
+            )}
+          </Reveal>
+          <Reveal className="gc-stack gc-gap-16" delay={80}>
+            <h2 className="gc-h2">Overview</h2>
+            <div className="gc-prose">
+              {paragraphs.map((paragraph, i) => (
+                <p key={i}>{paragraph}</p>
+              ))}
+            </div>
+          </Reveal>
         </div>
-        <div className="shape-2 common-shape">
-          <img src="/assets/img/bg/banner-shape-1.png" alt="banner-shape-1" />
-        </div>
-        <div className="threed-shape-1 move-with-cursor" data-value="1">
-          <img src="/assets/img/bg/object-3d-1.png" alt="object-3d-1" />
-        </div>
-        <div className="threed-shape-2 move-with-cursor" data-value="1">
-          <img src="/assets/img/bg/object-3d-2.png" alt="object-3d-2" />
-        </div>
-      </div>
-      {/* background shape area end */}
-    </section>
+      </section>
+
+      {(prev || next) && (
+        <section className="gc-section-tight">
+          <nav className="gc-container gc-pager" aria-label="More projects">
+            {prev ? (
+              <Link to={`/projects/${prev.id}`} className="gc-pager-link gc-glass gc-spot">
+                <span>
+                  <FaArrowLeft /> Previous
+                </span>
+                <strong>{prev.title}</strong>
+              </Link>
+            ) : (
+              <span />
+            )}
+            {next && (
+              <Link to={`/projects/${next.id}`} className="gc-pager-link is-next gc-glass gc-spot">
+                <span>
+                  Next <FaArrowRight />
+                </span>
+                <strong>{next.title}</strong>
+              </Link>
+            )}
+          </nav>
+        </section>
+      )}
+
+      <CtaBand />
+    </>
   );
 }

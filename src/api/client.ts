@@ -39,7 +39,11 @@ apiClient.interceptors.response.use(
   },
 );
 
-export function uploadUrl(relativePath: string | null | undefined): string | undefined {
-  if (!relativePath) return undefined;
-  return `/uploads/${relativePath}`;
+// Uploaded images are stored in the database and the API returns the path
+// they're served from ("/api/files/<id>"), usable directly as an <img src>.
+// Absolute URLs pass through too.
+export function uploadUrl(pathOrUrl: string | null | undefined): string | undefined {
+  if (!pathOrUrl) return undefined;
+  if (pathOrUrl.startsWith("/") || /^https?:\/\//.test(pathOrUrl)) return pathOrUrl;
+  return `/api/files/${pathOrUrl}`;
 }

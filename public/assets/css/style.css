@@ -539,6 +539,7 @@ p {
 }
 
 .card-projects .project-item .image {
+	display: block;
 	background-color: var(--background);
 	padding: 24px;
 	padding-bottom: 0;
@@ -653,10 +654,11 @@ p {
 
 
 .work-experiance-card .work-experiance-slider li .date {
-	margin-right: 40px;
+	flex-shrink: 0;
 }
 
 .work-experiance-card .work-experiance-slider li .date p {
+	white-space: nowrap;
 	font-size: 14px;
 	font-weight: 500;
 	color: var(--light-black);
@@ -870,6 +872,12 @@ p {
 	line-height: 1.5em;
 	display: flex;
 	align-items: center;
+}
+
+.content-box-card .available-btn span svg {
+	font-size: 10px;
+	margin-right: 10px;
+	flex-shrink: 0;
 }
 
 .content-box-card .available-btn span i {
@@ -1573,7 +1581,12 @@ p {
 	color: var(--light-black);
 }
 
+.portfolio-area .portfolio-item .text .visite-btn {
+	flex-shrink: 0;
+}
+
 .portfolio-area .portfolio-item .text .visite-btn a {
+	white-space: nowrap;
 	font-size: 14px;
 	font-weight: 400;
 	line-height: 1em;

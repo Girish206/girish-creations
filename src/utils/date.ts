@@ -10,14 +10,17 @@ export function endYearOrPresent(dateString: string | null): number | "Present" 
   return dateString ? new Date(dateString).getFullYear() : "Present";
 }
 
-// Mirrors ExperienceDetails.formatted_duration in main/models.py:
-// total_days // 365 years, (total_days % 365) // 30 months (approximate, non-calendar-aware).
+function plural(count: number, unit: string): string {
+  return `${count} ${unit}${count === 1 ? "" : "s"}`;
+}
+
+// Whole calendar months between start and end (an ongoing role counts up to
+// today), e.g. 22 Feb 2021 -> 9 Oct 2026 = "5 years 7 months".
 export function formatDuration(startDate: string, endDate: string | null): string {
   const start = new Date(startDate);
   const end = endDate ? new Date(endDate) : new Date();
-  const totalDays = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-  const totalYears = Math.floor(totalDays / 365);
-  const remainingDays = totalDays % 365;
-  const totalMonths = Math.floor(remainingDays / 30);
-  return `${totalYears} years ${totalMonths} months`;
+  let months = (end.getUTCFullYear() - start.getUTCFullYear()) * 12 + (end.getUTCMonth() - start.getUTCMonth());
+  if (end.getUTCDate() < start.getUTCDate()) months -= 1;
+  months = Math.max(0, months);
+  return `${plural(Math.floor(months / 12), "year")} ${plural(months % 12, "month")}`;
 }

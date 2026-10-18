@@ -2,11 +2,13 @@ import { createBrowserRouter } from "react-router-dom";
 import { MainLayout } from "../layouts/MainLayout";
 import { HomePage } from "../pages/HomePage";
 import { AboutPage } from "../pages/AboutPage";
-import { ContactPage } from "../pages/ContactPage";
+import { ExperiencePage } from "../pages/ExperiencePage";
+import { SkillsPage } from "../pages/SkillsPage";
 import { ServicesPage } from "../pages/ServicesPage";
+import { ContactPage } from "../pages/ContactPage";
+import { ProjectsListPage } from "../pages/projects/ProjectsListPage";
 import { BlogListPage } from "../pages/blog/BlogListPage";
 import { BlogDetailPage } from "../pages/blog/BlogDetailPage";
-import { ProjectsListPage } from "../pages/projects/ProjectsListPage";
 import { ProjectDetailPage } from "../pages/projects/ProjectDetailPage";
 import { NotFoundPage } from "../pages/NotFoundPage";
 import { ProtectedRoute, RequireModuleAccess, RequireSubModuleAccess } from "../admin/ProtectedRoute";
@@ -31,11 +33,13 @@ export const router = createBrowserRouter([
     children: [
       { path: "/", element: <HomePage /> },
       { path: "/about", element: <AboutPage /> },
-      { path: "/contact", element: <ContactPage /> },
+      { path: "/experience", element: <ExperiencePage /> },
+      { path: "/skills", element: <SkillsPage /> },
+      { path: "/projects", element: <ProjectsListPage /> },
       { path: "/services", element: <ServicesPage /> },
+      { path: "/contact", element: <ContactPage /> },
       { path: "/blog", element: <BlogListPage /> },
       { path: "/blog/:slug", element: <BlogDetailPage /> },
-      { path: "/projects", element: <ProjectsListPage /> },
       { path: "/projects/:id", element: <ProjectDetailPage /> },
       { path: "*", element: <NotFoundPage /> },
     ],

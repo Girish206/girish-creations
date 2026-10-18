@@ -55,3 +55,11 @@ export function blogImageFor(seed: number): string {
   const index = ((seed % BLOG_PLACEHOLDER_IMAGES.length) + BLOG_PLACEHOLDER_IMAGES.length) % BLOG_PLACEHOLDER_IMAGES.length;
   return BLOG_PLACEHOLDER_IMAGES[index];
 }
+
+// "React Js" -> "RJ", "Python" -> "Py": a compact badge for a skill/tool.
+export function monogram(name: string): string {
+  const words = name.replace(/[^A-Za-z0-9+#. ]/g, " ").split(/\s+/).filter(Boolean);
+  if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
+  const word = words[0] ?? "?";
+  return word.length <= 3 ? word.toUpperCase() : word[0].toUpperCase() + word[1].toLowerCase();
+}

@@ -563,7 +563,9 @@
 .admin-project-thumb-wrap img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  /* contain, not cover — project images are mostly logos/illustrations
+     whose edges carry content (e.g. a circular logo's text). */
+  object-fit: contain;
 }
 
 .admin-project-thumb-wrap i {
@@ -589,10 +591,11 @@
 /* Compact variant for content-light cards (Tools, Expense Categories) — a
    smaller icon+name chip instead of the full vertical card layout. Still
    uses the same .admin-item-card-header flex row as every other card, just
-   tighter. Wide enough (220px) that longer names don't force the row to
-   shrink other cards below their own minimum. */
+   tighter. 260px leaves the name ~100px beside the icon and the two action
+   buttons — at 220px only ~60px remained, so even a short word like
+   "Groceries" was split mid-word by overflow-wrap. */
 .admin-card-grid-compact {
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
 }
 
 /* Wide variant for content-heavy cards (Investments, Savings Goals) — a

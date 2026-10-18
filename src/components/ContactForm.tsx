@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { FaArrowRight, FaCircleCheck, FaCircleExclamation } from "react-icons/fa6";
 import { useSubmitContactMessage } from "../api/hooks/useContact";
 
 // The old Django `contact` view had a bug: it saved `subject = request.POST['email']`
@@ -30,97 +31,95 @@ export function ContactForm() {
   const { mutate, isPending, isSuccess, isError, reset: resetMutationState } = useSubmitContactMessage();
 
   function onSubmit(values: ContactFormValues) {
-    mutate(values, {
-      onSuccess: () => {
-        reset();
-      },
-    });
+    resetMutationState();
+    mutate(values, { onSuccess: () => reset() });
   }
 
+  const field = (name: keyof ContactFormValues) => ({
+    id: `contact-${name}`,
+    "aria-invalid": errors[name] ? true : undefined,
+    "aria-describedby": errors[name] ? `contact-${name}-error` : undefined,
+  });
+
   return (
-    <div className="leave-comments-area">
-      <div className="text-center">
-        {isSuccess && (
-          <p style={{ fontSize: 20 }} className="text-success">
-            Your Enquiry Sent Successfully!
-          </p>
-        )}
-        {isError && (
-          <p style={{ fontSize: 20 }} className="text-danger">
-            Something went wrong. Please try again.
+    <form className="gc-form" onSubmit={handleSubmit(onSubmit)} noValidate>
+      {isSuccess && (
+        <div className="gc-alert gc-alert-success" role="status">
+          <FaCircleCheck /> Thanks — your message has been sent. I'll get back to you soon.
+        </div>
+      )}
+      {isError && (
+        <div className="gc-alert gc-alert-error" role="alert">
+          <FaCircleExclamation /> Something went wrong sending your message. Please try again.
+        </div>
+      )}
+
+      <div className="gc-field">
+        <label className="gc-label" htmlFor="contact-name">
+          Name
+        </label>
+        <input {...register("name")} {...field("name")} type="text" className="gc-input" placeholder="Your name" autoComplete="name" />
+        {errors.name && (
+          <p id="contact-name-error" className="gc-field-error">
+            {errors.name.message}
           </p>
         )}
       </div>
-      <div className="comments-box">
-        <form
-          onSubmit={handleSubmit((values) => {
-            resetMutationState();
-            onSubmit(values);
-          })}
-          noValidate
-        >
-          <div className="row gx-3">
-            <div className="col-md-6">
-              <div className="mb-4">
-                <label className="form-label">Name</label>
-                <input
-                  {...register("name")}
-                  type="text"
-                  className="form-control shadow-none"
-                  placeholder="Enter your name"
-                />
-                {errors.name && <p className="text-danger mb-0">{errors.name.message}</p>}
-              </div>
-            </div>
-            <div className="col-md-6">
-              <div className="mb-4">
-                <label className="form-label">Email</label>
-                <input
-                  {...register("email")}
-                  type="email"
-                  className="form-control shadow-none"
-                  placeholder="Enter your email"
-                />
-                {errors.email && <p className="text-danger mb-0">{errors.email.message}</p>}
-              </div>
-            </div>
-            <div className="col-md-12">
-              <div className="mb-4">
-                <label className="form-label">Subject</label>
-                <input
-                  {...register("subject")}
-                  type="text"
-                  className="form-control shadow-none"
-                  placeholder="Subject"
-                />
-                {errors.subject && <p className="text-danger mb-0">{errors.subject.message}</p>}
-              </div>
-            </div>
-            <div className="col-md-12">
-              <div className="mb-4">
-                <label className="form-label">Comment</label>
-                <textarea
-                  {...register("message")}
-                  className="form-control shadow-none"
-                  rows={4}
-                  placeholder="Type details about your inquiry"
-                />
-                {errors.message && <p className="text-danger mb-0">{errors.message.message}</p>}
-              </div>
-            </div>
-            <div className="col-md-12">
-              <button className="submit-btn" type="submit" disabled={isSubmitting || isPending}>
-                Send Message
-                <svg className="icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M17.5 11.6665V6.6665H12.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M17.5 6.6665L10 14.1665L2.5 6.6665" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </form>
-        <p className="ajax-response mb-0" />
+
+      <div className="gc-field">
+        <label className="gc-label" htmlFor="contact-email">
+          Email
+        </label>
+        <input
+          {...register("email")}
+          {...field("email")}
+          type="email"
+          className="gc-input"
+          placeholder="you@example.com"
+          autoComplete="email"
+        />
+        {errors.email && (
+          <p id="contact-email-error" className="gc-field-error">
+            {errors.email.message}
+          </p>
+        )}
       </div>
-    </div>
+
+      <div className="gc-field gc-field-full">
+        <label className="gc-label" htmlFor="contact-subject">
+          Subject
+        </label>
+        <input {...register("subject")} {...field("subject")} type="text" className="gc-input" placeholder="What's it about?" />
+        {errors.subject && (
+          <p id="contact-subject-error" className="gc-field-error">
+            {errors.subject.message}
+          </p>
+        )}
+      </div>
+
+      <div className="gc-field gc-field-full">
+        <label className="gc-label" htmlFor="contact-message">
+          Message
+        </label>
+        <textarea
+          {...register("message")}
+          {...field("message")}
+          className="gc-input"
+          rows={5}
+          placeholder="Tell me a little about your project or opportunity"
+        />
+        {errors.message && (
+          <p id="contact-message-error" className="gc-field-error">
+            {errors.message.message}
+          </p>
+        )}
+      </div>
+
+      <div className="gc-field-full">
+        <button className="gc-btn gc-btn-primary" type="submit" disabled={isSubmitting || isPending}>
+          {isPending ? "Sending…" : "Send message"} <FaArrowRight />
+        </button>
+      </div>
+    </form>
   );
 }

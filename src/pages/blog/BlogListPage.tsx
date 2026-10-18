@@ -1,100 +1,67 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ProfileCard } from "../../layouts/ProfileCard";
-import { PaginationControls } from "../../components/PaginationControls";
+import { FaRegNewspaper } from "react-icons/fa6";
 import { useBlogList } from "../../api/hooks/useBlogPosts";
-import type { BlogPost } from "../../api/types";
 import { blogImageFor, excerpt, formatFullDate, readingTime, splitTags } from "../../utils/format";
+import { EmptyState, PageHero, Pagination, Reveal, WorkCardSkeleton } from "../../site/ui";
+import { usePageTitle } from "../../site/usePageTitle";
 
 export function BlogListPage() {
+  usePageTitle("Blog");
   const [page, setPage] = useState(1);
-  const { data, isLoading } = useBlogList(page, 10);
-  const items: BlogPost[] = data?.items ?? [];
+  const { data, isLoading } = useBlogList(page, 9);
+  const items = data?.items ?? [];
 
   return (
-    <section className="content-box-area mt-4">
-      <div className="container">
-        <div className="row g-4">
-          <div className="col-xl-4">
-            <ProfileCard />
-          </div>
-          <div className="col-xl-8">
-            <div className="card content-box-card">
-              <div className="card-body portfolio-card">
-                <div className="top-info">
-                  <div className="text">
-                    <h1 className="main-title">My Recent Article and Publications</h1>
-                    <p>Notes on the projects I've built, the tools I use, and things I've picked up along the way.</p>
-                  </div>
-                </div>
-                <div className="article-publications article-area">
-                  <div className="article-publications-main">
-                    <div className="row">
-                      {!isLoading && items.length === 0 && (
-                        <div style={{ alignItems: "center", justifyContent: "center", display: "flex" }}>
-                          <img src="/assets/img/shopping.png" style={{ maxHeight: 150, maxWidth: 150 }} alt="" />
-                          <p>No Blog Posts</p>
-                        </div>
-                      )}
-                      {items.map((post, i) => {
-                        const [tag] = splitTags(post.tags);
-                        return (
-                          <div className="col-xl-6 col-lg-4 col-md-6" key={post.id}>
-                            <div className="article-publications-item">
-                              <div className="image">
-                                <Link to={`/blog/${post.slug}`} className="d-block w-100">
-                                  <img
-                                    src={blogImageFor(i)}
-                                    alt={post.title}
-                                    className="img-fluid w-100"
-                                  />
-                                </Link>
-                                {tag && (
-                                  <Link to={`/blog/${post.slug}`} className="tags">
-                                    {tag}
-                                  </Link>
-                                )}
-                              </div>
-                              <div className="text">
-                                <Link to={`/blog/${post.slug}`} className="title">
-                                  {post.title}
-                                </Link>
-                                <p className="excerpt">{excerpt(post.content)}</p>
-                                <ul className="list-unstyled">
-                                  <li>{readingTime(post.content)}</li>
-                                  <li>{formatFullDate(post.publishedDate)}</li>
-                                </ul>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-                <PaginationControls page={page} totalPages={data?.totalPages ?? 1} onPageChange={setPage} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <>
+      <PageHero
+        eyebrow="Blog"
+        title={
+          <>
+            Articles &amp; <span className="gc-accent-text">notes</span>
+          </>
+        }
+        lead="Notes on the projects I've built, the tools I use, and things I've picked up along the way."
+      />
 
-      {/* background shape area start */}
-      <div className="background-shapes">
-        <div className="shape-1 common-shape">
-          <img src="/assets/img/bg/banner-shape-1.png" alt="banner-shape-1" />
+      <section className="gc-section-tight">
+        <div className="gc-container">
+          <div className="gc-work-grid gc-work-grid-3">
+            {isLoading && !data
+              ? Array.from({ length: 3 }, (_, i) => <WorkCardSkeleton key={i} />)
+              : items.map((post, i) => {
+                  const [tag] = splitTags(post.tags);
+                  return (
+                    <Reveal key={post.id} delay={(i % 3) * 80}>
+                      <Link to={`/blog/${post.slug}`} className="gc-post-card">
+                        <div className="gc-post-media">
+                          <img src={blogImageFor(post.id)} alt="" loading="lazy" />
+                        </div>
+                        <div className="gc-work-body">
+                          <div className="gc-work-meta">
+                            {tag && <span className="gc-chip gc-chip-accent">{tag}</span>}
+                            <span>{formatFullDate(post.publishedDate)}</span>
+                            <span aria-hidden="true">·</span>
+                            <span>{readingTime(post.content)}</span>
+                          </div>
+                          <h2 className="gc-work-title">{post.title}</h2>
+                          <p className="gc-work-desc">{excerpt(post.content)}</p>
+                        </div>
+                      </Link>
+                    </Reveal>
+                  );
+                })}
+            {!isLoading && items.length === 0 && (
+              <EmptyState
+                icon={<FaRegNewspaper />}
+                title="No articles yet"
+                message="I haven't published anything here yet — check back soon."
+              />
+            )}
+          </div>
+          <Pagination page={page} totalPages={data?.totalPages ?? 1} onPageChange={setPage} />
         </div>
-        <div className="shape-2 common-shape">
-          <img src="/assets/img/bg/banner-shape-1.png" alt="banner-shape-1" />
-        </div>
-        <div className="threed-shape-1 move-with-cursor" data-value="1">
-          <img src="/assets/img/bg/object-3d-1.png" alt="object-3d-1" />
-        </div>
-        <div className="threed-shape-2 move-with-cursor" data-value="1">
-          <img src="/assets/img/bg/object-3d-2.png" alt="object-3d-2" />
-        </div>
-      </div>
-      {/* background shape area end */}
-    </section>
+      </section>
+    </>
   );
 }

@@ -11,6 +11,8 @@ export interface ContactFormInput {
 
 export function useSubmitContactMessage() {
   return useMutation({
+    // ContactForm shows its own inline error message.
+    meta: { skipGlobalError: true },
     mutationFn: async (input: ContactFormInput) => {
       const { data } = await apiClient.post<ApiEnvelope<ContactMessage>>("/contact", input);
       return data.data;

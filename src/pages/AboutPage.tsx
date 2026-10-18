@@ -1,184 +1,180 @@
-import { FaCircle } from "react-icons/fa6";
-import { ProfileCard } from "../layouts/ProfileCard";
+import { Link } from "react-router-dom";
+import { FaBolt, FaBriefcase, FaCode, FaFilePdf, FaHandshake, FaLayerGroup, FaRocket } from "react-icons/fa6";
 import { useProfile } from "../api/hooks/useProfile";
 import { useExperience } from "../api/hooks/useExperience";
-import { useEducation } from "../api/hooks/useEducation";
+import { useCertifications } from "../api/hooks/useCertifications";
 import { useSkills } from "../api/hooks/useSkills";
 import { useTools } from "../api/hooks/useTools";
 import { useProjectsList } from "../api/hooks/useProjects";
-import { endYearOrPresent, formatDuration, yearOf } from "../utils/date";
+import { uploadUrl } from "../api/client";
+import { formatBio } from "../utils/bio";
+import { useImageLightbox } from "../components/lightbox/useImageLightbox";
+import { CopyEmailButton } from "../components/CopyEmailButton";
+import { ArrowUpRight, CtaBand, Reveal, SectionHead, SocialLinks } from "../site/ui";
+import { usePageTitle } from "../site/usePageTitle";
+import { CertificationsSection } from "./home/ProfileSections";
+
+const VALUES = [
+  {
+    icon: <FaLayerGroup />,
+    title: "End-to-end ownership",
+    text: "From the data model to deployment, I take a feature all the way to production instead of handing off halves.",
+  },
+  {
+    icon: <FaBolt />,
+    title: "Ship early, iterate",
+    text: "Working software in front of real users beats a perfect plan. I share progress early and refine from feedback.",
+  },
+  {
+    icon: <FaHandshake />,
+    title: "Clear communication",
+    text: "Plain-language updates, honest estimates and documentation that the next developer will thank you for.",
+  },
+];
 
 export function AboutPage() {
+  usePageTitle("About");
   const { data: profile } = useProfile();
   const { data: experience } = useExperience();
-  const { data: education } = useEducation();
+  const { data: certifications } = useCertifications();
   const { data: skills } = useSkills();
   const { data: tools } = useTools();
   const { data: projectsPage } = useProjectsList(1, 1);
 
+  const portrait = uploadUrl(profile?.profilePicture);
+  const { openAt, lightbox } = useImageLightbox(portrait ? [portrait] : []);
+  const currentRole = experience?.find((exp) => !exp.endDate) ?? experience?.[0];
+
+  const stats = [
+    { value: profile ? `${profile.formattedExperienceInYears}+` : "—", label: "Years of experience" },
+    { value: projectsPage ? `${projectsPage.total}+` : "—", label: "Projects shipped" },
+    { value: skills ? String(skills.length) : "—", label: "Technologies" },
+    { value: tools ? String(tools.length) : "—", label: "Tools in daily use" },
+  ];
+  const facts = [
+    { label: "Current role", value: currentRole ? `${currentRole.jobTitle}, ${currentRole.companyName}` : undefined },
+    { label: "Experience", value: profile?.formattedExperience },
+    { label: "Based in", value: profile?.address ?? undefined },
+    {
+      label: "Phone",
+      value: profile?.contactNumber ? `+91 ${profile.contactNumber}` : undefined,
+      href: profile?.contactNumber ? `tel:+91${profile.contactNumber}` : undefined,
+    },
+  ].filter((fact) => fact.value);
+
+  const explore = [
+    { to: "/experience", icon: <FaBriefcase />, title: "Experience", text: "Every role, what I built there, and my education." },
+    { to: "/skills", icon: <FaCode />, title: "Skills & tools", text: "The full stack I work with, rated honestly." },
+    { to: "/projects", icon: <FaRocket />, title: "Projects", text: "Case studies of the applications I've shipped." },
+  ];
+
   return (
     <>
-      <section className="content-box-area mt-4 mb-4">
-        <div className="container">
-          <div className="row g-4">
-            <div className="col-xl-4">
-              <ProfileCard />
-            </div>
-            <div className="col-xl-8">
-              <div className="card content-box-card">
-                <div className="card-body">
-                  <div className="top-info">
-                    <div className="text">
-                      <h1 className="main-title">
-                        Hi, This Is <span>{profile?.fullName}</span> 👋
-                      </h1>
-                      <p style={{ fontSize: 18 }}>{profile?.objective}</p>
-                    </div>
-                    <div className="available-btn">
-                      <span>
-                        <FaCircle /> Available For Hire
-                      </span>
-                    </div>
-                  </div>
-                  <div className="counter-area">
-                    <div className="counter">
-                      <div className="counter-item">
-                        <h3 className="number">{profile?.formattedExperienceInYears}+</h3>
-                        <p className="subtitle">Year of Experience</p>
-                      </div>
-                      <div className="counter-item">
-                        <h3 className="number">{projectsPage?.total}+</h3>
-                        <p className="subtitle">Project Completed</p>
-                      </div>
-                    </div>
-                    <div className="circle-area">
-                      <div className="circle-text">
-                        <img className="circle-image" src="/assets/img/about-us/circle-text.svg" alt="circle-text" />
-                        <img
-                          className="circle-image circle-image-light d-none"
-                          src="/assets/img/about-us/circle-text-light.svg"
-                          alt="circle-text"
-                        />
-                        <span className="arrow-down">
-                          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M20 5V35" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M15 30L20 35L25 30" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  {/* Work Experience */}
-                  <div className="awards-recognitions">
-                    <h2 className="main-common-title">Work Experience Details</h2>
-                    <div className="awards-recognitions-main">
-                      <ul className="list-unstyled">
-                        {experience?.map((exp) => (
-                          <li key={exp.id}>
-                            <a href="#" className="d-block w-100">
-                              <div className="awards-item">
-                                <div className="award-name">
-                                  <div className="text">
-                                    <h4 className="title">{exp.jobTitle}</h4>
-                                    <p className="year">
-                                      {yearOf(exp.startDate)} - {endYearOrPresent(exp.endDate)}
-                                    </p>
-                                  </div>
-                                </div>
-                                <div className="award-name">
-                                  <div className="text">
-                                    <h4 className="title">{exp.companyName}</h4>
-                                    <p className="year">{exp.location}</p>
-                                  </div>
-                                </div>
-                                <div className="project-btn">
-                                  <span>{formatDuration(exp.startDate, exp.endDate)}</span>
-                                </div>
-                              </div>
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                  {/* Educational Details */}
-                  <div className="awards-recognitions">
-                    <h2 className="main-common-title">Educational Details</h2>
-                    <div className="awards-recognitions-main">
-                      <ul className="list-unstyled">
-                        {education?.map((edu) => (
-                          <li key={edu.id}>
-                            <a href="#" className="d-block w-100">
-                              <div className="awards-item">
-                                <div className="award-name">
-                                  <div className="text">
-                                    <h4 className="title">{edu.course}</h4>
-                                    <p className="year">{edu.specialization}</p>
-                                  </div>
-                                </div>
-                                <div className="award-name">
-                                  <div className="text">
-                                    <h4 className="title">{edu.institutionName}</h4>
-                                    <p className="year">
-                                      {yearOf(edu.startDate)} - {endYearOrPresent(edu.endDate)}
-                                    </p>
-                                  </div>
-                                </div>
-                                <div className="project-btn">
-                                  <span>{edu.grade}</span>
-                                </div>
-                              </div>
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                  {/* Skills */}
-                  <div className="working-with-area mt-3">
-                    <h2 className="main-common-title">Skills</h2>
-                    <div className="working-with-main">
-                      {skills?.map((skill) => (
-                        <div key={skill.id} className="items" style={{ color: "#d6430e" }}>
-                          {skill.skillName}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  {/* Tools */}
-                  <div className="working-with-area mt-3">
-                    <h2 className="main-common-title">Tools</h2>
-                    <div className="working-with-main">
-                      {tools?.map((tool) => (
-                        <div key={tool.id} className="items" style={{ color: "#F63008" }}>
-                          {tool.toolName}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+      <section className="gc-page-hero">
+        <div className="gc-container gc-about-hero">
+          <Reveal className="gc-about-photo">
+            <span className="gc-portrait-accent" aria-hidden="true" />
+            <button type="button" className="gc-portrait" onClick={() => portrait && openAt(0)} aria-label="View profile photo">
+              {portrait ? (
+                <img src={portrait} alt={profile?.fullName ?? ""} />
+              ) : (
+                <span className="gc-skeleton" style={{ position: "absolute", inset: 0 }} />
+              )}
+            </button>
+            {lightbox}
+          </Reveal>
+
+          <Reveal className="gc-stack gc-gap-24" delay={80}>
+            <span className="gc-eyebrow">About me</span>
+            <h1 className="gc-h1">
+              Hi, I'm <span className="gc-accent-text">{profile?.fullName ?? "Girish S"}</span>
+            </h1>
+            {profile?.bio && <p className="gc-lead">{formatBio(profile.bio, profile.formattedExperience)}</p>}
+            {profile?.objective && <p>{profile.objective}</p>}
+            <dl className="gc-facts gc-facts-2">
+              {facts.map((fact) => (
+                <div className="gc-fact" key={fact.label}>
+                  <dt className="gc-fact-label">{fact.label}</dt>
+                  <dd className="gc-fact-value">
+                    {fact.href ? (
+                      <a className="gc-link" href={fact.href}>
+                        {fact.value}
+                      </a>
+                    ) : (
+                      fact.value
+                    )}
+                  </dd>
                 </div>
-              </div>
+              ))}
+            </dl>
+            <div className="gc-row" style={{ gap: 12 }}>
+              <a className="gc-btn gc-btn-primary" href="/assets/resume/Girish S Resume.pdf" target="_blank" rel="noreferrer">
+                <FaFilePdf /> Download résumé
+              </a>
+              {profile?.email && <CopyEmailButton email={profile.email} />}
             </div>
+            <SocialLinks profile={profile} />
+          </Reveal>
+        </div>
+      </section>
+
+      <section className="gc-section-tight">
+        <div className="gc-container">
+          <Reveal className="gc-stats">
+            {stats.map((stat) => (
+              <div className="gc-stat" key={stat.label}>
+                <strong className="gc-accent-text">{stat.value}</strong>
+                <span>{stat.label}</span>
+              </div>
+            ))}
+          </Reveal>
+        </div>
+      </section>
+
+      <section className="gc-section">
+        <div className="gc-container">
+          <SectionHead eyebrow="How I work" title="What you can expect" />
+          <div className="gc-value-grid">
+            {VALUES.map((value, i) => (
+              <Reveal className="gc-value gc-glass gc-spot" key={value.title} delay={i * 80}>
+                <span className="gc-service-icon" aria-hidden="true">
+                  {value.icon}
+                </span>
+                <h3 className="gc-h3">{value.title}</h3>
+                <p>{value.text}</p>
+              </Reveal>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* background shape area start */}
-      <div className="background-shapes">
-        <div className="shape-1 common-shape">
-          <img src="/assets/img/bg/banner-shape-1.png" alt="banner-shape-1" />
+      <CertificationsSection certifications={certifications} />
+
+      <section className="gc-section">
+        <div className="gc-container">
+          <SectionHead eyebrow="Keep exploring" title="Dig deeper" />
+          <div className="gc-explore-grid">
+            {explore.map((item, i) => (
+              <Reveal key={item.to} delay={i * 80}>
+                <Link to={item.to} className="gc-tile gc-glass gc-spot" style={{ height: "100%", minHeight: 0 }}>
+                  <span className="gc-tile-label">
+                    {item.icon} {item.title}
+                  </span>
+                  <p>{item.text}</p>
+                  <span className="gc-tile-foot">
+                    <span className="gc-muted">Open</span>
+                    <span className="gc-tile-arrow">
+                      <ArrowUpRight />
+                    </span>
+                  </span>
+                </Link>
+              </Reveal>
+            ))}
+          </div>
         </div>
-        <div className="shape-2 common-shape">
-          <img src="/assets/img/bg/banner-shape-1.png" alt="banner-shape-1" />
-        </div>
-        <div className="threed-shape-1 move-with-cursor" data-value="1">
-          <img src="/assets/img/bg/object-3d-1.png" alt="object-3d-1" />
-        </div>
-        <div className="threed-shape-2 move-with-cursor" data-value="1">
-          <img src="/assets/img/bg/object-3d-2.png" alt="object-3d-2" />
-        </div>
-      </div>
-      {/* background shape area end */}
+      </section>
+
+      <CtaBand />
     </>
   );
 }

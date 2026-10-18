@@ -1,11 +1,19 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MutationCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "react-router-dom";
 import { router } from "./routes/router";
 import { AdminAuthProvider } from "./context/AdminAuthContext";
+import { showMutationError } from "./api/mutationErrors";
 
 const queryClient = new QueryClient({
+  mutationCache: new MutationCache({
+    // A mutation that renders its own error UI opts out via
+    // meta: { skipGlobalError: true } (e.g. the public contact form).
+    onError: (error, _variables, _context, mutation) => {
+      if (!mutation.meta?.skipGlobalError) void showMutationError(error);
+    },
+  }),
   defaultOptions: {
     queries: {
       retry: 1,
