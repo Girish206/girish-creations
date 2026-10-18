@@ -5,6 +5,8 @@ import { CopyEmailButton } from "../../components/CopyEmailButton";
 import { Reveal, SectionHead, SocialLinks } from "../../site/ui";
 
 export function ContactSection({ profile, isPage = false }: { profile: UserProfile | undefined; isPage?: boolean }) {
+  // Hire-me wording is for the site creator, who takes on freelance work.
+  const isCreator = profile?.isCreator ?? false;
   return (
     <section className={`gc-section${isPage ? " gc-section-page" : ""}`} id="contact">
       <div className="gc-container">
@@ -12,11 +14,21 @@ export function ContactSection({ profile, isPage = false }: { profile: UserProfi
           level={isPage ? 1 : 2}
           eyebrow="Contact"
           title={
-            <>
-              Let's <span className="gc-accent-text">work</span> together
-            </>
+            isCreator ? (
+              <>
+                Let's <span className="gc-accent-text">work</span> together
+              </>
+            ) : (
+              <>
+                Get in <span className="gc-accent-text">touch</span>
+              </>
+            )
           }
-          description="Have a project in mind, an opportunity to discuss, or just want to say hello? Send a message and I'll get back to you."
+          description={
+            isCreator
+              ? "Have a project in mind, an opportunity to discuss, or just want to say hello? Send a message and I'll get back to you."
+              : "Have a question, an opportunity to discuss, or just want to say hello? Send a message and I'll get back to you."
+          }
         />
         <div className="gc-contact-grid">
           <Reveal className="gc-contact-list">
@@ -74,12 +86,9 @@ export function ContactSection({ profile, isPage = false }: { profile: UserProfi
           </Reveal>
 
           <Reveal className="gc-card gc-form-card" delay={100}>
-            <h3 className="gc-h3" style={{ marginBottom: 6 }}>
+            <h3 className="gc-h3" style={{ marginBottom: 24 }}>
               Send a message
             </h3>
-            <p className="gc-muted" style={{ marginBottom: 24, fontSize: 15 }}>
-              All fields are required.
-            </p>
             <ContactForm />
           </Reveal>
         </div>

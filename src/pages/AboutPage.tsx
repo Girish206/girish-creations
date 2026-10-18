@@ -10,9 +10,10 @@ import { uploadUrl } from "../api/client";
 import { formatBio } from "../utils/bio";
 import { useImageLightbox } from "../components/lightbox/useImageLightbox";
 import { CopyEmailButton } from "../components/CopyEmailButton";
-import { ArrowUpRight, CtaBand, Reveal, SectionHead, SocialLinks } from "../site/ui";
+import { ArrowUpRight, CtaBand, PortraitContent, Reveal, SectionHead, SocialLinks } from "../site/ui";
 import { usePageTitle } from "../site/usePageTitle";
 import { usePortfolioPath } from "../portfolio/PortfolioScope";
+import { useIsClassic } from "../portfolio/portfolioStyle";
 import { CertificationsSection } from "./home/ProfileSections";
 
 const VALUES = [
@@ -35,6 +36,7 @@ const VALUES = [
 
 export function AboutPage() {
   const path = usePortfolioPath();
+  const classic = useIsClassic();
   usePageTitle("About");
   const { data: profile } = useProfile();
   const { data: experience } = useExperience();
@@ -47,12 +49,13 @@ export function AboutPage() {
   const { openAt, lightbox } = useImageLightbox(portrait ? [portrait] : []);
   const currentRole = experience?.find((exp) => !exp.endDate) ?? experience?.[0];
 
+  // Only numbers worth showing: a new portfolio's zeros are left out.
   const stats = [
-    { value: profile ? `${profile.formattedExperienceInYears}+` : "—", label: "Years of experience" },
-    { value: projectsPage ? `${projectsPage.total}+` : "—", label: "Projects shipped" },
-    { value: skills ? String(skills.length) : "—", label: "Technologies" },
-    { value: tools ? String(tools.length) : "—", label: "Tools in daily use" },
-  ];
+    { count: profile?.formattedExperienceInYears, value: `${profile?.formattedExperienceInYears}+`, label: "Years of experience" },
+    { count: projectsPage?.total, value: `${projectsPage?.total}+`, label: "Projects" },
+    { count: skills?.length, value: String(skills?.length), label: classic ? "Skills" : "Technologies" },
+    { count: tools?.length, value: String(tools?.length), label: "Tools" },
+  ].filter((stat) => stat.count);
   const facts = [
     { label: "Current role", value: currentRole ? `${currentRole.jobTitle}, ${currentRole.companyName}` : undefined },
     { label: "Experience", value: profile?.formattedExperience },
@@ -64,11 +67,27 @@ export function AboutPage() {
     },
   ].filter((fact) => fact.value);
 
+  const counts = profile?.counts;
   const explore = [
-    { to: "/experience", icon: <FaBriefcase />, title: "Experience", text: "Every role, what I built there, and my education." },
-    { to: "/skills", icon: <FaCode />, title: "Skills & tools", text: "The full stack I work with, rated honestly." },
-    { to: "/projects", icon: <FaRocket />, title: "Projects", text: "Case studies of the applications I've shipped." },
-  ];
+    counts && counts.experience + counts.education > 0 && {
+      to: "/experience",
+      icon: <FaBriefcase />,
+      title: "Experience",
+      text: "Work history and education.",
+    },
+    counts && counts.skills + counts.tools > 0 && {
+      to: "/skills",
+      icon: <FaCode />,
+      title: "Skills & tools",
+      text: "Skills and the tools I use.",
+    },
+    counts && counts.projects > 0 && {
+      to: "/projects",
+      icon: <FaRocket />,
+      title: "Projects",
+      text: "A closer look at my work.",
+    },
+  ].filter((item): item is Exclude<typeof item, false | undefined> => Boolean(item));
 
   return (
     <>
@@ -77,11 +96,7 @@ export function AboutPage() {
           <Reveal className="gc-about-photo">
             <span className="gc-portrait-accent" aria-hidden="true" />
             <button type="button" className="gc-portrait" onClick={() => portrait && openAt(0)} aria-label="View profile photo">
-              {portrait ? (
-                <img src={portrait} alt={profile?.fullName ?? ""} />
-              ) : (
-                <span className="gc-skeleton" style={{ position: "absolute", inset: 0 }} />
-              )}
+              <PortraitContent profile={profile} src={portrait} />
             </button>
             {lightbox}
           </Reveal>
@@ -122,61 +137,68 @@ export function AboutPage() {
         </div>
       </section>
 
-      <section className="gc-section-tight">
-        <div className="gc-container">
-          <Reveal className="gc-stats">
-            {stats.map((stat) => (
-              <div className="gc-stat" key={stat.label}>
-                <strong className="gc-accent-text">{stat.value}</strong>
-                <span>{stat.label}</span>
-              </div>
-            ))}
-          </Reveal>
-        </div>
-      </section>
-
-      <section className="gc-section">
-        <div className="gc-container">
-          <SectionHead eyebrow="How I work" title="What you can expect" />
-          <div className="gc-value-grid">
-            {VALUES.map((value, i) => (
-              <Reveal className="gc-value gc-glass gc-spot" key={value.title} delay={i * 80}>
-                <span className="gc-service-icon" aria-hidden="true">
-                  {value.icon}
-                </span>
-                <h3 className="gc-h3">{value.title}</h3>
-                <p>{value.text}</p>
-              </Reveal>
-            ))}
+      {stats.length > 0 && (
+        <section className="gc-section-tight">
+          <div className="gc-container">
+            <Reveal className="gc-stats">
+              {stats.map((stat) => (
+                <div className="gc-stat" key={stat.label}>
+                  <strong className="gc-accent-text">{stat.value}</strong>
+                  <span>{stat.label}</span>
+                </div>
+              ))}
+            </Reveal>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
+
+      {/* How the creator works with freelance clients — their portfolio only. */}
+      {profile?.isCreator && (
+        <section className="gc-section">
+          <div className="gc-container">
+            <SectionHead eyebrow="How I work" title="What you can expect" />
+            <div className="gc-value-grid">
+              {VALUES.map((value, i) => (
+                <Reveal className="gc-value gc-glass gc-spot" key={value.title} delay={i * 80}>
+                  <span className="gc-service-icon" aria-hidden="true">
+                    {value.icon}
+                  </span>
+                  <h3 className="gc-h3">{value.title}</h3>
+                  <p>{value.text}</p>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <CertificationsSection certifications={certifications} />
 
-      <section className="gc-section">
-        <div className="gc-container">
-          <SectionHead eyebrow="Keep exploring" title="Dig deeper" />
-          <div className="gc-explore-grid">
-            {explore.map((item, i) => (
-              <Reveal key={item.to} delay={i * 80}>
-                <Link to={path(item.to)} className="gc-tile gc-glass gc-spot" style={{ height: "100%", minHeight: 0 }}>
-                  <span className="gc-tile-label">
-                    {item.icon} {item.title}
-                  </span>
-                  <p>{item.text}</p>
-                  <span className="gc-tile-foot">
-                    <span className="gc-muted">Open</span>
-                    <span className="gc-tile-arrow">
-                      <ArrowUpRight />
+      {explore.length > 0 && (
+        <section className="gc-section">
+          <div className="gc-container">
+            <SectionHead eyebrow="Keep exploring" title="Dig deeper" />
+            <div className="gc-explore-grid">
+              {explore.map((item, i) => (
+                <Reveal key={item.to} delay={i * 80}>
+                  <Link to={path(item.to)} className="gc-tile gc-glass gc-spot" style={{ height: "100%", minHeight: 0 }}>
+                    <span className="gc-tile-label">
+                      {item.icon} {item.title}
                     </span>
-                  </span>
-                </Link>
-              </Reveal>
-            ))}
+                    <p>{item.text}</p>
+                    <span className="gc-tile-foot">
+                      <span className="gc-muted">Open</span>
+                      <span className="gc-tile-arrow">
+                        <ArrowUpRight />
+                      </span>
+                    </span>
+                  </Link>
+                </Reveal>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <CtaBand />
     </>

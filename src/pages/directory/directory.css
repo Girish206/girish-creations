@@ -192,3 +192,23 @@
     transform: none;
   }
 }
+
+/* The site creator's card: a small tag after their name. */
+.gc-person-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--gc-accent-soft);
+  color: var(--gc-accent);
+  font-family: var(--gc-font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  vertical-align: 2px;
+}
+.gc .gc-directory-hero .gc-lead a {
+  color: var(--gc-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

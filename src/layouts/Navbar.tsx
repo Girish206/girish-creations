@@ -3,15 +3,18 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import { FaArrowRight, FaBars, FaMoon, FaSun, FaXmark } from "react-icons/fa6";
 import { useProfile } from "../api/hooks/useProfile";
 import { useDarkTheme } from "../hooks/useDarkTheme";
+import { usePortfolioStyle } from "../portfolio/portfolioStyle";
 import { ArrowUpRight, SocialLinks } from "../site/ui";
-import { NAV_LINKS } from "../site/navLinks";
+import { useNavLinks } from "../site/navLinks";
 import { usePortfolioPath, usePortfolioScope } from "../portfolio/PortfolioScope";
 
 export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { isDark, toggle } = useDarkTheme();
+  // Classic portfolios open in the light theme unless the visitor chose dark.
+  const { isDark, toggle } = useDarkTheme(usePortfolioStyle() !== "classic");
   const { data: profile } = useProfile();
+  const navLinks = useNavLinks();
   const inPortfolio = usePortfolioScope() !== null;
   const path = usePortfolioPath();
   const { pathname } = useLocation();
@@ -90,7 +93,7 @@ export function Navbar() {
 
           <nav className="gc-nav" aria-label="Main">
             <ul className="gc-nav-list">
-              {NAV_LINKS.map((link) => (
+              {navLinks.map((link) => (
                 <li key={link.to}>
                   <NavLink
                     to={path(link.to)}
@@ -146,7 +149,7 @@ export function Navbar() {
 
         <nav aria-label="Main">
           <ol className="gc-drawer-list">
-            {NAV_LINKS.map((link, i) => (
+            {navLinks.map((link, i) => (
               <li key={link.to} style={{ transitionDelay: menuOpen ? `${80 + i * 35}ms` : "0ms" }}>
                 <NavLink
                   to={path(link.to)}

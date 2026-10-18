@@ -8,7 +8,10 @@ export interface UserProfile {
   objective: string | null;
   profilePicture: string | null;
   signature: string | null;
+  // Null on the public site when the owner hides it (showContactNumber).
   contactNumber: string | null;
+  // Null on profiles saved before the setting existed — treated as shown.
+  showContactNumber: boolean | null;
   address: string | null;
   totalExperience: string;
   formattedExperience: string;
@@ -18,6 +21,31 @@ export interface UserProfile {
   linkedinId: string | null;
   twitterId: string | null;
   resume: string | null;
+  // Null on profiles saved before the choice existed — treated as "tech".
+  portfolioStyle: PortfolioStyle | null;
+  // Colour shade of the classic design; null means "emerald".
+  portfolioAccent: PortfolioAccent | null;
+  // Owned by the site's creator: only their portfolio shows freelance /
+  // hire-me content.
+  isCreator: boolean;
+  // Rows per section, so empty pages and nav links can be hidden.
+  counts: PortfolioCounts;
+}
+
+// "tech": developer look (terminal, tech stack, monospace accents).
+// "classic": plain, editorial look for people outside tech.
+export type PortfolioStyle = "tech" | "classic";
+
+export type PortfolioAccent = "emerald" | "ocean" | "indigo" | "rose" | "sunset" | "violet";
+
+export interface PortfolioCounts {
+  experience: number;
+  education: number;
+  certifications: number;
+  skills: number;
+  tools: number;
+  projects: number;
+  blogPosts: number;
 }
 
 // One card in the public people directory (GET /portfolios).
@@ -27,6 +55,7 @@ export interface PortfolioSummary {
   fullName: string;
   profilePicture: string | null;
   bio: string | null;
+  isCreator: boolean;
   jobTitle: string | null;
   // Only set while the latest role is ongoing.
   companyName: string | null;
@@ -174,6 +203,15 @@ export interface ExpenseGroup {
   closedAt: string | null;
   createdAt: string;
   settlements: ExpenseGroupSettlement[];
+  // The people on the trip/event — any of them can be marked as having paid
+  // one of its expenses. Empty on groups created before members existed.
+  members: ExpenseGroupMember[];
+}
+
+export interface ExpenseGroupMember {
+  id: number;
+  adminUserId: number;
+  adminUser: AdminUserRef;
 }
 
 export interface ExpenseGroupRef {
@@ -203,6 +241,8 @@ export interface Expense {
   category: ExpenseCategory;
   paidByAdminUserId: number;
   paidBy: AdminUserRef;
+  // Who logged it; null on expenses from before this was recorded.
+  createdByAdminUserId: number | null;
   savingsGoalId: number | null;
   savingsGoal: SavingsGoalRef | null;
   expenseGroupId: number | null;

@@ -23,7 +23,6 @@ export function BlogListPage() {
             Articles &amp; <span className="gc-accent-text">notes</span>
           </>
         }
-        lead="Notes on the projects I've built, the tools I use, and things I've picked up along the way."
       />
 
       <section className="gc-section-tight">

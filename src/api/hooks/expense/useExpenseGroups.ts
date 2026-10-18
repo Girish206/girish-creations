@@ -23,6 +23,8 @@ export interface ExpenseGroupInput {
   name: string;
   startDate?: string | null;
   endDate?: string | null;
+  // Omitted on create = just the signed-in account; on update = unchanged.
+  memberAdminUserIds?: number[];
 }
 
 export function useCreateExpenseGroup() {

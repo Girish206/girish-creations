@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../../client";
-import type { ApiEnvelope, UserProfile } from "../../types";
+import type { ApiEnvelope, PortfolioAccent, PortfolioStyle, UserProfile } from "../../types";
 
 export interface ProfileFormInput {
   username?: string;
@@ -9,11 +9,15 @@ export interface ProfileFormInput {
   bio?: string | null;
   objective?: string | null;
   contactNumber?: string | null;
+  // Sent as "true" / "false" in the form data.
+  showContactNumber?: boolean;
   address?: string | null;
   facebookId?: string | null;
   instaId?: string | null;
   linkedinId?: string | null;
   twitterId?: string | null;
+  portfolioStyle?: PortfolioStyle;
+  portfolioAccent?: PortfolioAccent;
   profilePictureFile?: File | null;
   signatureFile?: File | null;
   // Ignored if signatureFile is also set — the new upload wins.
@@ -30,7 +34,7 @@ export function useUpdateProfile() {
       const formData = new FormData();
       const { profilePictureFile, signatureFile, removeSignature, resumeFile, removeResume, ...rest } = input;
       Object.entries(rest).forEach(([key, value]) => {
-        formData.append(key, value ?? "");
+        formData.append(key, String(value ?? ""));
       });
       if (profilePictureFile) formData.append("profilePicture", profilePictureFile);
       if (signatureFile) formData.append("signature", signatureFile);

@@ -106,7 +106,7 @@ export function ContactForm() {
           {...field("message")}
           className="gc-input"
           rows={5}
-          placeholder="Tell me a little about your project or opportunity"
+          placeholder="Your message"
         />
         {errors.message && (
           <p id="contact-message-error" className="gc-field-error">

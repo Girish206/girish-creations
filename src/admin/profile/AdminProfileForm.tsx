@@ -7,6 +7,8 @@ import { useProfile } from "../../api/hooks/useProfile";
 import { useExperience } from "../../api/hooks/useExperience";
 import { useUpdateProfile, type ProfileFormInput } from "../../api/hooks/admin/useAdminProfile";
 import { uploadUrl } from "../../api/client";
+import type { PortfolioStyle } from "../../api/types";
+import { CLASSIC_ACCENTS } from "../../portfolio/portfolioStyle";
 import { useImageLightbox } from "../../components/lightbox/useImageLightbox";
 import InputComp from "../dms/components/InputComp";
 import TextareaInput from "../dms/components/TextareaInput";
@@ -27,11 +29,14 @@ const schema = z.object({
   bio: z.string().optional(),
   objective: z.string().optional(),
   contactNumber: z.string().optional(),
+  showContactNumber: z.boolean(),
   address: z.string().optional(),
   facebookId: z.string().optional(),
   instaId: z.string().optional(),
   linkedinId: z.string().optional(),
   twitterId: z.string().optional(),
+  portfolioStyle: z.enum(["tech", "classic"]),
+  portfolioAccent: z.enum(["emerald", "ocean", "indigo", "rose", "sunset", "violet"]),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -158,11 +163,15 @@ export function AdminProfileForm() {
         bio: profile.bio ?? "",
         objective: profile.objective ?? "",
         contactNumber: profile.contactNumber ?? "",
+        showContactNumber: profile.showContactNumber ?? true,
         address: profile.address ?? "",
         facebookId: profile.facebookId ?? "",
         instaId: profile.instaId ?? "",
         linkedinId: profile.linkedinId ?? "",
         twitterId: profile.twitterId ?? "",
+        portfolioStyle: profile.portfolioStyle ?? "tech",
+        // A shade from an earlier palette isn't a valid choice any more.
+        portfolioAccent: CLASSIC_ACCENTS.find((shade) => shade.value === profile.portfolioAccent)?.value ?? "emerald",
       });
     }
   }, [profile, reset]);
@@ -304,6 +313,72 @@ export function AdminProfileForm() {
 
         <section className="card admin-profile-section">
           <header className="admin-profile-section-header">
+            <i className="fa-solid fa-palette"></i> Portfolio Design
+          </header>
+          <Controller
+            name="portfolioStyle"
+            control={control}
+            defaultValue="tech"
+            render={({ field }) => (
+              <div className="admin-style-options" role="radiogroup" aria-label="Portfolio design">
+                {STYLE_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={field.value === option.value}
+                    className={`admin-style-option${field.value === option.value ? " is-selected" : ""}`}
+                    onClick={() => field.onChange(option.value)}
+                  >
+                    <span className={`admin-style-preview admin-style-preview-${option.value}`} aria-hidden="true">
+                      <i />
+                      <b />
+                      <b />
+                    </span>
+                    <span className="admin-style-name">
+                      {option.label}
+                      {field.value === option.value && <i className="fa-solid fa-circle-check"></i>}
+                    </span>
+                    <span className="admin-style-desc">{option.description}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          />
+          {watch("portfolioStyle") === "classic" && (
+            <Controller
+              name="portfolioAccent"
+              control={control}
+              defaultValue="emerald"
+              render={({ field }) => (
+                <div className="admin-shade-picker">
+                  <span className="admin-shade-label">Colour</span>
+                  <div className="admin-shade-options" role="radiogroup" aria-label="Classic colour">
+                    {CLASSIC_ACCENTS.map((shade) => (
+                      <button
+                        key={shade.value}
+                        type="button"
+                        role="radio"
+                        aria-checked={field.value === shade.value}
+                        className={`admin-shade${field.value === shade.value ? " is-selected" : ""}`}
+                        onClick={() => field.onChange(shade.value)}
+                      >
+                        <span className="admin-shade-swatch" style={{ background: shade.swatch }} aria-hidden="true">
+                          {field.value === shade.value && <i className="fa-solid fa-check"></i>}
+                        </span>
+                        {shade.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            />
+          )}
+          <small className="admin-hint">Changes how your public portfolio looks and reads. Your content stays the same.</small>
+        </section>
+
+        <section className="card admin-profile-section">
+          <header className="admin-profile-section-header">
             <i className="fa-solid fa-id-card"></i> Basic Info
           </header>
           <Controller
@@ -325,6 +400,25 @@ export function AdminProfileForm() {
             control={control}
             defaultValue=""
             render={({ field }) => <InputComp label="Contact Number" icon="fa-solid fa-phone" {...field} />}
+          />
+          <Controller
+            name="showContactNumber"
+            control={control}
+            defaultValue={true}
+            render={({ field }) => (
+              <div className="form-check mb-3">
+                <input
+                  type="checkbox"
+                  className="form-check-input"
+                  id="showContactNumber"
+                  checked={field.value}
+                  onChange={(e) => field.onChange(e.target.checked)}
+                />
+                <label className="form-check-label" htmlFor="showContactNumber">
+                  Show my contact number on my public portfolio
+                </label>
+              </div>
+            )}
           />
           <Controller
             name="address"
@@ -497,6 +591,19 @@ export function AdminProfileForm() {
     </form>
   );
 }
+
+const STYLE_OPTIONS: { value: PortfolioStyle; label: string; description: string }[] = [
+  {
+    value: "tech",
+    label: "Tech",
+    description: "For developers: terminal card, tech stack, code-style accents.",
+  },
+  {
+    value: "classic",
+    label: "Classic",
+    description: "Clean and elegant with plain wording — suits any profession.",
+  },
+];
 
 // Email and experience as a quiet meta strip along the bottom of the
 // header, separated by dividers rather than pills. Experience links to its

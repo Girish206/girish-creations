@@ -4,10 +4,12 @@ import { useProjectsList } from "../../api/hooks/useProjects";
 import { CtaBand, EmptyState, Metrics, PageHero, Reveal, WorkCard, WorkCardSkeleton } from "../../site/ui";
 import { usePageTitle } from "../../site/usePageTitle";
 import { ALL_PROJECTS } from "../home/constants";
+import { useIsClassic } from "../../portfolio/portfolioStyle";
 
 // Every project on one page, filterable by stack and searchable by name.
 export function ProjectsListPage() {
   usePageTitle("Projects");
+  const classic = useIsClassic();
   const { data, isLoading } = useProjectsList(1, ALL_PROJECTS);
   const [stack, setStack] = useState("All");
   const [query, setQuery] = useState("");
@@ -27,17 +29,22 @@ export function ProjectsListPage() {
       <PageHero
         eyebrow="Projects"
         title={
-          <>
-            Things I've <span className="gc-accent-text">built</span>
-          </>
+          classic ? (
+            <>
+              Selected <span className="gc-accent-text">work</span>
+            </>
+          ) : (
+            <>
+              Things I've <span className="gc-accent-text">built</span>
+            </>
+          )
         }
-        lead="Applications I've designed, built and deployed end to end. Open any one for the full case study."
         aside={
           <Metrics
             items={[
               { value: data ? data.total : "—", label: "Projects" },
-              { value: stacks.length || "—", label: "Stacks" },
-              { value: data ? live : "—", label: "Live sites" },
+              { value: stacks.length || "—", label: classic ? "Categories" : "Stacks" },
+              { value: data ? live : "—", label: classic ? "With links" : "Live sites" },
             ]}
           />
         }
@@ -46,7 +53,7 @@ export function ProjectsListPage() {
       <section className="gc-section-tight">
         <div className="gc-container">
           <div className="gc-toolbar">
-            <div className="gc-tabs" role="group" aria-label="Filter by stack">
+            <div className="gc-tabs" role="group" aria-label={classic ? "Filter by category" : "Filter by stack"}>
               {["All", ...stacks].map((name) => (
                 <button key={name} type="button" className="gc-tab" aria-pressed={stack === name} onClick={() => setStack(name)}>
                   {name}
@@ -81,7 +88,11 @@ export function ProjectsListPage() {
               <EmptyState
                 icon={<FaFolderOpen />}
                 title={projects.length ? "No matching projects" : "No projects yet"}
-                message={projects.length ? "Try a different stack or search term." : "New work will show up here soon."}
+                message={
+                  projects.length
+                    ? `Try a different ${classic ? "category" : "stack"} or search term.`
+                    : "New work will show up here soon."
+                }
               />
             )}
           </div>

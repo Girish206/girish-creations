@@ -1,10 +1,10 @@
-import { FaBuilding, FaGraduationCap, FaLocationDot } from "react-icons/fa6";
+import { FaBriefcase, FaBuilding, FaGraduationCap, FaLocationDot } from "react-icons/fa6";
 import { useExperience } from "../api/hooks/useExperience";
 import { useEducation } from "../api/hooks/useEducation";
 import { useProfile } from "../api/hooks/useProfile";
 import { endYearOrPresent, formatDuration, yearOf } from "../utils/date";
 import { formatFullDate } from "../utils/format";
-import { CtaBand, Metrics, PageHero, Reveal, SectionHead } from "../site/ui";
+import { CtaBand, EmptyState, Metrics, PageHero, Reveal, SectionHead } from "../site/ui";
 import { usePageTitle } from "../site/usePageTitle";
 
 // A role's description is free text with one point per line; show it as a
@@ -33,7 +33,6 @@ export function ExperiencePage() {
             My <span className="gc-accent-text">journey</span> so far
           </>
         }
-        lead="The roles I've held, what I built in each, and the education behind it."
         aside={
           <Metrics
             items={[
@@ -45,50 +44,60 @@ export function ExperiencePage() {
         }
       />
 
-      <section className="gc-section-tight gc-tl-section">
-        <div className="gc-container">
-          <SectionHead eyebrow="Work" title="Where I've worked" />
-          {isLoading && !experience ? (
-            <div className="gc-skeleton" style={{ height: 220, borderRadius: 24 }} />
-          ) : (
-            <ol className="gc-tl">
-              {experience?.map((exp, i) => {
-                const points = descriptionPoints(exp.description);
-                return (
-                  <Reveal as="li" key={exp.id} delay={i * 60} className={`gc-tl-item gc-glass gc-spot${exp.endDate ? "" : " is-current"}`}>
-                    <span className="gc-tl-node" aria-hidden="true" />
-                    <div className="gc-tl-top">
-                      <span className="gc-tl-when">
-                        {!exp.endDate && <span className="gc-status-dot" aria-hidden="true" />}
-                        {formatFullDate(exp.startDate)} — {exp.endDate ? formatFullDate(exp.endDate) : "Present"}
-                      </span>
-                      <span className="gc-chip gc-chip-accent">{formatDuration(exp.startDate, exp.endDate)}</span>
-                    </div>
-                    <h3 className="gc-tl-title">{exp.jobTitle}</h3>
-                    <div className="gc-tl-sub">
-                      <span>
-                        <FaBuilding aria-hidden="true" /> {exp.companyName}
-                      </span>
-                      {exp.location && (
-                        <span>
-                          <FaLocationDot aria-hidden="true" /> {exp.location}
+      {!isLoading && !experience?.length && !education?.length && (
+        <section className="gc-section-tight">
+          <div className="gc-container">
+            <EmptyState icon={<FaBriefcase />} title="Nothing here yet" message="Work history and education will show up here soon." />
+          </div>
+        </section>
+      )}
+
+      {(isLoading || Boolean(experience?.length)) && (
+        <section className="gc-section-tight gc-tl-section">
+          <div className="gc-container">
+            <SectionHead eyebrow="Work" title="Where I've worked" />
+            {isLoading && !experience ? (
+              <div className="gc-skeleton" style={{ height: 220, borderRadius: 24 }} />
+            ) : (
+              <ol className="gc-tl">
+                {experience?.map((exp, i) => {
+                  const points = descriptionPoints(exp.description);
+                  return (
+                    <Reveal as="li" key={exp.id} delay={i * 60} className={`gc-tl-item gc-glass gc-spot${exp.endDate ? "" : " is-current"}`}>
+                      <span className="gc-tl-node" aria-hidden="true" />
+                      <div className="gc-tl-top">
+                        <span className="gc-tl-when">
+                          {!exp.endDate && <span className="gc-status-dot" aria-hidden="true" />}
+                          {formatFullDate(exp.startDate)} — {exp.endDate ? formatFullDate(exp.endDate) : "Present"}
                         </span>
+                        <span className="gc-chip gc-chip-accent">{formatDuration(exp.startDate, exp.endDate)}</span>
+                      </div>
+                      <h3 className="gc-tl-title">{exp.jobTitle}</h3>
+                      <div className="gc-tl-sub">
+                        <span>
+                          <FaBuilding aria-hidden="true" /> {exp.companyName}
+                        </span>
+                        {exp.location && (
+                          <span>
+                            <FaLocationDot aria-hidden="true" /> {exp.location}
+                          </span>
+                        )}
+                      </div>
+                      {points.length > 0 && (
+                        <ul className="gc-tl-points">
+                          {points.map((point, j) => (
+                            <li key={j}>{point}</li>
+                          ))}
+                        </ul>
                       )}
-                    </div>
-                    {points.length > 0 && (
-                      <ul className="gc-tl-points">
-                        {points.map((point, j) => (
-                          <li key={j}>{point}</li>
-                        ))}
-                      </ul>
-                    )}
-                  </Reveal>
-                );
-              })}
-            </ol>
-          )}
-        </div>
-      </section>
+                    </Reveal>
+                  );
+                })}
+              </ol>
+            )}
+          </div>
+        </section>
+      )}
 
       {education && education.length > 0 && (
         <section className="gc-section-tight gc-tl-section">

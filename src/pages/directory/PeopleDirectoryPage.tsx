@@ -31,7 +31,10 @@ function PersonCard({ person, index }: { person: PortfolioSummary; index: number
           {photo ? <img src={photo} alt="" loading="lazy" /> : <span aria-hidden="true">{initials(person.fullName)}</span>}
         </span>
         <span className="gc-person-content">
-          <span className="gc-person-name">{person.fullName}</span>
+          <span className="gc-person-name">
+            {person.fullName}
+            {person.isCreator && <span className="gc-person-badge">Creator</span>}
+          </span>
           {person.jobTitle && <span className="gc-person-role">{person.jobTitle}</span>}
           {years > 0 && (
             <span className="gc-person-exp">
@@ -66,6 +69,7 @@ export function PeopleDirectoryPage() {
   usePageTitle();
   const { data: people, isLoading, isError } = usePortfolios();
   const [query, setQuery] = useState("");
+  const creator = people?.find((person) => person.isCreator);
 
   const shown = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -83,11 +87,13 @@ export function PeopleDirectoryPage() {
         <Reveal className="gc-container gc-stack">
           <span className="gc-eyebrow">Portfolios</span>
           <h1 className="gc-display">
-            Meet the <span className="gc-accent-text">people</span> behind the work.
+            One place for every <span className="gc-accent-text">portfolio</span>.
           </h1>
+          {/* The people listed use the platform; it was built by one person. */}
           <p className="gc-lead">
-            Developers and makers sharing what they've built. Pick someone to explore their projects, experience and
-            writing.
+            Girish Creations is a portfolio platform designed and built by{" "}
+            {creator ? <Link to={`/${creator.username}`}>{creator.fullName}</Link> : "Girish S"}. Everyone below
+            showcases their work here — pick someone to explore their profile, experience and projects.
           </p>
           {people && people.length > 0 && (
             <p className="gc-directory-count">

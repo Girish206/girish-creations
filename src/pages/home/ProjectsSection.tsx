@@ -36,11 +36,6 @@ export function ProjectsSection({
               "Recent work"
             )
           }
-          description={
-            isPage && projects?.length
-              ? `All ${projects.length} applications I've designed, built and deployed end to end. Open any one for the full story.`
-              : "Applications designed, built and deployed end to end."
-          }
           action={
             hasMore ? (
               <Link to={path("/projects")} className="gc-link">

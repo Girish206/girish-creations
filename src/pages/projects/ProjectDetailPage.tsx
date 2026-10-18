@@ -8,9 +8,11 @@ import { ArrowUpRight, CtaBand, EmptyState, Reveal } from "../../site/ui";
 import { usePageTitle } from "../../site/usePageTitle";
 import { ALL_PROJECTS } from "../home/constants";
 import { usePortfolioPath } from "../../portfolio/PortfolioScope";
+import { useIsClassic } from "../../portfolio/portfolioStyle";
 
 export function ProjectDetailPage() {
   const path = usePortfolioPath();
+  const classic = useIsClassic();
   const { id } = useParams<{ id: string }>();
   const { data: project, isLoading, isError } = useProject(id);
   const { data: allProjects } = useProjectsList(1, ALL_PROJECTS);
@@ -53,10 +55,10 @@ export function ProjectDetailPage() {
   const next = index >= 0 && index < list.length - 1 ? list[index + 1] : undefined;
 
   const facts = [
-    { label: "Stack", value: project.technologiesUsed },
+    { label: classic ? "Category" : "Stack", value: project.technologiesUsed },
     { label: "Timeline", value: `${formatYear(project.startDate)} – ${formatYear(project.endDate)}` },
     { label: "Duration", value: formatDuration(project.startDate, project.endDate) },
-    { label: "Status", value: project.endDate ? "Delivered" : "Ongoing" },
+    { label: "Status", value: project.endDate ? "Completed" : "Ongoing" },
   ];
 
   return (
@@ -67,12 +69,14 @@ export function ProjectDetailPage() {
             <FaArrowLeft /> All projects
           </Link>
           <Reveal className="gc-stack gc-gap-24">
-            <span className="gc-eyebrow">Case study · {project.technologiesUsed}</span>
+            <span className="gc-eyebrow">
+              Project · {project.technologiesUsed}
+            </span>
             <h1 className="gc-h1">{project.title}</h1>
             {project.projectUrl && (
               <div>
                 <a className="gc-btn gc-btn-primary" href={project.projectUrl} target="_blank" rel="noreferrer">
-                  Visit live site <ArrowUpRight />
+                  {classic ? "View project" : "Visit live site"} <ArrowUpRight />
                 </a>
               </div>
             )}
@@ -103,7 +107,7 @@ export function ProjectDetailPage() {
             ))}
             {project.projectUrl && (
               <div className="gc-fact">
-                <dt className="gc-fact-label">Live site</dt>
+                <dt className="gc-fact-label">{classic ? "Link" : "Live site"}</dt>
                 <dd className="gc-fact-value">
                   <a className="gc-link" href={project.projectUrl} target="_blank" rel="noreferrer">
                     {project.projectUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}

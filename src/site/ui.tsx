@@ -3,8 +3,9 @@ import { Link } from "react-router-dom";
 import { FaArrowLeft, FaArrowRight, FaFacebookF, FaInstagram, FaLinkedinIn, FaXTwitter } from "react-icons/fa6";
 import { uploadUrl } from "../api/client";
 import type { ProjectDetails, UserProfile } from "../api/types";
-import { formatYear } from "../utils/format";
+import { formatYear, monogram } from "../utils/format";
 import { usePortfolioPath } from "../portfolio/PortfolioScope";
+import { useIsCreator } from "../portfolio/portfolioStyle";
 
 // Fades/slides its content in the first time it scrolls into view. Content
 // is never hidden for users who prefer reduced motion (see site.css).
@@ -125,7 +126,10 @@ export function Metrics({ items }: { items: { value: ReactNode; label: string }[
   );
 }
 
+// Freelance availability — only the site creator takes on projects here.
 export function AvailabilityBadge() {
+  const isCreator = useIsCreator();
+  if (!isCreator) return null;
   return (
     <span className="gc-status">
       <span className="gc-status-dot" aria-hidden="true" />
@@ -195,18 +199,40 @@ export function WorkCardSkeleton() {
   );
 }
 
+// Inside a <button class="gc-portrait">: the photo, the person's initials
+// when they haven't uploaded one, or a skeleton while the profile loads.
+export function PortraitContent({ profile, src }: { profile: UserProfile | undefined; src: string | null | undefined }) {
+  if (src) return <img src={src} alt={profile?.fullName ?? ""} />;
+  if (profile) {
+    return (
+      <span className="gc-portrait-initials" aria-hidden="true">
+        {monogram(profile.fullName)}
+      </span>
+    );
+  }
+  return <span className="gc-skeleton" style={{ position: "absolute", inset: 0 }} />;
+}
+
 export function CtaBand() {
   const path = usePortfolioPath();
+  const isCreator = useIsCreator();
   return (
     <section className="gc-section">
       <div className="gc-container">
         <Reveal className="gc-cta">
-          <div>
-            <h2>Have a project in mind?</h2>
-            <p>I'm open to freelance work and full-time roles. Tell me what you're building and I'll get back to you.</p>
-          </div>
+          {isCreator ? (
+            <div>
+              <h2>Have a project in mind?</h2>
+              <p>I'm open to freelance work and full-time roles. Tell me what you're building and I'll get back to you.</p>
+            </div>
+          ) : (
+            <div>
+              <h2>Want to get in touch?</h2>
+              <p>Have a question or an opportunity to share? Send a message and I'll get back to you.</p>
+            </div>
+          )}
           <Link to={path("/contact")} className="gc-btn gc-btn-primary">
-            Let's work together <FaArrowRight />
+            {isCreator ? "Let's work together" : "Get in touch"} <FaArrowRight />
           </Link>
         </Reveal>
       </div>

@@ -384,6 +384,8 @@
 .gc-bento {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  /* Tiles without data are left out; let later tiles fill the gaps. */
+  grid-auto-flow: dense;
   gap: 16px;
 }
 .gc-tile {

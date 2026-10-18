@@ -39,7 +39,9 @@ export function HomePage() {
         tools={tools}
         projectCount={projectsPage?.total}
       />
-      <ProjectsSection projects={projectsPage?.items} isLoading={projectsLoading} featured={3} />
+      {(projectsLoading || Boolean(projectsPage?.total)) && (
+        <ProjectsSection projects={projectsPage?.items} isLoading={projectsLoading} featured={3} />
+      )}
       <BlogSection posts={blogPage?.items} total={blogPage?.total ?? 0} />
       <CtaBand />
     </>

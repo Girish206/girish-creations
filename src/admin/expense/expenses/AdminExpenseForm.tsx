@@ -1,10 +1,15 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useExpenses, useCreateExpense, useUpdateExpense } from "../../../api/hooks/expense/useExpenses";
 import { useExpenseCategories } from "../../../api/hooks/expense/useExpenseCategories";
-import { useExpenseGroups, useCreateExpenseGroup } from "../../../api/hooks/expense/useExpenseGroups";
+import {
+  useExpenseGroups,
+  useCreateExpenseGroup,
+  useUpdateExpenseGroup,
+} from "../../../api/hooks/expense/useExpenseGroups";
+import type { ExpenseGroup } from "../../../api/types";
 import { useSavingsGoals } from "../../../api/hooks/expense/useSavingsGoals";
 import { useExpenseMembers } from "../../../api/hooks/expense/useExpenseMembers";
 import { useAdminAuth } from "../../../context/AdminAuthContext";
@@ -25,6 +30,10 @@ const schema = z.object({
   // Number = an existing group's id. Non-empty string = a new group name
   // typed into the creatable picker, created on submit. "" = no group.
   expenseGroupId: z.union([z.number(), z.string()]).optional(),
+  // Only used while a group is picked: the people in it (saved onto the
+  // group) and which of them paid.
+  groupMemberIds: z.array(z.number()),
+  paidByAdminUserId: z.number().nullable(),
   splitEnabled: z.boolean(),
   splitAdminUserIds: z.array(z.number()),
 }).refine((values) => !values.splitEnabled || values.splitAdminUserIds.length >= 2, {
@@ -72,10 +81,21 @@ export interface AdminExpenseFormProps {
   onSaved: () => void;
 }
 
-// Rendered inside a DefaultModal by AdminExpensesList. Who paid is always
-// the logged-in account (the backend defaults paidByAdminUserId to the
-// authenticated admin when it's omitted) — each member logs their own
-// expenses, so there's no "paid by" picker here.
+// The people in a group, or — for a group from before groups had people —
+// just `fallback`.
+function groupMemberIdsOf(group: ExpenseGroup | undefined, fallback: number | null): number[] {
+  if (group?.members.length) return group.members.map((member) => member.adminUserId);
+  return fallback !== null ? [fallback] : [];
+}
+
+const sameIds = (a: number[], b: number[]) =>
+  a.length === b.length && [...a].sort().join() === [...b].sort().join();
+
+// Rendered inside a DefaultModal by AdminExpensesList. Ungrouped expenses
+// are paid by whoever logs them (the backend defaults paidByAdminUserId to
+// the signed-in admin). Once a group is picked, the form shows the people in
+// it — editable here, saved onto the group — and a "Paid by" picker among
+// them, starting on the signed-in account.
 export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
   const isEdit = id !== undefined;
   const { data: items } = useExpenses();
@@ -85,9 +105,7 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
   const { data: members } = useExpenseMembers();
   const { admin } = useAdminAuth();
   const existing = isEdit ? items?.find((item) => item.id === id) : undefined;
-  // Whoever paid: the original payer when editing, otherwise the logged-in
-  // account (the backend fills paidByAdminUserId in the same way).
-  const payerId = existing?.paidByAdminUserId ?? (admin?.sub ? Number(admin.sub) : null);
+  const myId = admin?.sub ? Number(admin.sub) : null;
 
   const {
     control,
@@ -103,6 +121,12 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
   const splitEnabled = useWatch({ control, name: "splitEnabled" });
   const splitAdminUserIds = useWatch({ control, name: "splitAdminUserIds" }) ?? [];
   const selectedGroupId = useWatch({ control, name: "expenseGroupId" });
+  const groupMemberIds = useWatch({ control, name: "groupMemberIds" }) ?? [];
+  const paidBy = useWatch({ control, name: "paidByAdminUserId" });
+  const hasGroup = selectedGroupId !== "" && selectedGroupId !== undefined;
+  // Whoever paid: picked among the group's people when there's a group;
+  // otherwise the original payer when editing, or the signed-in account.
+  const payerId = hasGroup ? (paidBy ?? null) : (existing?.paidByAdminUserId ?? myId);
   // Only an existing group can have a date window (a newly typed name can't).
   const selectedGroup =
     typeof selectedGroupId === "number" ? groups?.find((g) => g.id === selectedGroupId) : undefined;
@@ -110,8 +134,15 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
   const windowEnd = selectedGroup?.endDate?.slice(0, 10) ?? null;
   const windowText = describeWindow(windowStart, windowEnd);
 
+  // Fill the form once its data is in (an edit also needs the groups, for
+  // the group's people). Later refetches mustn't wipe what's been typed.
+  const initialized = useRef(false);
   useEffect(() => {
+    if (initialized.current) return;
+    if (isEdit && (!existing || !groups)) return;
+    initialized.current = true;
     if (existing) {
+      const group = groups?.find((g) => g.id === existing.expenseGroupId);
       reset({
         amount: existing.amount,
         date: toDateInputValue(existing.date),
@@ -119,6 +150,8 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
         description: existing.description ?? "",
         savingsGoalId: existing.savingsGoalId ?? "",
         expenseGroupId: existing.expenseGroupId ?? "",
+        groupMemberIds: existing.expenseGroupId ? groupMemberIdsOf(group, existing.paidByAdminUserId) : [],
+        paidByAdminUserId: existing.paidByAdminUserId,
         splitEnabled: existing.splitParticipants.length > 0,
         splitAdminUserIds:
           existing.splitParticipants.length > 0
@@ -135,15 +168,37 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
         description: "",
         savingsGoalId: "",
         expenseGroupId: "",
+        groupMemberIds: [],
+        paidByAdminUserId: myId,
         splitEnabled: false,
         splitAdminUserIds: [],
       });
     }
-  }, [existing, reset]);
+  }, [isEdit, existing, groups, myId, reset]);
 
   const createExpense = useCreateExpense();
   const updateExpense = useUpdateExpense();
   const createExpenseGroup = useCreateExpenseGroup();
+  const updateExpenseGroup = useUpdateExpenseGroup();
+
+  // Picking a group brings in its people and starts "Paid by" on you (or
+  // the first of them, if you're not in it).
+  function onGroupChange(value: number | string) {
+    if (value === "") return;
+    const group = typeof value === "number" ? groups?.find((g) => g.id === value) : undefined;
+    const ids = groupMemberIdsOf(group, myId);
+    setValue("groupMemberIds", ids);
+    setValue("paidByAdminUserId", myId !== null && ids.includes(myId) ? myId : (ids[0] ?? null));
+  }
+
+  // Taking the payer out of the group moves "Paid by" back to you (or the
+  // first person left).
+  function onGroupMembersChange(ids: number[]) {
+    setValue("groupMemberIds", ids);
+    if (paidBy === null || !ids.includes(paidBy)) {
+      setValue("paidByAdminUserId", myId !== null && ids.includes(myId) ? myId : (ids[0] ?? null));
+    }
+  }
 
   async function onSubmit(values: FormValues) {
     // Same rule the server enforces — caught here first for a friendlier
@@ -153,17 +208,39 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
       return;
     }
 
+    const grouped = values.expenseGroupId !== "" && values.expenseGroupId !== undefined;
+    if (grouped && values.groupMemberIds.length === 0) {
+      setError("groupMemberIds", { message: "Add at least one person to the group" });
+      return;
+    }
+    if (grouped && (values.paidByAdminUserId === null || !values.groupMemberIds.includes(values.paidByAdminUserId))) {
+      setError("paidByAdminUserId", { message: "Pick who paid" });
+      return;
+    }
+
     // A typed-but-not-yet-existing group name (creatable picker) needs to
-    // become a real group before the expense can reference its id.
+    // become a real group before the expense can reference its id. An
+    // existing group gets the people chosen here if they changed.
     let expenseGroupId: number | null = null;
-    if (values.expenseGroupId !== "" && values.expenseGroupId !== undefined) {
+    if (grouped) {
       if (typeof values.expenseGroupId === "number") {
         expenseGroupId = values.expenseGroupId;
+        const group = groups?.find((g) => g.id === expenseGroupId);
+        if (!sameIds(groupMemberIdsOf(group, null), values.groupMemberIds)) {
+          await updateExpenseGroup.mutateAsync({
+            id: expenseGroupId,
+            input: { memberAdminUserIds: values.groupMemberIds },
+          });
+        }
       } else {
-        const created = await createExpenseGroup.mutateAsync(values.expenseGroupId);
+        const created = await createExpenseGroup.mutateAsync({
+          name: values.expenseGroupId as string,
+          memberAdminUserIds: values.groupMemberIds,
+        });
         expenseGroupId = created.id;
       }
     }
+    const payer = grouped ? values.paidByAdminUserId : (existing?.paidByAdminUserId ?? myId);
 
     const input = {
       amount: values.amount,
@@ -172,7 +249,8 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
       description: values.description || null,
       savingsGoalId: values.savingsGoalId === "" ? null : values.savingsGoalId,
       expenseGroupId,
-      splitAdminUserIds: values.splitEnabled ? withPayerFirst(values.splitAdminUserIds, payerId) : [],
+      ...(payer !== null ? { paidByAdminUserId: payer } : {}),
+      splitAdminUserIds: values.splitEnabled ? withPayerFirst(values.splitAdminUserIds, payer) : [],
     };
     if (isEdit && existing) {
       await updateExpense.mutateAsync({ id: existing.id, input });
@@ -201,6 +279,14 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
   const memberOptions = (members ?? []).map((member) => ({
     value: member.id,
     label: `${member.name || member.email}${member.id === payerId ? " (paid)" : ""}`,
+  }));
+  const groupPeopleOptions = (members ?? []).map((member) => ({
+    value: member.id,
+    label: `${member.name || member.email}${member.id === myId ? " (you)" : ""}`,
+  }));
+  const payerOptions = groupMemberIds.map((memberId) => ({
+    value: memberId,
+    label: `${memberName(memberId)}${memberId === myId ? " (you)" : ""}`,
   }));
 
   return (
@@ -253,10 +339,54 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
             creatable
             options={groupOptions}
             value={field.value}
-            onChange={(value) => field.onChange(value === "" ? "" : value)}
+            onChange={(value) => {
+              field.onChange(value === "" ? "" : value);
+              onGroupChange(value);
+            }}
           />
         )}
       />
+      {hasGroup && (
+        <>
+          <Controller
+            name="groupMemberIds"
+            control={control}
+            render={({ field }) => (
+              <SelectInput
+                label="People in this group"
+                required
+                isMulti
+                placeholder="Add people…"
+                options={groupPeopleOptions}
+                value={field.value}
+                onChange={onGroupMembersChange}
+                error={errors.groupMemberIds?.message}
+              />
+            )}
+          />
+          <Controller
+            name="paidByAdminUserId"
+            control={control}
+            render={({ field }) => (
+              <SelectInput
+                label="Paid by"
+                required
+                clearable={false}
+                options={payerOptions}
+                value={field.value ?? ""}
+                onChange={(value: number) => {
+                  field.onChange(value);
+                  // The payer is always part of the split.
+                  if (getValues("splitEnabled")) {
+                    setValue("splitAdminUserIds", withPayerFirst(getValues("splitAdminUserIds") ?? [], value));
+                  }
+                }}
+                error={errors.paidByAdminUserId?.message}
+              />
+            )}
+          />
+        </>
+      )}
       {windowText && (
         <p className="admin-form-hint">
           <i className="fa-solid fa-calendar-days"></i> Expenses in {selectedGroup?.name} must be dated {windowText}.
@@ -294,9 +424,11 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
               checked={field.value ?? false}
               onChange={(e) => {
                 field.onChange(e.target.checked);
-                // Turning the split on starts with the payer already in it.
+                // Turning the split on starts with the payer already in it —
+                // and, in a group, everyone in the group.
                 if (e.target.checked) {
-                  setValue("splitAdminUserIds", withPayerFirst(getValues("splitAdminUserIds") ?? [], payerId));
+                  const start = hasGroup ? groupMemberIds : (getValues("splitAdminUserIds") ?? []);
+                  setValue("splitAdminUserIds", withPayerFirst(start, payerId));
                 }
               }}
             />

@@ -1,12 +1,13 @@
 import { Link } from "react-router-dom";
 import { useProfile } from "../api/hooks/useProfile";
 import { SocialLinks } from "../site/ui";
-import { NAV_LINKS } from "../site/navLinks";
+import { useNavLinks } from "../site/navLinks";
 import { uploadUrl } from "../api/client";
 import { usePortfolioPath, usePortfolioScope } from "../portfolio/PortfolioScope";
 
 export function Footer() {
   const { data: profile } = useProfile();
+  const navLinks = useNavLinks();
   const inPortfolio = usePortfolioScope() !== null;
   const path = usePortfolioPath();
   const year = new Date().getFullYear();
@@ -14,10 +15,10 @@ export function Footer() {
 
   if (!inPortfolio) {
     return (
-      <footer className="gc-footer">
+      <footer className="gc-footer gc-footer-simple">
         <div className="gc-container">
           <div className="gc-footer-bottom">
-            <span>© {year} Girish Creations. All rights reserved.</span>
+            <span>© {year} Girish Creations. Designed and built by Girish S.</span>
             <Link to="/admin/login">Member sign in</Link>
           </div>
         </div>
@@ -37,14 +38,19 @@ export function Footer() {
               </span>
             </Link>
             <p>
-              {profile ? `The portfolio of ${profile.fullName}` : "\u00a0"}. <Link to="/">Meet everyone else</Link>.
+              {profile
+                ? profile.isCreator
+                  ? `The portfolio of ${profile.fullName}, creator of Girish Creations. `
+                  : `The portfolio of ${profile.fullName}, hosted on Girish Creations. `
+                : "\u00a0"}
+              <Link to="/">Browse all portfolios</Link>.
             </p>
             <SocialLinks profile={profile} />
           </div>
           <div>
             <span className="gc-footer-title">Pages</span>
             <ul className="gc-footer-links">
-              {NAV_LINKS.map((link) => (
+              {navLinks.map((link) => (
                 <li key={link.to}>
                   <Link to={path(link.to)}>{link.label}</Link>
                 </li>

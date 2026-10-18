@@ -1,0 +1,308 @@
+/* ==========================================================================
+   Classic portfolio design — for people outside tech who pick "Classic" in
+   the admin Profile page (MainLayout adds `gc-classic` to the `.gc` root).
+
+   Imported after site.css and tech.css and only re-themes them: a softly
+   tinted palette in the owner's chosen shade, a serif display face,
+   solid cards instead of glass, and no aurora, grid, spotlight, terminal,
+   monospace or gradient text. Layout is untouched.
+   ========================================================================== */
+
+/* ---------- Colour shades ----------
+   Each shade is a handful of raw colours (--c-*), picked per portfolio in
+   the admin Profile page (MainLayout adds `gc-shade-<name>`). They're set
+   on <body> via :has() so the page background behind the root can use them
+   too, and every `--gc-*` token below is derived from them. Emerald is the
+   default. `--c-d-*` are the dark-theme versions: deep tinted backgrounds
+   rather than black, with a lighter accent that reads on them. */
+
+body:has(.gc-classic) {
+  --c-accent: #059669;
+  --c-accent-hover: #047857;
+  --c-rgb: 5, 150, 105;
+  --c-bg: #f2faf6;
+  --c-bg-2: #e2f3ea;
+  --c-ink: #123a2e;
+  --c-ink-2: #3d5f54;
+  --c-d-bg: #0c1f1a;
+  --c-d-surface: #122a23;
+  --c-d-bg-2: #19372e;
+  --c-d-accent: #34d399;
+  --c-d-accent-hover: #6ee7b7;
+  --c-d-rgb: 52, 211, 153;
+  --c-d-accent-ink: #052e22;
+}
+body:has(.gc-shade-ocean) {
+  --c-accent: #0284c7;
+  --c-accent-hover: #0369a1;
+  --c-rgb: 2, 132, 199;
+  --c-bg: #f0f7fc;
+  --c-bg-2: #ddeef9;
+  --c-ink: #0f2f45;
+  --c-ink-2: #3c5a70;
+  --c-d-bg: #0a1a28;
+  --c-d-surface: #102536;
+  --c-d-bg-2: #163046;
+  --c-d-accent: #38bdf8;
+  --c-d-accent-hover: #7dd3fc;
+  --c-d-rgb: 56, 189, 248;
+  --c-d-accent-ink: #04283d;
+}
+body:has(.gc-shade-indigo) {
+  --c-accent: #4f46e5;
+  --c-accent-hover: #4338ca;
+  --c-rgb: 79, 70, 229;
+  --c-bg: #f5f5ff;
+  --c-bg-2: #e8e7fd;
+  --c-ink: #1e1b4b;
+  --c-ink-2: #4a4873;
+  --c-d-bg: #111030;
+  --c-d-surface: #191840;
+  --c-d-bg-2: #22214f;
+  --c-d-accent: #a5b4fc;
+  --c-d-accent-hover: #c7d2fe;
+  --c-d-rgb: 165, 180, 252;
+  --c-d-accent-ink: #1e1b4b;
+}
+body:has(.gc-shade-rose) {
+  --c-accent: #e11d48;
+  --c-accent-hover: #be123c;
+  --c-rgb: 225, 29, 72;
+  --c-bg: #fff5f7;
+  --c-bg-2: #fde4ea;
+  --c-ink: #4c0519;
+  --c-ink-2: #6e3a47;
+  --c-d-bg: #230b12;
+  --c-d-surface: #30101a;
+  --c-d-bg-2: #3e1623;
+  --c-d-accent: #fb7185;
+  --c-d-accent-hover: #fda4af;
+  --c-d-rgb: 251, 113, 133;
+  --c-d-accent-ink: #3b0613;
+}
+body:has(.gc-shade-sunset) {
+  --c-accent: #ea580c;
+  --c-accent-hover: #c2410c;
+  --c-rgb: 234, 88, 12;
+  --c-bg: #fff7f0;
+  --c-bg-2: #feeadb;
+  --c-ink: #431407;
+  --c-ink-2: #6b4433;
+  --c-d-bg: #22130a;
+  --c-d-surface: #2f1b0f;
+  --c-d-bg-2: #3d2515;
+  --c-d-accent: #fb923c;
+  --c-d-accent-hover: #fdba74;
+  --c-d-rgb: 251, 146, 60;
+  --c-d-accent-ink: #3a1505;
+}
+body:has(.gc-shade-violet) {
+  --c-accent: #9333ea;
+  --c-accent-hover: #7e22ce;
+  --c-rgb: 147, 51, 234;
+  --c-bg: #faf5ff;
+  --c-bg-2: #f0e4fd;
+  --c-ink: #3b0764;
+  --c-ink-2: #5f4a75;
+  --c-d-bg: #1b0e2a;
+  --c-d-surface: #251439;
+  --c-d-bg-2: #301b49;
+  --c-d-accent: #c084fc;
+  --c-d-accent-hover: #d8b4fe;
+  --c-d-rgb: 192, 132, 252;
+  --c-d-accent-ink: #2e0854;
+}
+
+/* `body` in front so these beat `.gc` and tie `body.dark-theme .gc`, and
+   being later in the cascade, win. */
+body .gc.gc-classic {
+  --gc-bg: var(--c-bg);
+  --gc-surface: #ffffff;
+  --gc-surface-2: var(--c-bg-2);
+  --gc-glass: #ffffff;
+  --gc-ink: var(--c-ink);
+  --gc-ink-2: var(--c-ink-2);
+  --gc-muted: color-mix(in srgb, var(--c-ink-2) 70%, #ffffff);
+  --gc-line: rgba(var(--c-rgb), 0.14);
+  --gc-line-strong: rgba(var(--c-rgb), 0.26);
+  --gc-accent: var(--c-accent);
+  --gc-accent-hover: var(--c-accent-hover);
+  --gc-accent-2: var(--c-accent);
+  --gc-accent-3: var(--c-accent);
+  --gc-accent-ink: #ffffff;
+  --gc-accent-soft: rgba(var(--c-rgb), 0.1);
+  --gc-grad: linear-gradient(var(--gc-accent), var(--gc-accent));
+  --gc-grad-text: linear-gradient(var(--gc-accent), var(--gc-accent));
+  --gc-glow: transparent;
+  --gc-shadow: 0 1px 2px rgba(var(--c-rgb), 0.06), 0 8px 22px rgba(var(--c-rgb), 0.08);
+  --gc-shadow-lg: 0 2px 4px rgba(var(--c-rgb), 0.07), 0 20px 44px rgba(var(--c-rgb), 0.14);
+
+  --gc-font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --gc-font-mono: var(--gc-font-body);
+
+  --gc-radius-sm: 8px;
+  --gc-radius: 12px;
+  --gc-radius-lg: 16px;
+}
+body.dark-theme .gc.gc-classic {
+  --gc-bg: var(--c-d-bg);
+  --gc-surface: var(--c-d-surface);
+  --gc-surface-2: var(--c-d-bg-2);
+  --gc-glass: var(--c-d-surface);
+  --gc-ink: #f6f4f8;
+  --gc-ink-2: color-mix(in srgb, var(--c-d-accent) 18%, #d2d0da);
+  --gc-muted: color-mix(in srgb, var(--c-d-accent) 18%, #93919e);
+  --gc-line: rgba(255, 255, 255, 0.09);
+  --gc-line-strong: rgba(255, 255, 255, 0.17);
+  --gc-accent: var(--c-d-accent);
+  --gc-accent-hover: var(--c-d-accent-hover);
+  --gc-accent-2: var(--c-d-accent);
+  --gc-accent-3: var(--c-d-accent);
+  --gc-accent-ink: var(--c-d-accent-ink);
+  --gc-accent-soft: rgba(var(--c-d-rgb), 0.14);
+  --gc-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 22px rgba(0, 0, 0, 0.22);
+  --gc-shadow-lg: 0 2px 4px rgba(0, 0, 0, 0.3), 0 20px 44px rgba(0, 0, 0, 0.4);
+}
+body.gc-body:has(.gc-classic) {
+  background: var(--c-bg);
+}
+body.gc-body.dark-theme:has(.gc-classic) {
+  background: var(--c-d-bg);
+}
+
+/* ---------- No tech decoration ---------- */
+
+.gc-classic .gc-backdrop,
+.gc-classic .gc-spot::before,
+.gc-classic .gc-spot::after,
+.gc-classic .gc-terminal,
+.gc-classic .gc-marquee {
+  display: none;
+}
+.gc-classic .gc-glass,
+.gc-classic .gc-card,
+.gc-classic .gc-skill-group,
+.gc-classic .gc-service,
+.gc-classic .gc-contact-item,
+.gc-classic .gc-stats,
+.gc-classic .gc-empty,
+.gc-classic .gc-page-btn,
+.gc-classic .gc-float-stat {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.gc-classic .gc-portrait-accent {
+  inset: 14px -14px -14px 14px;
+  border-radius: var(--gc-radius-lg);
+  background: var(--gc-accent-soft);
+  filter: none;
+  opacity: 1;
+}
+.gc-classic .gc-portrait {
+  border-radius: var(--gc-radius-lg);
+}
+
+/* ---------- Type ---------- */
+
+.gc-classic :where(h1, h2, h3, h4),
+.gc-classic .gc-display {
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.gc-classic .gc-display {
+  letter-spacing: -0.02em;
+}
+/* Plain-coloured accent words instead of gradient text. */
+.gc-classic .gc-accent-text,
+.gc-classic .gc-hero-title .gc-hero-role,
+.gc-classic .gc-float-stat strong,
+.gc-classic .gc-step::before {
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  color: var(--gc-accent);
+}
+.gc-classic .gc-accent-text {
+  font-style: italic;
+}
+
+/* Eyebrow: a quiet small-caps label with a short rule, not a pill. */
+.gc-classic .gc-eyebrow {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--gc-accent);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+}
+.gc-classic .gc-eyebrow::before {
+  width: 22px;
+  height: 1px;
+  border-radius: 0;
+  background: currentColor;
+  box-shadow: none;
+}
+
+/* ---------- Components ---------- */
+
+.gc-classic .gc-btn-primary,
+.gc-classic .gc-btn-primary:hover {
+  background: var(--gc-accent);
+  box-shadow: none;
+}
+.gc-classic .gc-btn-primary:hover {
+  background: var(--gc-accent-hover);
+}
+.gc-classic .gc-service-icon,
+.gc-classic .gc-contact-item-icon,
+.gc-classic .gc-empty-icon {
+  background: var(--gc-accent-soft);
+  color: var(--gc-accent);
+  box-shadow: none;
+}
+.gc-classic .gc-work-arrow {
+  background: var(--gc-surface);
+  color: var(--gc-accent);
+}
+.gc-classic .gc-work-media {
+  background: var(--gc-surface-2);
+}
+.gc-classic .gc-page-btn[aria-current="page"],
+.gc-classic .gc-faq-item.is-open .gc-faq-icon,
+.gc-classic .gc-level i.on {
+  background: var(--gc-accent);
+  color: var(--gc-accent-ink);
+}
+
+/* Call-to-action band: a solid panel in the portfolio's shade, with a
+   white button. The dark theme keeps a tinted panel, since its light
+   accent wouldn't hold white text. */
+.gc-classic .gc-cta {
+  background: linear-gradient(135deg, var(--gc-accent), var(--gc-accent-hover));
+  color: #ffffff;
+  border: 0;
+}
+.gc-classic .gc-cta::before {
+  display: none;
+}
+.gc.gc-classic .gc-cta h2 {
+  color: #ffffff;
+}
+.gc.gc-classic .gc-cta p {
+  color: rgba(255, 255, 255, 0.85);
+}
+.gc.gc-classic .gc-cta .gc-btn-primary {
+  background: #ffffff;
+  color: var(--gc-accent) !important;
+}
+body.dark-theme .gc.gc-classic .gc-cta {
+  background: var(--gc-surface-2);
+  border: 1px solid var(--gc-line);
+}
+body.dark-theme .gc.gc-classic .gc-cta p {
+  color: var(--gc-ink-2);
+}
+body.dark-theme .gc.gc-classic .gc-cta .gc-btn-primary {
+  background: var(--gc-accent);
+  color: var(--gc-accent-ink) !important;
+}
