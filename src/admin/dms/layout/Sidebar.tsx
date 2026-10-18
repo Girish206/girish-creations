@@ -61,24 +61,10 @@ const Sidebar = ({
                     submenu: [],
                 },
                 {
-                    id: "certifications",
-                    label: "Certifications",
-                    icon: "fa-solid fa-certificate",
-                    link: "/admin/certifications",
-                    submenu: [],
-                },
-                {
                     id: "skills",
-                    label: "Skills",
+                    label: "Expertise",
                     icon: "fa-solid fa-star",
                     link: "/admin/skills",
-                    submenu: [],
-                },
-                {
-                    id: "tools",
-                    label: "Tools",
-                    icon: "fa-solid fa-toolbox",
-                    link: "/admin/tools",
                     submenu: [],
                 },
                 {
@@ -109,6 +95,22 @@ const Sidebar = ({
                 },
             ],
         },
+        ...(admin?.isSuperAdmin
+            ? [
+                  {
+                      label: "Administration",
+                      items: [
+                          {
+                              id: "admin-users",
+                              label: "Admin Accounts",
+                              icon: "fa-solid fa-user-shield",
+                              link: "/admin/admin-users",
+                              submenu: [],
+                          },
+                      ],
+                  },
+              ]
+            : []),
     ];
 
     const expenseMenuGroups = [
@@ -160,23 +162,20 @@ const Sidebar = ({
                     : []),
             ],
         },
-        // Super admins only: managing who can sign in and which module(s) they see.
-        ...(admin?.isSuperAdmin
-            ? [
-                  {
-                      label: "Administration",
-                      items: [
-                          {
-                              id: "expense-admin-users",
-                              label: "Admin Accounts",
-                              icon: "fa-solid fa-user-shield",
-                              link: "/admin/expense/admin-users",
-                              submenu: [],
-                          },
-                      ],
-                  },
-              ]
-            : []),
+        // Super admins manage every account; other members get "Members" —
+        // the same page, limited to people they add for expenses/savings.
+        {
+            label: admin?.isSuperAdmin ? "Administration" : "People",
+            items: [
+                {
+                    id: "expense-admin-users",
+                    label: admin?.isSuperAdmin ? "Admin Accounts" : "Members",
+                    icon: admin?.isSuperAdmin ? "fa-solid fa-user-shield" : "fa-solid fa-users",
+                    link: "/admin/expense/admin-users",
+                    submenu: [],
+                },
+            ],
+        },
     ];
 
     const menuGroups = (isExpenseModule ? expenseMenuGroups : portfolioMenuGroups).filter(

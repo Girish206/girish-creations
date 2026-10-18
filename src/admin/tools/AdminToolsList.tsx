@@ -3,12 +3,12 @@ import { useTools } from "../../api/hooks/useTools";
 import { useDeleteTool } from "../../api/hooks/admin/useAdminTools";
 import { ListCard } from "../components/ListCard";
 import { Button } from "../components/Button";
-import { RowActions } from "../components/RowActions";
 import { confirmDelete } from "../components/confirmDelete";
 import DefaultModal from "../dms/components/DefaultModal";
 import { AdminToolsForm } from "./AdminToolsForm";
 import "../dms/css/adminDisplays.css";
 import "../admin.css";
+import "../skills/skillsCredentials.css";
 
 type ModalState = { mode: "new" } | { mode: "edit"; id: number } | null;
 
@@ -17,8 +17,8 @@ export function AdminToolsList() {
   const deleteTool = useDeleteTool();
   const [modal, setModal] = useState<ModalState>(null);
 
-  async function handleDelete(id: number) {
-    if (await confirmDelete("tool")) {
+  async function handleDelete(id: number, name: string) {
+    if (await confirmDelete("tool", name)) {
       deleteTool.mutate(id);
     }
   }
@@ -37,26 +37,30 @@ export function AdminToolsList() {
       ) : !items?.length ? (
         <div className="admin-empty-state">No tools yet.</div>
       ) : (
-        <div className="admin-card-grid admin-card-grid-compact">
+        <ul className="admin-chips">
           {items.map((item) => (
-            <div className="card admin-item-card admin-item-card-compact" key={item.id}>
-              <div className="admin-item-card-header">
-                <div className="admin-item-card-heading">
-                  <div className="admin-item-card-icon">
-                    <i className="fa-solid fa-screwdriver-wrench"></i>
-                  </div>
-                  <h3 className="admin-item-card-title">{item.toolName}</h3>
-                </div>
-                <div className="admin-item-card-actions">
-                  <RowActions
-                    onEdit={() => setModal({ mode: "edit", id: item.id })}
-                    onDelete={() => handleDelete(item.id)}
-                  />
-                </div>
-              </div>
-            </div>
+            <li className="admin-chip" key={item.id}>
+              <button
+                type="button"
+                className="admin-chip-label"
+                onClick={() => setModal({ mode: "edit", id: item.id })}
+                title="Edit"
+              >
+                <i className="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i>
+                {item.toolName}
+              </button>
+              <button
+                type="button"
+                className="admin-chip-remove"
+                onClick={() => handleDelete(item.id, item.toolName)}
+                aria-label={`Delete ${item.toolName}`}
+                title="Delete"
+              >
+                <i className="fa-solid fa-xmark" aria-hidden="true"></i>
+              </button>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
 
       {modal && (

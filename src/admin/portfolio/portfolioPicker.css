@@ -5,9 +5,9 @@
   gap: 8px 12px;
   margin-bottom: 16px;
   padding: 10px 14px;
-  border: 1px solid var(--theme-border, rgba(0, 0, 0, 0.08));
+  border: 1px solid var(--adm-line, rgba(0, 0, 0, 0.08));
   border-radius: 10px;
-  background: var(--theme-card-bg, #fff);
+  background: var(--adm-surface, #fff);
   font-size: 14px;
 }
 .admin-portfolio-picker > i {
@@ -17,15 +17,29 @@
   margin: 0;
   font-weight: 600;
 }
-.admin-portfolio-picker select {
-  min-width: 200px;
-  padding: 6px 10px;
-  border: 1px solid var(--theme-border, rgba(0, 0, 0, 0.15));
-  border-radius: 8px;
-  background: transparent;
-  color: inherit;
-  font: inherit;
+.admin-portfolio-picker-select {
+  min-width: 220px;
 }
+.admin-portfolio-picker-select > div {
+  margin: 0 !important;
+}
+/* Compact control — the shared SelectInput "sm" is still form-field height. */
+.admin-portfolio-picker-select .select__control {
+  min-height: 34px !important;
+  border-radius: 8px !important;
+  font-size: 13.5px;
+}
+.admin-portfolio-picker-select .select__value-container {
+  padding: 0 10px !important;
+}
+.admin-portfolio-picker-select .select__indicator {
+  padding: 6px !important;
+}
+.admin-portfolio-picker-select .select__input-container {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
 /* Viewing someone else's data: make it hard to miss. */
 .admin-portfolio-picker.is-other {
   border-color: var(--primary);
@@ -33,7 +47,7 @@
 }
 .admin-portfolio-picker-note {
   flex-basis: 100%;
-  color: var(--theme-text-muted, #6c757d);
+  color: var(--adm-text-2, #6c757d);
   font-size: 13px;
 }
 .admin-portfolio-picker-note a {

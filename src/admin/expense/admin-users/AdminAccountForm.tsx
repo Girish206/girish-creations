@@ -62,6 +62,15 @@ export function AdminAccountForm({ id, startWithLogin = false, onSaved }: AdminA
   const { admin } = useAdminAuth();
   // Only the owner hands out super admin (the server enforces it too).
   const canSetSuperAdmin = Boolean(admin?.isOwner);
+  // Members without super admin add people for the Money Hub only: no
+  // portfolio access, and at most the access they have themselves.
+  const accessCheckboxes = admin?.isSuperAdmin
+    ? ACCESS_CHECKBOXES
+    : ACCESS_CHECKBOXES.filter(
+        (checkbox) =>
+          (checkbox.name === "hasExpensesAccess" && admin?.hasExpensesAccess) ||
+          (checkbox.name === "hasSavingsAccess" && admin?.hasSavingsAccess),
+      );
   const { data: items } = useAdminUsers();
   const existing = isEdit ? items?.find((item) => item.id === id) : undefined;
 
@@ -270,7 +279,7 @@ export function AdminAccountForm({ id, startWithLogin = false, onSaved }: AdminA
       )}
 
       <div className="mb-3 d-flex flex-column gap-2">
-        {ACCESS_CHECKBOXES.map((checkbox) => (
+        {accessCheckboxes.map((checkbox) => (
           <Controller
             key={checkbox.name}
             name={checkbox.name}
@@ -291,7 +300,7 @@ export function AdminAccountForm({ id, startWithLogin = false, onSaved }: AdminA
             )}
           />
         ))}
-        {wantsLogin && !removeLogin && (
+        {admin?.isSuperAdmin && wantsLogin && !removeLogin && (
           <Controller
             name="isSuperAdmin"
             control={control}

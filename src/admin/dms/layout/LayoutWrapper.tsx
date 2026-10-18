@@ -38,12 +38,13 @@ const LayoutWrapper = () => {
         if (path.includes("/admin/profile")) return "profile";
         if (path.includes("/admin/experience")) return "experience";
         if (path.includes("/admin/education")) return "education";
-        if (path.includes("/admin/certifications")) return "certifications";
-        if (path.includes("/admin/skills")) return "skills";
-        if (path.includes("/admin/tools")) return "tools";
+        // Skills, tools and certifications are tabs of one page.
+        if (path.includes("/admin/skills") || path.includes("/admin/tools") || path.includes("/admin/certifications"))
+            return "skills";
         if (path.includes("/admin/projects")) return "projects";
         if (path.includes("/admin/blog")) return "blog";
         if (path.includes("/admin/contact")) return "contact";
+        if (path.includes("/admin/admin-users")) return "admin-users";
 
         return "dashboard";
     };

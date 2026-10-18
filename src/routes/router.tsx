@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import { MainLayout } from "../layouts/MainLayout";
 import { PortfolioLayout } from "../layouts/PortfolioLayout";
 import { PeopleDirectoryPage } from "../pages/directory/PeopleDirectoryPage";
@@ -106,28 +106,15 @@ export const router = createBrowserRouter([
                 },
               },
               {
-                path: "certifications",
-                lazy: async () => {
-                  const { AdminCertificationsList } = await import(
-                    "../admin/certifications/AdminCertificationsList"
-                  );
-                  return { Component: AdminCertificationsList };
-                },
-              },
-              {
+                // Skills, tools and certifications share one page, as tabs.
                 path: "skills",
                 lazy: async () => {
-                  const { AdminSkillsList } = await import("../admin/skills/AdminSkillsList");
-                  return { Component: AdminSkillsList };
+                  const { AdminSkillsCredentialsPage } = await import("../admin/skills/AdminSkillsCredentialsPage");
+                  return { Component: AdminSkillsCredentialsPage };
                 },
               },
-              {
-                path: "tools",
-                lazy: async () => {
-                  const { AdminToolsList } = await import("../admin/tools/AdminToolsList");
-                  return { Component: AdminToolsList };
-                },
-              },
+              { path: "tools", element: <Navigate to="/admin/skills?tab=tools" replace /> },
+              { path: "certifications", element: <Navigate to="/admin/skills?tab=certifications" replace /> },
               {
                 path: "projects",
                 lazy: async () => {
@@ -147,6 +134,16 @@ export const router = createBrowserRouter([
                 lazy: async () => {
                   const { AdminContactList } = await import("../admin/contact/AdminContactList");
                   return { Component: AdminContactList };
+                },
+              },
+              {
+                // Same page as /admin/expense/admin-users, reachable from the
+                // portfolio module (super admins only — the Sidebar shows the
+                // link only to them and the server enforces it).
+                path: "admin-users",
+                lazy: async () => {
+                  const { AdminAccountsList } = await import("../admin/expense/admin-users/AdminAccountsList");
+                  return { Component: AdminAccountsList };
                 },
               },
             ],
@@ -207,8 +204,9 @@ export const router = createBrowserRouter([
                 ],
               },
               {
-                // Owner-only server-side; the Sidebar also only shows this
-                // link to owners, so no extra client-side guard needed here.
+                // "Admin Accounts" for super admins; "Members" (people they
+                // added for expenses/savings) for everyone else here. The
+                // server scopes what each one sees and may change.
                 path: "admin-users",
                 lazy: async () => {
                   const { AdminAccountsList } = await import("../admin/expense/admin-users/AdminAccountsList");

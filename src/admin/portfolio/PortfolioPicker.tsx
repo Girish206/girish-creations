@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "../../api/client";
 import type { ApiEnvelope } from "../../api/types";
+import SelectInput from "../dms/components/SelectInput";
 import "./portfolioPicker.css";
 
 interface ManageablePortfolio {
@@ -39,23 +40,26 @@ export function PortfolioPicker({
   const others = accounts?.filter((account) => String(account.id) !== adminId) ?? [];
   const selected = target ? accounts?.find((account) => String(account.id) === target) : undefined;
   const viewingOther = Boolean(target && target !== adminId);
+  // "me" stands for the admin's own portfolio (SelectInput treats "" as empty).
+  const options = [
+    { value: "me", label: "Myself" },
+    ...others.map((account) => ({ value: String(account.id), label: label(account) })),
+  ];
 
   return (
     <div className={`admin-portfolio-picker${viewingOther ? " is-other" : ""}`}>
       <i className="fa-solid fa-user-shield" aria-hidden="true"></i>
       <label htmlFor="admin-portfolio-picker">Managing portfolio of</label>
-      <select
-        id="admin-portfolio-picker"
-        value={viewingOther ? target! : ""}
-        onChange={(e) => onChange(e.target.value || null)}
-      >
-        <option value="">Myself</option>
-        {others.map((account) => (
-          <option key={account.id} value={account.id}>
-            {label(account)}
-          </option>
-        ))}
-      </select>
+      <div className="admin-portfolio-picker-select">
+        <SelectInput
+          id="admin-portfolio-picker"
+          options={options}
+          value={viewingOther ? target! : "me"}
+          clearable={false}
+          size="sm"
+          onChange={(value: string) => onChange(value && value !== "me" ? value : null)}
+        />
+      </div>
       {viewingOther && selected && (
         <span className="admin-portfolio-picker-note">
           Changes you make here are saved to {label(selected)}'s portfolio.

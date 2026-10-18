@@ -90,7 +90,7 @@ export function AdminAccountsList() {
 
   return (
     <ListCard
-      title="Admin Accounts"
+      title={admin?.isSuperAdmin ? "Admin Accounts" : "Members"}
       action={
         <Button variant="primary" onClick={() => setModal({ mode: "new" })}>
           + New
@@ -101,7 +101,11 @@ export function AdminAccountsList() {
       {isLoading ? (
         <p>Loading...</p>
       ) : !items?.length ? (
-        <div className="admin-empty-state">No admin accounts yet.</div>
+        <div className="admin-empty-state">
+          {admin?.isSuperAdmin
+            ? "No admin accounts yet."
+            : "No members yet. Add the people you share expenses or savings with."}
+        </div>
       ) : (
         <>
           <div className="admin-user-stats">

@@ -45,10 +45,10 @@ export function DashboardHomePage() {
       label: "Certifications",
       value: certifications?.length,
       icon: "fa-solid fa-certificate",
-      link: "/admin/certifications",
+      link: "/admin/skills?tab=certifications",
     },
     { label: "Skills", value: skills?.length, icon: "fa-solid fa-star", link: "/admin/skills" },
-    { label: "Tools", value: tools?.length, icon: "fa-solid fa-toolbox", link: "/admin/tools" },
+    { label: "Tools", value: tools?.length, icon: "fa-solid fa-toolbox", link: "/admin/skills?tab=tools" },
     {
       label: "Projects",
       value: projectsPage?.total,

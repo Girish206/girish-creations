@@ -10,6 +10,7 @@ import DefaultModal from "../dms/components/DefaultModal";
 import { AdminCertificationsForm } from "./AdminCertificationsForm";
 import "../dms/css/adminDisplays.css";
 import "../admin.css";
+import "../skills/skillsCredentials.css";
 
 type ModalState = { mode: "new" } | { mode: "edit"; id: number } | null;
 
@@ -25,8 +26,8 @@ export function AdminCertificationsList() {
 
   const viewItem = viewId !== null ? items?.find((item) => item.id === viewId) : undefined;
 
-  async function handleDelete(id: number) {
-    if (await confirmDelete("certification")) {
+  async function handleDelete(id: number, name: string) {
+    if (await confirmDelete("certification", name)) {
       deleteCertification.mutate(id);
     }
   }
@@ -45,46 +46,36 @@ export function AdminCertificationsList() {
       ) : !items?.length ? (
         <div className="admin-empty-state">No certifications yet.</div>
       ) : (
-        <div className="admin-card-grid">
+        <ul className="admin-cert-list">
           {items.map((item) => (
-            <div className="card admin-item-card" key={item.id}>
-              <div className="admin-item-card-header">
-                <div className="admin-item-card-heading">
-                  <div className="admin-item-card-icon">
-                    <i className="fa-solid fa-certificate"></i>
-                  </div>
-                  <div>
-                    <h3 className="admin-item-card-title">{item.name}</h3>
-                    <p className="admin-item-card-subtitle">{item.issuingOrganization}</p>
-                  </div>
-                </div>
-                <div className="admin-item-card-actions">
-                  <RowActions
-                    onView={() => setViewId(item.id)}
-                    onEdit={() => setModal({ mode: "edit", id: item.id })}
-                    onDelete={() => handleDelete(item.id)}
-                  />
-                </div>
-              </div>
-              <span className="admin-item-card-meta">
-                <i className="fa-solid fa-calendar-days"></i>
-                {formatDate(item.issueDate)}
-                {item.expirationDate ? ` – ${formatDate(item.expirationDate)}` : " · No expiry"}
+            <li className="admin-cert-row" key={item.id}>
+              <span className="admin-cert-icon" aria-hidden="true">
+                <i className="fa-solid fa-certificate"></i>
               </span>
-              {item.credentialUrl && (
-                <a
-                  href={item.credentialUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="admin-item-card-link"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <i className="fa-solid fa-arrow-up-right-from-square"></i> View credential
-                </a>
-              )}
-            </div>
+              <div className="admin-cert-body">
+                <button type="button" className="admin-cert-name" onClick={() => setViewId(item.id)}>
+                  {item.name}
+                </button>
+                <span className="admin-cert-meta">
+                  {item.issuingOrganization} · {formatDate(item.issueDate)}
+                  {item.expirationDate ? ` – ${formatDate(item.expirationDate)}` : ""}
+                  {item.credentialUrl && (
+                    <>
+                      {" · "}
+                      <a href={item.credentialUrl} target="_blank" rel="noreferrer">
+                        Credential <i className="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                      </a>
+                    </>
+                  )}
+                </span>
+              </div>
+              <RowActions
+                onEdit={() => setModal({ mode: "edit", id: item.id })}
+                onDelete={() => handleDelete(item.id, item.name)}
+              />
+            </li>
           ))}
-        </div>
+        </ul>
       )}
 
       {viewItem && (
