@@ -351,3 +351,20 @@
   background: #d92d20;
   color: #ffffff;
 }
+
+/* "View my portfolio" link at the end of the header row. */
+.admin-profile-view-btn {
+  margin-left: auto;
+  align-self: center;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+@media (max-width: 576px) {
+  .admin-profile-hero-body {
+    flex-wrap: wrap;
+  }
+  .admin-profile-view-btn {
+    margin-left: 0;
+  }
+}

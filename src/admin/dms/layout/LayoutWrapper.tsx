@@ -1,8 +1,28 @@
+import { useMemo, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Layout from "./Layout";
+import { PortfolioScopeProvider, type PortfolioScope } from "../../../portfolio/PortfolioScope";
+import { getPortfolioTarget, setPortfolioTarget } from "../../../portfolio/adminPortfolioTarget";
+import { useAdminAuth } from "../../../context/AdminAuthContext";
+import { PortfolioPicker } from "../../portfolio/PortfolioPicker";
 
 const LayoutWrapper = () => {
+    const { admin } = useAdminAuth();
     const location = useLocation();
+    // Super admins can switch the portfolio pages to another account; the
+    // API client sends the choice as a header (api/client.ts).
+    const [portfolioTarget, setTarget] = useState(() => (admin?.isSuperAdmin ? getPortfolioTarget() : null));
+    const choosePortfolio = (adminUserId: string | null) => {
+        setPortfolioTarget(adminUserId);
+        setTarget(adminUserId);
+    };
+    // The portfolio data hooks read the admin's (or chosen account's)
+    // portfolio. Cache entries are per chosen account; switching login
+    // clears the cache entirely (AdminAuthContext).
+    const scope = useMemo<PortfolioScope>(
+        () => ({ apiBase: "/admin/portfolio", cacheKey: `admin:${portfolioTarget ?? "me"}`, basePath: "" }),
+        [portfolioTarget],
+    );
     const path = location.pathname;
     const isExpenseModule = path.startsWith("/admin/expense");
 
@@ -29,9 +49,16 @@ const LayoutWrapper = () => {
     };
 
     return (
-        <Layout activeItem={getActiveItem()} activeSubItem="">
-            <Outlet />
-        </Layout>
+        <PortfolioScopeProvider value={scope}>
+            <Layout activeItem={getActiveItem()} activeSubItem="">
+                {admin?.isSuperAdmin && !isExpenseModule && (
+                    <PortfolioPicker adminId={admin.sub} target={portfolioTarget} onChange={choosePortfolio} />
+                )}
+                {/* Remount on switch so forms (e.g. the autosaving profile)
+                    load the newly chosen portfolio instead of keeping state. */}
+                <Outlet key={portfolioTarget ?? "me"} />
+            </Layout>
+        </PortfolioScopeProvider>
     );
 };
 

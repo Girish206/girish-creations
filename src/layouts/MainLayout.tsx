@@ -1,12 +1,20 @@
 import { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
+import { isAxiosError } from "axios";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
+import { useProfile } from "../api/hooks/useProfile";
+import { NotFoundPage } from "../pages/NotFoundPage";
 import "../site/site.css";
 import "../site/tech.css";
 
+// Public site shell: the people directory at "/" and, inside a
+// PortfolioLayout, every page of one person's portfolio.
 export function MainLayout() {
   const { pathname, hash, key } = useLocation();
+  // Inside a portfolio, a username nobody has gets the 404 page.
+  const { error: profileError } = useProfile();
+  const portfolioMissing = isAxiosError(profileError) && profileError.response?.status === 404;
 
   // The template's global style.css pads <body> and paints its own
   // background; `gc-body` (site.css) neutralizes that for the public site.
@@ -98,7 +106,7 @@ export function MainLayout() {
       </a>
       <Navbar />
       <main id="main" className="gc-main">
-        <Outlet />
+        {portfolioMissing ? <NotFoundPage /> : <Outlet />}
       </main>
       <Footer />
     </div>

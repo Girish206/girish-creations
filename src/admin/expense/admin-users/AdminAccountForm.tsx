@@ -11,6 +11,7 @@ import { ModalForm } from "../../components/ModalForm";
 import { SubmitButton } from "../../components/SubmitButton";
 import InputComp from "../../dms/components/InputComp";
 import { messageFor } from "../../../api/mutationErrors";
+import { useAdminAuth } from "../../../context/AdminAuthContext";
 
 const schema = z
   .object({
@@ -23,6 +24,7 @@ const schema = z
     hasPortfolioAccess: z.boolean(),
     hasExpensesAccess: z.boolean(),
     hasSavingsAccess: z.boolean(),
+    isSuperAdmin: z.boolean(),
   })
   .superRefine((values, ctx) => {
     if (!values.wantsLogin || values.removeLogin) return;
@@ -57,6 +59,9 @@ const ACCESS_CHECKBOXES = [
 // identifier) but the password can still be rotated (leave blank to keep).
 export function AdminAccountForm({ id, startWithLogin = false, onSaved }: AdminAccountFormProps) {
   const isEdit = id !== undefined;
+  const { admin } = useAdminAuth();
+  // Only the owner hands out super admin (the server enforces it too).
+  const canSetSuperAdmin = Boolean(admin?.isOwner);
   const { data: items } = useAdminUsers();
   const existing = isEdit ? items?.find((item) => item.id === id) : undefined;
 
@@ -88,6 +93,7 @@ export function AdminAccountForm({ id, startWithLogin = false, onSaved }: AdminA
         hasPortfolioAccess: existing.hasPortfolioAccess,
         hasExpensesAccess: existing.hasExpensesAccess,
         hasSavingsAccess: existing.hasSavingsAccess,
+        isSuperAdmin: existing.isSuperAdmin,
       });
     } else {
       reset({
@@ -100,6 +106,7 @@ export function AdminAccountForm({ id, startWithLogin = false, onSaved }: AdminA
         hasPortfolioAccess: false,
         hasExpensesAccess: false,
         hasSavingsAccess: false,
+        isSuperAdmin: false,
       });
     }
   }, [existing, startWithLogin, reset]);
@@ -133,6 +140,10 @@ export function AdminAccountForm({ id, startWithLogin = false, onSaved }: AdminA
       hasPortfolioAccess: values.hasPortfolioAccess,
       hasExpensesAccess: values.hasExpensesAccess,
       hasSavingsAccess: values.hasSavingsAccess,
+      // A guest can't sign in, so super admin only applies with login.
+      ...(canSetSuperAdmin && !existing?.isOwner
+        ? { isSuperAdmin: values.wantsLogin && !values.removeLogin && values.isSuperAdmin }
+        : {}),
     };
 
     if (isEdit && existing) {
@@ -280,6 +291,28 @@ export function AdminAccountForm({ id, startWithLogin = false, onSaved }: AdminA
             )}
           />
         ))}
+        {wantsLogin && !removeLogin && (
+          <Controller
+            name="isSuperAdmin"
+            control={control}
+            render={({ field }) => (
+              <div className="form-check">
+                <input
+                  type="checkbox"
+                  className="form-check-input"
+                  id="isSuperAdmin"
+                  checked={field.value ?? false}
+                  disabled={!canSetSuperAdmin || existing?.isOwner}
+                  onChange={(e) => field.onChange(e.target.checked)}
+                />
+                <label className="form-check-label" htmlFor="isSuperAdmin">
+                  Super admin — sees every user's data and manages accounts
+                  {!canSetSuperAdmin && " (only the owner can change this)"}
+                </label>
+              </div>
+            )}
+          />
+        )}
         {isEdit && (
           <Controller
             name="isActive"

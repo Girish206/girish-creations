@@ -1,0 +1,42 @@
+.admin-portfolio-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border: 1px solid var(--theme-border, rgba(0, 0, 0, 0.08));
+  border-radius: 10px;
+  background: var(--theme-card-bg, #fff);
+  font-size: 14px;
+}
+.admin-portfolio-picker > i {
+  color: var(--primary);
+}
+.admin-portfolio-picker label {
+  margin: 0;
+  font-weight: 600;
+}
+.admin-portfolio-picker select {
+  min-width: 200px;
+  padding: 6px 10px;
+  border: 1px solid var(--theme-border, rgba(0, 0, 0, 0.15));
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+/* Viewing someone else's data: make it hard to miss. */
+.admin-portfolio-picker.is-other {
+  border-color: var(--primary);
+  background: var(--primary-light-5, rgba(232, 93, 4, 0.06));
+}
+.admin-portfolio-picker-note {
+  flex-basis: 100%;
+  color: var(--theme-text-muted, #6c757d);
+  font-size: 13px;
+}
+.admin-portfolio-picker-note a {
+  color: var(--primary);
+  font-weight: 600;
+}

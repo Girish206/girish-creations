@@ -565,8 +565,8 @@ body.gc-body.dark-theme {
   position: relative;
   display: flex !important;
   align-items: center;
-  gap: 16px;
-  padding: 13px 4px;
+  gap: 14px;
+  padding: 9px 4px;
   border-bottom: 1px solid var(--gc-line);
   color: var(--gc-ink) !important;
 }
@@ -579,10 +579,10 @@ body.gc-body.dark-theme {
 .gc-drawer-label {
   flex: 1;
   font-family: var(--gc-font-display);
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
 }
 .gc-drawer-arrow {
   font-size: 14px;

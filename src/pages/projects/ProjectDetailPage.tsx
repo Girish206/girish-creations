@@ -7,8 +7,10 @@ import { formatYear } from "../../utils/format";
 import { ArrowUpRight, CtaBand, EmptyState, Reveal } from "../../site/ui";
 import { usePageTitle } from "../../site/usePageTitle";
 import { ALL_PROJECTS } from "../home/constants";
+import { usePortfolioPath } from "../../portfolio/PortfolioScope";
 
 export function ProjectDetailPage() {
+  const path = usePortfolioPath();
   const { id } = useParams<{ id: string }>();
   const { data: project, isLoading, isError } = useProject(id);
   const { data: allProjects } = useProjectsList(1, ALL_PROJECTS);
@@ -18,7 +20,7 @@ export function ProjectDetailPage() {
     return (
       <section className="gc-page-hero">
         <div className="gc-container">
-          <Link to="/projects" className="gc-back">
+          <Link to={path("/projects")} className="gc-back">
             <FaArrowLeft /> All projects
           </Link>
           <EmptyState
@@ -61,7 +63,7 @@ export function ProjectDetailPage() {
     <>
       <section className="gc-page-hero">
         <div className="gc-container">
-          <Link to="/projects" className="gc-back">
+          <Link to={path("/projects")} className="gc-back">
             <FaArrowLeft /> All projects
           </Link>
           <Reveal className="gc-stack gc-gap-24">
@@ -125,7 +127,7 @@ export function ProjectDetailPage() {
         <section className="gc-section-tight">
           <nav className="gc-container gc-pager" aria-label="More projects">
             {prev ? (
-              <Link to={`/projects/${prev.id}`} className="gc-pager-link gc-glass gc-spot">
+              <Link to={path(`/projects/${prev.id}`)} className="gc-pager-link gc-glass gc-spot">
                 <span>
                   <FaArrowLeft /> Previous
                 </span>
@@ -135,7 +137,7 @@ export function ProjectDetailPage() {
               <span />
             )}
             {next && (
-              <Link to={`/projects/${next.id}`} className="gc-pager-link is-next gc-glass gc-spot">
+              <Link to={path(`/projects/${next.id}`)} className="gc-pager-link is-next gc-glass gc-spot">
                 <span>
                   Next <FaArrowRight />
                 </span>

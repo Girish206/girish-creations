@@ -16,6 +16,7 @@ import { AdminAccountForm } from "./AdminAccountForm";
 import { avatarColorFor } from "../avatarColor";
 import "../../dms/css/adminDisplays.css";
 import "../../admin.css";
+import { useAdminAuth } from "../../../context/AdminAuthContext";
 
 type ModalState = { mode: "new" } | { mode: "edit"; id: number; grantLogin?: boolean } | null;
 
@@ -41,6 +42,7 @@ function themedDialog() {
 }
 
 export function AdminAccountsList() {
+  const { admin } = useAdminAuth();
   const { data: items, isLoading } = useAdminUsers();
   const deactivateAccount = useDeactivateAdminUser();
   const deleteAccount = useDeleteAdminUserPermanently();
@@ -194,6 +196,12 @@ export function AdminAccountsList() {
                         <i className={`fa-solid ${item.hasLogin ? "fa-key" : "fa-user-slash"}`} aria-hidden="true"></i>
                         {item.hasLogin ? "Can sign in" : "Guest"}
                       </span>
+                      {item.isSuperAdmin && (
+                        <span className="admin-user-badge is-success" title="Sees every user's data">
+                          <i className="fa-solid fa-user-shield" aria-hidden="true"></i>
+                          Super admin
+                        </span>
+                      )}
                     </div>
 
                     <div className="admin-user-access" aria-label="Module access">
@@ -211,7 +219,10 @@ export function AdminAccountsList() {
 
                     <footer className="admin-user-card-foot">
                       <RowActions
-                        onEdit={() => setModal({ mode: "edit", id: item.id })}
+                        // Only the owner edits the owner account (server-enforced).
+                        onEdit={
+                          !item.isOwner || admin?.isOwner ? () => setModal({ mode: "edit", id: item.id }) : undefined
+                        }
                         onDelete={
                           !item.isOwner && item.linkedRecords === 0 ? () => handleDeletePermanently(item) : undefined
                         }

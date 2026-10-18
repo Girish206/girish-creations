@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { apiClient, getAdminToken, setAdminToken } from "../api/client";
+import { setPortfolioTarget } from "../portfolio/adminPortfolioTarget";
 import type { ApiEnvelope } from "../api/types";
 
 // Top-level shell switch (Portfolio vs. the whole Expense Tracker). Which
@@ -14,6 +16,8 @@ interface AdminIdentity {
   email: string;
   name: string | null;
   isOwner: boolean;
+  // Sees every account's data in the admin panel (the owner always does).
+  isSuperAdmin: boolean;
   hasPortfolioAccess: boolean;
   hasExpensesAccess: boolean;
   hasSavingsAccess: boolean;
@@ -55,6 +59,7 @@ function decodeAdminFromToken(token: string): AdminIdentity | null {
       email: payload.email,
       name: payload.name ?? null,
       isOwner: Boolean(payload.isOwner),
+      isSuperAdmin: Boolean(payload.isSuperAdmin || payload.isOwner),
       hasPortfolioAccess: Boolean(payload.hasPortfolioAccess),
       hasExpensesAccess: Boolean(payload.hasExpensesAccess),
       hasSavingsAccess: Boolean(payload.hasSavingsAccess),
@@ -76,6 +81,7 @@ function defaultModuleFor(admin: AdminIdentity | null): AdminModule {
 }
 
 export function AdminAuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [admin, setAdmin] = useState<AdminIdentity | null>(() => {
     const token = getAdminToken();
     return token ? decodeAdminFromToken(token) : null;
@@ -94,17 +100,25 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function login(email: string, password: string) {
-    const { data } = await apiClient.post<ApiEnvelope<{ token: string; admin: AdminIdentity }>>(
+    const { data } = await apiClient.post<ApiEnvelope<{ token: string }>>(
       "/admin/auth/login",
       { email, password },
     );
     setAdminToken(data.data.token);
-    setAdmin(data.data.admin);
-    setActiveModuleState(defaultModuleFor(data.data.admin));
+    // Admin data (own portfolio, contact messages, ...) is per account.
+    setPortfolioTarget(null);
+    queryClient.clear();
+    // Same source as a page reload: the response's `admin` carries `id`, not
+    // the `sub` the rest of the app reads.
+    const identity = decodeAdminFromToken(data.data.token);
+    setAdmin(identity);
+    setActiveModuleState(defaultModuleFor(identity));
   }
 
   function logout() {
     setAdminToken(null);
+    setPortfolioTarget(null);
+    queryClient.clear();
     setAdmin(null);
   }
 

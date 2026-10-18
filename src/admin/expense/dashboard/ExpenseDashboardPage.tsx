@@ -57,7 +57,7 @@ export function ExpenseDashboardPage() {
     <div>
       <div className="admin-dashboard-hero">
         <div>
-          <span className="admin-dashboard-hero-badge">Group Finances</span>
+          <span className="admin-dashboard-hero-badge">Money Hub</span>
           <h1>Welcome back{admin?.name ? `, ${admin.name}` : ""}</h1>
           <p>Here's a snapshot of the group's expenses and savings.</p>
         </div>

@@ -5,12 +5,15 @@ import { useProfile } from "../api/hooks/useProfile";
 import { useDarkTheme } from "../hooks/useDarkTheme";
 import { ArrowUpRight, SocialLinks } from "../site/ui";
 import { NAV_LINKS } from "../site/navLinks";
+import { usePortfolioPath, usePortfolioScope } from "../portfolio/PortfolioScope";
 
 export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { isDark, toggle } = useDarkTheme();
   const { data: profile } = useProfile();
+  const inPortfolio = usePortfolioScope() !== null;
+  const path = usePortfolioPath();
   const { pathname } = useLocation();
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -51,23 +54,46 @@ export function Navbar() {
   const closeMenu = () => setMenuOpen(false);
   const themeLabel = isDark ? "Switch to light theme" : "Switch to dark theme";
 
+  // The brand always leads back to the people directory ("/"); "Home" in the
+  // nav is the current person's portfolio home.
+  const brand = (onClick?: () => void) => (
+    <Link to="/" className="gc-brand" aria-label="Girish Creations — all portfolios" onClick={onClick}>
+      <img src="/logo/logo.png" alt="" />
+      <span>
+        Girish<span className="gc-brand-accent">Creations</span>
+      </span>
+    </Link>
+  );
+
+  // Outside a portfolio (the directory, the top-level 404) there are no
+  // portfolio pages to link to.
+  if (!inPortfolio) {
+    return (
+      <header className={`gc-header${scrolled ? " is-scrolled" : ""}`}>
+        <div className="gc-container gc-header-inner">
+          {brand()}
+          <div className="gc-header-actions">
+            <button type="button" className="gc-icon-btn" onClick={toggle} aria-label={themeLabel}>
+              {isDark ? <FaSun /> : <FaMoon />}
+            </button>
+          </div>
+        </div>
+      </header>
+    );
+  }
+
   return (
     <>
       <header className={`gc-header${scrolled ? " is-scrolled" : ""}`}>
         <div className="gc-container gc-header-inner">
-          <Link to="/" className="gc-brand" aria-label="Girish Creations — home">
-            <img src="/logo/logo.png" alt="" />
-            <span>
-              Girish<span className="gc-brand-accent">Creations</span>
-            </span>
-          </Link>
+          {brand()}
 
           <nav className="gc-nav" aria-label="Main">
             <ul className="gc-nav-list">
               {NAV_LINKS.map((link) => (
                 <li key={link.to}>
                   <NavLink
-                    to={link.to}
+                    to={path(link.to)}
                     end={link.end}
                     className={({ isActive }) => `gc-nav-link${isActive ? " active" : ""}`}
                   >
@@ -82,7 +108,7 @@ export function Navbar() {
             <button type="button" className="gc-icon-btn" onClick={toggle} aria-label={themeLabel}>
               {isDark ? <FaSun /> : <FaMoon />}
             </button>
-            <Link to="/contact" className="gc-btn gc-btn-dark gc-btn-sm gc-header-cta">
+            <Link to={path("/contact")} className="gc-btn gc-btn-dark gc-btn-sm gc-header-cta">
               Let's talk <ArrowUpRight />
             </Link>
             <button
@@ -112,12 +138,7 @@ export function Navbar() {
         inert={!menuOpen}
       >
         <div className="gc-drawer-head">
-          <Link to="/" className="gc-brand" aria-label="Girish Creations — home" onClick={closeMenu}>
-            <img src="/logo/logo.png" alt="" />
-            <span>
-              Girish<span className="gc-brand-accent">Creations</span>
-            </span>
-          </Link>
+          {brand(closeMenu)}
           <button ref={closeButtonRef} type="button" className="gc-icon-btn" onClick={closeMenu} aria-label="Close menu">
             <FaXmark />
           </button>
@@ -128,7 +149,7 @@ export function Navbar() {
             {NAV_LINKS.map((link, i) => (
               <li key={link.to} style={{ transitionDelay: menuOpen ? `${80 + i * 35}ms` : "0ms" }}>
                 <NavLink
-                  to={link.to}
+                  to={path(link.to)}
                   end={link.end}
                   onClick={closeMenu}
                   className={({ isActive }) => `gc-drawer-link${isActive ? " active" : ""}`}
@@ -143,7 +164,7 @@ export function Navbar() {
         </nav>
 
         <div className="gc-drawer-foot">
-          <Link to="/contact" className="gc-btn gc-btn-primary" onClick={closeMenu}>
+          <Link to={path("/contact")} className="gc-btn gc-btn-primary" onClick={closeMenu}>
             Let's talk <ArrowUpRight />
           </Link>
           <div className="gc-drawer-row">
@@ -152,11 +173,6 @@ export function Navbar() {
               {isDark ? <FaSun /> : <FaMoon />}
             </button>
           </div>
-          {profile?.email && (
-            <a className="gc-drawer-email" href={`mailto:${profile.email}`}>
-              {profile.email}
-            </a>
-          )}
         </div>
       </div>
     </>

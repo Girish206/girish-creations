@@ -6,6 +6,7 @@ import { formatBio } from "../../utils/bio";
 import { useImageLightbox } from "../../components/lightbox/useImageLightbox";
 import { CopyEmailButton } from "../../components/CopyEmailButton";
 import { AvailabilityBadge, Reveal, SocialLinks } from "../../site/ui";
+import { usePortfolioPath } from "../../portfolio/PortfolioScope";
 
 const LEVEL_ORDER = ["Expert", "Advanced", "Intermediate", "Beginner"];
 
@@ -18,7 +19,9 @@ interface HeroSectionProps {
 }
 
 export function HeroSection({ profile, experience, skills, tools, projectCount }: HeroSectionProps) {
+  const path = usePortfolioPath();
   const portrait = uploadUrl(profile?.profilePicture);
+  const resume = uploadUrl(profile?.resume);
   const { openAt, lightbox } = useImageLightbox(portrait ? [portrait] : []);
   const currentRole = experience?.find((exp) => !exp.endDate) ?? experience?.[0];
   const firstName = profile?.fullName.split(" ")[0];
@@ -36,19 +39,21 @@ export function HeroSection({ profile, experience, skills, tools, projectCount }
           <Reveal className="gc-hero-copy">
             <AvailabilityBadge />
             <h1 className="gc-display gc-hero-title">
-              Hi, I'm {firstName ?? "Girish"}.
+              Hi, I'm {firstName ?? "…"}.
               <span className="gc-hero-role">
                 {currentRole?.jobTitle ?? "Full Stack Developer"}.
               </span>
             </h1>
             <p className="gc-lead">{profile ? formatBio(profile.bio, profile.formattedExperience) : "\u00a0"}</p>
             <div className="gc-hero-actions">
-              <Link to="/projects" className="gc-btn gc-btn-primary">
+              <Link to={path("/projects")} className="gc-btn gc-btn-primary">
                 Explore my work <FaArrowRight />
               </Link>
-              <a className="gc-btn gc-btn-ghost" href="/assets/resume/Girish S Resume.pdf" target="_blank" rel="noreferrer">
-                <FaFilePdf /> Résumé
-              </a>
+              {resume && (
+                <a className="gc-btn gc-btn-ghost" href={resume} target="_blank" rel="noreferrer">
+                  <FaFilePdf /> Résumé
+                </a>
+              )}
               {profile?.email && <CopyEmailButton email={profile.email} />}
             </div>
             <SocialLinks profile={profile} />
@@ -73,11 +78,11 @@ export function HeroSection({ profile, experience, skills, tools, projectCount }
                 <p>
                   <span className="gc-terminal-prompt">~ $</span> <span className="gc-terminal-cmd">whoami</span>
                 </p>
-                <p className="gc-terminal-out">{(profile?.fullName ?? "girish").toLowerCase()} · full stack dev</p>
+                <p className="gc-terminal-out">{(profile?.fullName ?? "").toLowerCase()} · {(currentRole?.jobTitle ?? "developer").toLowerCase()}</p>
                 <p>
                   <span className="gc-terminal-prompt">~ $</span> <span className="gc-terminal-cmd">stack --top</span>
                 </p>
-                <p className="gc-terminal-out">{topStack || "laravel · django · react"}</p>
+                <p className="gc-terminal-out">{topStack || "…"}</p>
                 <p>
                   <span className="gc-terminal-prompt">~ $</span> <span className="gc-caret" />
                 </p>

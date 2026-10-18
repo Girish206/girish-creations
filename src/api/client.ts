@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getPortfolioTarget } from "../portfolio/adminPortfolioTarget";
 
 export const apiClient = axios.create({
   baseURL: "/api",
@@ -22,6 +23,11 @@ apiClient.interceptors.request.use((config) => {
   const token = getAdminToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+  // A super admin managing someone else's portfolio (admin PortfolioPicker).
+  const portfolioTarget = getPortfolioTarget();
+  if (portfolioTarget && config.url?.startsWith("/admin/")) {
+    config.headers["X-Portfolio-User"] = portfolioTarget;
   }
   return config;
 });

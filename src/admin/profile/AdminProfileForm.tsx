@@ -14,6 +14,14 @@ import "../admin.css";
 import "./adminProfile.css";
 
 const schema = z.object({
+  // Mirrors the server's rule (profile.service.ts); it also rejects a few
+  // reserved words and names already taken.
+  username: z
+    .string()
+    .regex(
+      /^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/,
+      "3–40 lowercase letters, numbers or hyphens, starting and ending with a letter or number",
+    ),
   fullName: z.string().min(1, "Required"),
   email: z.string().email("Invalid email"),
   bio: z.string().optional(),
@@ -28,7 +36,10 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-type PendingFiles = Pick<ProfileFormInput, "profilePictureFile" | "signatureFile" | "removeSignature">;
+type PendingFiles = Pick<
+  ProfileFormInput,
+  "profilePictureFile" | "signatureFile" | "removeSignature" | "resumeFile" | "removeResume"
+>;
 
 type SaveStatus = "idle" | "pending" | "saving" | "saved" | "invalid" | "error";
 
@@ -51,6 +62,8 @@ export function AdminProfileForm() {
   const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null);
   const [signatureFile, setSignatureFile] = useState<File | null>(null);
   const [removeSignature, setRemoveSignature] = useState(false);
+  // Name of a just-picked résumé, or true once removed, until the refetch lands.
+  const [resumeChange, setResumeChange] = useState<string | true | null>(null);
   const [status, setStatus] = useState<SaveStatus>("idle");
 
   const {
@@ -139,6 +152,7 @@ export function AdminProfileForm() {
     if (profile && !formInitialized.current) {
       formInitialized.current = true;
       reset({
+        username: profile.username ?? "",
         fullName: profile.fullName,
         email: profile.email,
         bio: profile.bio ?? "",
@@ -190,12 +204,14 @@ export function AdminProfileForm() {
   if (!profile) {
     return (
       <div className="card">
-        <div className="admin-card-body">No profile exists yet. Create one directly in the database first.</div>
+        <div className="admin-card-body">Couldn't load your portfolio. Refresh the page to try again.</div>
       </div>
     );
   }
 
   const currentRole = experience?.find((exp) => !exp.endDate) ?? experience?.[0];
+  const publicPath = profile.username ? `/${profile.username}` : null;
+  const hasResume = resumeChange === null ? Boolean(profile.resume) : resumeChange !== true;
 
   return (
     <form className="admin-profile-page" onSubmit={(e) => e.preventDefault()} noValidate>
@@ -239,6 +255,11 @@ export function AdminProfileForm() {
               </p>
             )}
           </div>
+          {publicPath && (
+            <a className="admin-upload-btn admin-profile-view-btn" href={publicPath} target="_blank" rel="noreferrer">
+              <i className="fa-solid fa-arrow-up-right-from-square"></i> View my portfolio
+            </a>
+          )}
         </div>
         <ProfileMeta email={profile.email} experience={profile.formattedExperience} />
       </div>
@@ -246,6 +267,41 @@ export function AdminProfileForm() {
       <SaveStatusIndicator status={status} onRetry={save} />
 
       <div className="admin-profile-grid">
+        <section className="card admin-profile-section">
+          <header className="admin-profile-section-header">
+            <i className="fa-solid fa-globe"></i> Public Page
+          </header>
+          <Controller
+            name="username"
+            control={control}
+            defaultValue=""
+            render={({ field }) => (
+              <InputComp
+                label="Username"
+                required
+                icon="fa-solid fa-at"
+                {...field}
+                onChange={(e) => field.onChange(e.target.value.toLowerCase().replace(/\s+/g, "-"))}
+                error={errors.username?.message}
+              />
+            )}
+          />
+          <small className="admin-hint">
+            Your portfolio lives at{" "}
+            {publicPath ? (
+              <a href={publicPath} target="_blank" rel="noreferrer">
+                <code>
+                  {window.location.host}
+                  {publicPath}
+                </code>
+              </a>
+            ) : (
+              <code>{window.location.host}/your-username</code>
+            )}{" "}
+            and is listed on the home page with your name and photo. Changing the username changes that link.
+          </small>
+        </section>
+
         <section className="card admin-profile-section">
           <header className="admin-profile-section-header">
             <i className="fa-solid fa-id-card"></i> Basic Info
@@ -387,6 +443,55 @@ export function AdminProfileForm() {
             )}
           </div>
           {signatureLightbox}
+        </section>
+
+        <section className="card admin-profile-section">
+          <header className="admin-profile-section-header">
+            <i className="fa-solid fa-file-pdf"></i> Résumé
+          </header>
+          <div className="admin-signature-preview-wrap">
+            <div className="admin-signature-placeholder">
+              <i className="fa-solid fa-file-pdf"></i>
+              {typeof resumeChange === "string" ? (
+                <span>{resumeChange}</span>
+              ) : hasResume && profile.resume ? (
+                <a href={uploadUrl(profile.resume)} target="_blank" rel="noreferrer">
+                  View current résumé
+                </a>
+              ) : (
+                <span>No résumé uploaded — the Résumé buttons stay hidden on your portfolio</span>
+              )}
+            </div>
+          </div>
+          <div className="admin-signature-actions">
+            <label className="admin-upload-btn">
+              <i className="fa-solid fa-upload"></i> {hasResume ? "Replace résumé" : "Upload résumé (PDF)"}
+              <input
+                type="file"
+                accept="application/pdf"
+                hidden
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null;
+                  e.target.value = "";
+                  if (!file) return;
+                  setResumeChange(file.name);
+                  queueFiles({ resumeFile: file, removeResume: false });
+                }}
+              />
+            </label>
+            {hasResume && (
+              <button
+                type="button"
+                className="admin-remove-btn"
+                onClick={() => {
+                  setResumeChange(true);
+                  queueFiles({ resumeFile: null, removeResume: true });
+                }}
+              >
+                <i className="fa-solid fa-trash"></i> Remove résumé
+              </button>
+            )}
+          </div>
         </section>
       </div>
     </form>

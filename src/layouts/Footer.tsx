@@ -2,10 +2,28 @@ import { Link } from "react-router-dom";
 import { useProfile } from "../api/hooks/useProfile";
 import { SocialLinks } from "../site/ui";
 import { NAV_LINKS } from "../site/navLinks";
+import { uploadUrl } from "../api/client";
+import { usePortfolioPath, usePortfolioScope } from "../portfolio/PortfolioScope";
 
 export function Footer() {
   const { data: profile } = useProfile();
+  const inPortfolio = usePortfolioScope() !== null;
+  const path = usePortfolioPath();
   const year = new Date().getFullYear();
+  const resume = uploadUrl(profile?.resume);
+
+  if (!inPortfolio) {
+    return (
+      <footer className="gc-footer">
+        <div className="gc-container">
+          <div className="gc-footer-bottom">
+            <span>© {year} Girish Creations. All rights reserved.</span>
+            <Link to="/admin/login">Member sign in</Link>
+          </div>
+        </div>
+      </footer>
+    );
+  }
 
   return (
     <footer className="gc-footer">
@@ -18,7 +36,9 @@ export function Footer() {
                 Girish<span className="gc-brand-accent">Creations</span>
               </span>
             </Link>
-            <p>Full stack developer building web applications end to end — from database design to deployment.</p>
+            <p>
+              {profile ? `The portfolio of ${profile.fullName}` : "\u00a0"}. <Link to="/">Meet everyone else</Link>.
+            </p>
             <SocialLinks profile={profile} />
           </div>
           <div>
@@ -26,7 +46,7 @@ export function Footer() {
             <ul className="gc-footer-links">
               {NAV_LINKS.map((link) => (
                 <li key={link.to}>
-                  <Link to={link.to}>{link.label}</Link>
+                  <Link to={path(link.to)}>{link.label}</Link>
                 </li>
               ))}
             </ul>
@@ -44,17 +64,19 @@ export function Footer() {
                   <a href={`tel:+91${profile.contactNumber}`}>+91 {profile.contactNumber}</a>
                 </li>
               )}
-              <li>
-                <a href="/assets/resume/Girish S Resume.pdf" target="_blank" rel="noreferrer">
-                  Download résumé
-                </a>
-              </li>
+              {resume && (
+                <li>
+                  <a href={resume} target="_blank" rel="noreferrer">
+                    Download résumé
+                  </a>
+                </li>
+              )}
             </ul>
           </div>
         </div>
         <div className="gc-footer-bottom">
           <span>© {year} Girish Creations. All rights reserved.</span>
-          <span>Designed &amp; built by {profile?.fullName ?? "Girish S"}</span>
+          {profile && <span>Portfolio of {profile.fullName}</span>}
         </div>
       </div>
     </footer>

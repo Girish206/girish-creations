@@ -3,6 +3,7 @@ import { apiClient } from "../../client";
 import type { ApiEnvelope, UserProfile } from "../../types";
 
 export interface ProfileFormInput {
+  username?: string;
   fullName: string;
   email: string;
   bio?: string | null;
@@ -17,6 +18,9 @@ export interface ProfileFormInput {
   signatureFile?: File | null;
   // Ignored if signatureFile is also set — the new upload wins.
   removeSignature?: boolean;
+  resumeFile?: File | null;
+  // Same rule as removeSignature, for the résumé PDF.
+  removeResume?: boolean;
 }
 
 export function useUpdateProfile() {
@@ -24,13 +28,15 @@ export function useUpdateProfile() {
   return useMutation({
     mutationFn: async (input: ProfileFormInput) => {
       const formData = new FormData();
-      const { profilePictureFile, signatureFile, removeSignature, ...rest } = input;
+      const { profilePictureFile, signatureFile, removeSignature, resumeFile, removeResume, ...rest } = input;
       Object.entries(rest).forEach(([key, value]) => {
         formData.append(key, value ?? "");
       });
       if (profilePictureFile) formData.append("profilePicture", profilePictureFile);
       if (signatureFile) formData.append("signature", signatureFile);
       if (removeSignature) formData.append("removeSignature", "true");
+      if (resumeFile) formData.append("resume", resumeFile);
+      if (removeResume) formData.append("removeResume", "true");
 
       const { data } = await apiClient.put<ApiEnvelope<UserProfile>>("/admin/profile", formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -39,6 +45,8 @@ export function useUpdateProfile() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile"] });
+      // Name, photo and username all show in the public directory.
+      queryClient.invalidateQueries({ queryKey: ["portfolios"] });
     },
   });
 }

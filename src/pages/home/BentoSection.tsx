@@ -4,6 +4,7 @@ import type { ExperienceDetails, Skill, Tool, UserProfile } from "../../api/type
 import { formatDuration } from "../../utils/date";
 import { ArrowUpRight, Reveal, SectionHead } from "../../site/ui";
 import { SERVICES } from "./services";
+import { usePortfolioPath } from "../../portfolio/PortfolioScope";
 
 // "#26A, 5th cross, …, Bengaluru 560092" -> "Bengaluru, India": the full
 // street address belongs on the Contact page, not in a small tile.
@@ -29,6 +30,7 @@ export function BentoSection({
   tools: Tool[] | undefined;
   projectCount: number | undefined;
 }) {
+  const path = usePortfolioPath();
   const currentRole = experience?.find((exp) => !exp.endDate) ?? experience?.[0];
   const topSkills = [...(skills ?? [])]
     .sort((a, b) => LEVEL_ORDER.indexOf(a.proficiencyLevel) - LEVEL_ORDER.indexOf(b.proficiencyLevel))
@@ -40,7 +42,7 @@ export function BentoSection({
         <SectionHead eyebrow="At a glance" title="Everything in one place" />
         <div className="gc-bento">
           <Reveal className="gc-tile-2" delay={0}>
-            <Link to="/about" className="gc-tile gc-glass gc-spot" style={{ height: "100%" }}>
+            <Link to={path("/about")} className="gc-tile gc-glass gc-spot" style={{ height: "100%" }}>
               <span className="gc-tile-label">
                 <FaUser /> About
               </span>
@@ -56,7 +58,7 @@ export function BentoSection({
           </Reveal>
 
           <Reveal delay={60}>
-            <Link to="/experience" className="gc-tile gc-glass gc-spot" style={{ height: "100%" }}>
+            <Link to={path("/experience")} className="gc-tile gc-glass gc-spot" style={{ height: "100%" }}>
               <span className="gc-tile-label">
                 <FaBriefcase /> Experience
               </span>
@@ -71,7 +73,7 @@ export function BentoSection({
           </Reveal>
 
           <Reveal delay={120}>
-            <Link to="/projects" className="gc-tile gc-glass gc-spot" style={{ height: "100%" }}>
+            <Link to={path("/projects")} className="gc-tile gc-glass gc-spot" style={{ height: "100%" }}>
               <span className="gc-tile-label">
                 <FaRocket /> Projects
               </span>
@@ -86,7 +88,7 @@ export function BentoSection({
           </Reveal>
 
           <Reveal className="gc-tile-2" delay={0}>
-            <Link to="/experience" className="gc-tile gc-glass gc-spot" style={{ height: "100%" }}>
+            <Link to={path("/experience")} className="gc-tile gc-glass gc-spot" style={{ height: "100%" }}>
               <span className="gc-tile-label">
                 <span className="gc-status-dot" aria-hidden="true" /> Currently
               </span>
@@ -111,7 +113,7 @@ export function BentoSection({
           </Reveal>
 
           <Reveal className="gc-tile-2" delay={60}>
-            <Link to="/skills" className="gc-tile gc-glass gc-spot" style={{ height: "100%" }}>
+            <Link to={path("/skills")} className="gc-tile gc-glass gc-spot" style={{ height: "100%" }}>
               <span className="gc-tile-label">
                 <FaCode /> Tech stack
               </span>
@@ -134,7 +136,7 @@ export function BentoSection({
           </Reveal>
 
           <Reveal className="gc-tile-2" delay={0}>
-            <Link to="/services" className="gc-tile gc-glass gc-spot" style={{ height: "100%" }}>
+            <Link to={path("/services")} className="gc-tile gc-glass gc-spot" style={{ height: "100%" }}>
               <span className="gc-tile-label">
                 <FaWandMagicSparkles /> What I do
               </span>
@@ -167,7 +169,7 @@ export function BentoSection({
           </Reveal>
 
           <Reveal delay={120}>
-            <Link to="/contact" className="gc-tile gc-glass gc-spot" style={{ height: "100%" }}>
+            <Link to={path("/contact")} className="gc-tile gc-glass gc-spot" style={{ height: "100%" }}>
               <span className="gc-tile-label">
                 <FaPaperPlane /> Say hello
               </span>

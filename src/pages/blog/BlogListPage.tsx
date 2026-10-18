@@ -5,8 +5,10 @@ import { useBlogList } from "../../api/hooks/useBlogPosts";
 import { blogImageFor, excerpt, formatFullDate, readingTime, splitTags } from "../../utils/format";
 import { EmptyState, PageHero, Pagination, Reveal, WorkCardSkeleton } from "../../site/ui";
 import { usePageTitle } from "../../site/usePageTitle";
+import { usePortfolioPath } from "../../portfolio/PortfolioScope";
 
 export function BlogListPage() {
+  const path = usePortfolioPath();
   usePageTitle("Blog");
   const [page, setPage] = useState(1);
   const { data, isLoading } = useBlogList(page, 9);
@@ -33,7 +35,7 @@ export function BlogListPage() {
                   const [tag] = splitTags(post.tags);
                   return (
                     <Reveal key={post.id} delay={(i % 3) * 80}>
-                      <Link to={`/blog/${post.slug}`} className="gc-post-card">
+                      <Link to={path(`/blog/${post.slug}`)} className="gc-post-card">
                         <div className="gc-post-media">
                           <img src={blogImageFor(post.id)} alt="" loading="lazy" />
                         </div>

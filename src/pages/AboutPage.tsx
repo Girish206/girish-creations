@@ -12,6 +12,7 @@ import { useImageLightbox } from "../components/lightbox/useImageLightbox";
 import { CopyEmailButton } from "../components/CopyEmailButton";
 import { ArrowUpRight, CtaBand, Reveal, SectionHead, SocialLinks } from "../site/ui";
 import { usePageTitle } from "../site/usePageTitle";
+import { usePortfolioPath } from "../portfolio/PortfolioScope";
 import { CertificationsSection } from "./home/ProfileSections";
 
 const VALUES = [
@@ -33,6 +34,7 @@ const VALUES = [
 ];
 
 export function AboutPage() {
+  const path = usePortfolioPath();
   usePageTitle("About");
   const { data: profile } = useProfile();
   const { data: experience } = useExperience();
@@ -87,7 +89,7 @@ export function AboutPage() {
           <Reveal className="gc-stack gc-gap-24" delay={80}>
             <span className="gc-eyebrow">About me</span>
             <h1 className="gc-h1">
-              Hi, I'm <span className="gc-accent-text">{profile?.fullName ?? "Girish S"}</span>
+              Hi, I'm <span className="gc-accent-text">{profile?.fullName ?? "…"}</span>
             </h1>
             {profile?.bio && <p className="gc-lead">{formatBio(profile.bio, profile.formattedExperience)}</p>}
             {profile?.objective && <p>{profile.objective}</p>}
@@ -108,9 +110,11 @@ export function AboutPage() {
               ))}
             </dl>
             <div className="gc-row" style={{ gap: 12 }}>
-              <a className="gc-btn gc-btn-primary" href="/assets/resume/Girish S Resume.pdf" target="_blank" rel="noreferrer">
-                <FaFilePdf /> Download résumé
-              </a>
+              {profile?.resume && (
+                <a className="gc-btn gc-btn-primary" href={uploadUrl(profile.resume)} target="_blank" rel="noreferrer">
+                  <FaFilePdf /> Download résumé
+                </a>
+              )}
               {profile?.email && <CopyEmailButton email={profile.email} />}
             </div>
             <SocialLinks profile={profile} />
@@ -156,7 +160,7 @@ export function AboutPage() {
           <div className="gc-explore-grid">
             {explore.map((item, i) => (
               <Reveal key={item.to} delay={i * 80}>
-                <Link to={item.to} className="gc-tile gc-glass gc-spot" style={{ height: "100%", minHeight: 0 }}>
+                <Link to={path(item.to)} className="gc-tile gc-glass gc-spot" style={{ height: "100%", minHeight: 0 }}>
                   <span className="gc-tile-label">
                     {item.icon} {item.title}
                   </span>

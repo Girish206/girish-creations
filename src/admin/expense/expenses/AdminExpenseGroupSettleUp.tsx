@@ -118,7 +118,7 @@ export function AdminExpenseGroupSettleUp({ group, expenses }: AdminExpenseGroup
         </div>
       </div>
 
-      {!admin?.isOwner && (
+      {!admin?.isSuperAdmin && (
         <p className="admin-settle-note">
           <i className="fa-solid fa-circle-info"></i> Based on the expenses in this group that you can see.
         </p>

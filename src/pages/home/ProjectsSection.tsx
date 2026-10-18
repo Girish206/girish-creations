@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { FaArrowRight, FaFolderOpen } from "react-icons/fa6";
 import type { ProjectDetails } from "../../api/types";
 import { EmptyState, Reveal, SectionHead, WorkCard, WorkCardSkeleton } from "../../site/ui";
+import { usePortfolioPath } from "../../portfolio/PortfolioScope";
 
 // Projects page: every project (isPage). Home: just the latest few
 // (`featured`), linking through to the full list.
@@ -16,6 +17,7 @@ export function ProjectsSection({
   isPage?: boolean;
   featured?: number;
 }) {
+  const path = usePortfolioPath();
   const shown = featured ? projects?.slice(0, featured) : projects;
   const hasMore = featured !== undefined && (projects?.length ?? 0) > featured;
 
@@ -41,7 +43,7 @@ export function ProjectsSection({
           }
           action={
             hasMore ? (
-              <Link to="/projects" className="gc-link">
+              <Link to={path("/projects")} className="gc-link">
                 All {projects?.length} projects <FaArrowRight />
               </Link>
             ) : undefined

@@ -5,6 +5,7 @@ import { useBlogList, useBlogPost } from "../../api/hooks/useBlogPosts";
 import { blogImageFor, formatFullDate, readingTime, splitTags } from "../../utils/format";
 import { CtaBand, EmptyState, Reveal, SectionHead } from "../../site/ui";
 import { usePageTitle } from "../../site/usePageTitle";
+import { usePortfolioPath } from "../../portfolio/PortfolioScope";
 
 function ShareLinks({ title }: { title: string }) {
   const [copied, setCopied] = useState(false);
@@ -51,6 +52,7 @@ function ShareLinks({ title }: { title: string }) {
 }
 
 export function BlogDetailPage() {
+  const path = usePortfolioPath();
   const { slug } = useParams<{ slug: string }>();
   const { data: post, isLoading, isError } = useBlogPost(slug);
   const { data: relatedData } = useBlogList(1, 4);
@@ -60,7 +62,7 @@ export function BlogDetailPage() {
     return (
       <section className="gc-page-hero">
         <div className="gc-container">
-          <Link to="/blog" className="gc-back">
+          <Link to={path("/blog")} className="gc-back">
             <FaArrowLeft /> All articles
           </Link>
           <EmptyState
@@ -94,7 +96,7 @@ export function BlogDetailPage() {
       <article>
         <header className="gc-page-hero">
           <div className="gc-container" style={{ maxWidth: 868 }}>
-            <Link to="/blog" className="gc-back">
+            <Link to={path("/blog")} className="gc-back">
               <FaArrowLeft /> All articles
             </Link>
             <Reveal className="gc-stack gc-gap-16">
@@ -140,7 +142,7 @@ export function BlogDetailPage() {
             <SectionHead eyebrow="Keep reading" title="More articles" />
             <div className="gc-work-grid gc-work-grid-3">
               {relatedPosts.map((related) => (
-                <Link key={related.id} to={`/blog/${related.slug}`} className="gc-post-card">
+                <Link key={related.id} to={path(`/blog/${related.slug}`)} className="gc-post-card">
                   <div className="gc-post-media">
                     <img src={blogImageFor(related.id)} alt="" loading="lazy" />
                   </div>

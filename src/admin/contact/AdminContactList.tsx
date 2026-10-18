@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../../api/client";
+import { usePortfolioScope } from "../../portfolio/PortfolioScope";
 import type { ApiEnvelope, ContactMessage, PaginatedResponse } from "../../api/types";
 import { ListCard } from "../components/ListCard";
 import { RowActions } from "../components/RowActions";
@@ -10,9 +11,10 @@ import "../admin.css";
 
 export function AdminContactList() {
   const queryClient = useQueryClient();
+  const scope = usePortfolioScope();
 
   const { data, isLoading } = useQuery({
-    queryKey: ["admin-contact-messages"],
+    queryKey: ["admin-contact-messages", scope?.cacheKey],
     queryFn: async () => {
       const { data } = await apiClient.get<ApiEnvelope<PaginatedResponse<ContactMessage>>>("/admin/contact", {
         params: { page: 1, pageSize: 500 },

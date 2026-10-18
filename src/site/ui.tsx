@@ -4,6 +4,7 @@ import { FaArrowLeft, FaArrowRight, FaFacebookF, FaInstagram, FaLinkedinIn, FaXT
 import { uploadUrl } from "../api/client";
 import type { ProjectDetails, UserProfile } from "../api/types";
 import { formatYear } from "../utils/format";
+import { usePortfolioPath } from "../portfolio/PortfolioScope";
 
 // Fades/slides its content in the first time it scrolls into view. Content
 // is never hidden for users who prefer reduced motion (see site.css).
@@ -154,9 +155,10 @@ export function SocialLinks({ profile }: { profile: UserProfile | undefined }) {
 }
 
 export function WorkCard({ project, showDescription = false }: { project: ProjectDetails; showDescription?: boolean }) {
+  const path = usePortfolioPath();
   const image = uploadUrl(project.image);
   return (
-    <Link to={`/projects/${project.id}`} className="gc-work-card gc-spot">
+    <Link to={path(`/projects/${project.id}`)} className="gc-work-card gc-spot">
       <div className="gc-work-media">
         {image ? (
           <img src={image} alt="" loading="lazy" />
@@ -194,6 +196,7 @@ export function WorkCardSkeleton() {
 }
 
 export function CtaBand() {
+  const path = usePortfolioPath();
   return (
     <section className="gc-section">
       <div className="gc-container">
@@ -202,7 +205,7 @@ export function CtaBand() {
             <h2>Have a project in mind?</h2>
             <p>I'm open to freelance work and full-time roles. Tell me what you're building and I'll get back to you.</p>
           </div>
-          <Link to="/contact" className="gc-btn gc-btn-primary">
+          <Link to={path("/contact")} className="gc-btn gc-btn-primary">
             Let's work together <FaArrowRight />
           </Link>
         </Reveal>

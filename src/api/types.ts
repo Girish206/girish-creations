@@ -1,5 +1,7 @@
 export interface UserProfile {
   id: number;
+  // Public URL handle: the portfolio lives at /<username>.
+  username: string | null;
   fullName: string;
   email: string;
   bio: string | null;
@@ -15,6 +17,22 @@ export interface UserProfile {
   instaId: string | null;
   linkedinId: string | null;
   twitterId: string | null;
+  resume: string | null;
+}
+
+// One card in the public people directory (GET /portfolios).
+export interface PortfolioSummary {
+  id: number;
+  username: string;
+  fullName: string;
+  profilePicture: string | null;
+  bio: string | null;
+  jobTitle: string | null;
+  // Only set while the latest role is ongoing.
+  companyName: string | null;
+  projectCount: number;
+  formattedExperience: string;
+  formattedExperienceInYears: number;
 }
 
 export interface ExperienceDetails {
@@ -106,6 +124,8 @@ export interface AdminUserRef {
 
 export interface AdminUserAccount extends AdminUserRef {
   isOwner: boolean;
+  // Always true for the owner.
+  isSuperAdmin: boolean;
   isActive: boolean;
   hasLogin: boolean;
   hasPortfolioAccess: boolean;

@@ -9,13 +9,15 @@ import { useTools } from "../api/hooks/useTools";
 import { useProjectsList } from "../api/hooks/useProjects";
 import { useBlogList } from "../api/hooks/useBlogPosts";
 import { apiClient } from "../api/client";
+import { usePortfolioScope } from "../portfolio/PortfolioScope";
 import type { ApiEnvelope, ContactMessage, PaginatedResponse } from "../api/types";
 import "./dms/css/adminDisplays.css";
 import "./admin.css";
 
 function useContactCount() {
+  const scope = usePortfolioScope();
   return useQuery({
-    queryKey: ["admin-contact-messages-count"],
+    queryKey: ["admin-contact-messages-count", scope?.cacheKey],
     queryFn: async () => {
       const { data } = await apiClient.get<ApiEnvelope<PaginatedResponse<ContactMessage>>>("/admin/contact", {
         params: { page: 1, pageSize: 1 },

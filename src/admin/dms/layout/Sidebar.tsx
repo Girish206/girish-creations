@@ -160,8 +160,8 @@ const Sidebar = ({
                     : []),
             ],
         },
-        // Owner-only: managing who can sign in and which module(s) they see.
-        ...(admin?.isOwner
+        // Super admins only: managing who can sign in and which module(s) they see.
+        ...(admin?.isSuperAdmin
             ? [
                   {
                       label: "Administration",

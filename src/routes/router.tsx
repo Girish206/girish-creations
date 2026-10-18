@@ -1,5 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import { MainLayout } from "../layouts/MainLayout";
+import { PortfolioLayout } from "../layouts/PortfolioLayout";
+import { PeopleDirectoryPage } from "../pages/directory/PeopleDirectoryPage";
 import { HomePage } from "../pages/HomePage";
 import { AboutPage } from "../pages/AboutPage";
 import { ExperiencePage } from "../pages/ExperiencePage";
@@ -31,16 +33,27 @@ export const router = createBrowserRouter([
   {
     element: <MainLayout />,
     children: [
-      { path: "/", element: <HomePage /> },
-      { path: "/about", element: <AboutPage /> },
-      { path: "/experience", element: <ExperiencePage /> },
-      { path: "/skills", element: <SkillsPage /> },
-      { path: "/projects", element: <ProjectsListPage /> },
-      { path: "/services", element: <ServicesPage /> },
-      { path: "/contact", element: <ContactPage /> },
-      { path: "/blog", element: <BlogListPage /> },
-      { path: "/blog/:slug", element: <BlogDetailPage /> },
-      { path: "/projects/:id", element: <ProjectDetailPage /> },
+      { path: "/", element: <PeopleDirectoryPage /> },
+      { path: "*", element: <NotFoundPage /> },
+    ],
+  },
+  {
+    // One person's portfolio. Static paths (/admin, /admin/login) rank above
+    // this dynamic segment, and the server refuses usernames that would
+    // collide with them.
+    path: "/:username",
+    element: <PortfolioLayout />,
+    children: [
+      { index: true, element: <HomePage /> },
+      { path: "about", element: <AboutPage /> },
+      { path: "experience", element: <ExperiencePage /> },
+      { path: "skills", element: <SkillsPage /> },
+      { path: "projects", element: <ProjectsListPage /> },
+      { path: "services", element: <ServicesPage /> },
+      { path: "contact", element: <ContactPage /> },
+      { path: "blog", element: <BlogListPage /> },
+      { path: "blog/:slug", element: <BlogDetailPage /> },
+      { path: "projects/:id", element: <ProjectDetailPage /> },
       { path: "*", element: <NotFoundPage /> },
     ],
   },

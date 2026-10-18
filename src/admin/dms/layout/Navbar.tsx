@@ -108,7 +108,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
                                 onClick={() => goToModule("expense")}
                             >
                                 <i className="fa-solid fa-sack-dollar"></i>
-                                <span className="d-none d-md-inline">Group Finances</span>
+                                <span className="d-none d-md-inline">Money Hub</span>
                             </button>
                         </div>
                     )}

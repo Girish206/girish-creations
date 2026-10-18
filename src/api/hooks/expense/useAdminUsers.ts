@@ -10,6 +10,8 @@ export interface AdminUserCreateInput {
   hasPortfolioAccess: boolean;
   hasExpensesAccess: boolean;
   hasSavingsAccess: boolean;
+  // Only the owner may send this.
+  isSuperAdmin?: boolean;
 }
 
 export interface AdminUserUpdateInput {
@@ -24,6 +26,8 @@ export interface AdminUserUpdateInput {
   hasPortfolioAccess?: boolean;
   hasExpensesAccess?: boolean;
   hasSavingsAccess?: boolean;
+  // Only the owner may send this.
+  isSuperAdmin?: boolean;
 }
 
 export function useAdminUsers() {
