@@ -1,0 +1,17 @@
+{
+  "id": "/",
+  "name": "Girish Creations",
+  "short_name": "Girish Creations",
+  "description": "Browse people's portfolios, work, experience and projects on Girish Creations.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#070820",
+  "background_color": "#070820",
+  "icons": [
+    { "src": "/logo/pwa-64x64.png", "sizes": "64x64", "type": "image/png" },
+    { "src": "/logo/pwa-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/logo/pwa-512x512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/logo/maskable-icon-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

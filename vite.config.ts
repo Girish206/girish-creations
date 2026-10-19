@@ -9,9 +9,9 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['logo/favicon.ico', 'logo/apple-touch-icon-180x180.png'],
-      // The installable app is the admin panel only: public/admin.webmanifest
-      // is linked at runtime on /admin routes (see src/pwa/adminManifest.ts),
-      // so the plugin must not inject a site-wide manifest.
+      // The site installs as two apps (public/portfolio.webmanifest and
+      // public/admin.webmanifest), linked per route at runtime by
+      // src/pwa/appManifest.ts, so the plugin must not inject a manifest.
       manifest: false,
       workbox: {
         // Precache the app shell only; template images and the resume are
