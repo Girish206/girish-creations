@@ -2,7 +2,8 @@ import { router } from "../routes/router";
 
 // The site installs as two separate apps: admin pages advertise the admin
 // manifest (opens into /admin), every other page the portfolio manifest
-// (opens into the people directory). Distinct manifest ids keep them apart.
+// (opens into the people directory). index.html / admin.html already link the
+// right one on load; this keeps it right across client-side navigation.
 const ADMIN_MANIFEST = "/admin.webmanifest";
 const PORTFOLIO_MANIFEST = "/portfolio.webmanifest";
 
