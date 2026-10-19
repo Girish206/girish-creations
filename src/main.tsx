@@ -6,6 +6,7 @@ import { RouterProvider } from "react-router-dom";
 import { router } from "./routes/router";
 import { AdminAuthProvider } from "./context/AdminAuthContext";
 import { showMutationError } from "./api/mutationErrors";
+import { setupAdminManifest } from "./pwa/adminManifest";
 
 const queryClient = new QueryClient({
   mutationCache: new MutationCache({
@@ -22,6 +23,8 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+setupAdminManifest();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

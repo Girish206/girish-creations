@@ -9,23 +9,10 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['logo/favicon.ico', 'logo/apple-touch-icon-180x180.png'],
-      manifest: {
-        name: 'Girish Creations',
-        short_name: 'Girish Creations',
-        description:
-          'Girish Creations — a portfolio platform where people showcase their work, experience and projects.',
-        theme_color: '#070820',
-        background_color: '#070820',
-        display: 'standalone',
-        start_url: '/',
-        scope: '/',
-        icons: [
-          { src: '/logo/pwa-64x64.png', sizes: '64x64', type: 'image/png' },
-          { src: '/logo/pwa-192x192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/logo/pwa-512x512.png', sizes: '512x512', type: 'image/png' },
-          { src: '/logo/maskable-icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
-        ],
-      },
+      // The installable app is the admin panel only: public/admin.webmanifest
+      // is linked at runtime on /admin routes (see src/pwa/adminManifest.ts),
+      // so the plugin must not inject a site-wide manifest.
+      manifest: false,
       workbox: {
         // Precache the app shell only; template images and the resume are
         // cached at runtime as they're requested.
