@@ -5,6 +5,8 @@ import type { AdminUserAccount, ApiEnvelope } from "../../types";
 export interface AdminUserCreateInput {
   // Omit both for a guest member (listed in pickers, can't log in).
   email?: string | null;
+  // Digits only; also a sign-in.
+  mobile?: string | null;
   password?: string | null;
   name?: string | null;
   hasPortfolioAccess: boolean;
@@ -19,6 +21,8 @@ export interface AdminUserUpdateInput {
   // Set together to grant a guest login access, or to change an existing
   // login member's email.
   email?: string;
+  // null clears it.
+  mobile?: string | null;
   password?: string;
   // Back to a guest: password cleared, email kept.
   removeLogin?: boolean;

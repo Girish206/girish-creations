@@ -12,12 +12,14 @@ import { SubmitButton } from "../../components/SubmitButton";
 import InputComp from "../../dms/components/InputComp";
 import { messageFor } from "../../../api/mutationErrors";
 import { useAdminAuth } from "../../../context/AdminAuthContext";
+import { normalizeMobile } from "../../../utils/mobile";
 
 const schema = z
   .object({
     name: z.string().min(1, "Required"),
     wantsLogin: z.boolean(),
     email: z.string().optional(),
+    mobile: z.string().optional(),
     password: z.string().optional(),
     removeLogin: z.boolean(),
     isActive: z.boolean(),
@@ -27,9 +29,15 @@ const schema = z
     isSuperAdmin: z.boolean(),
   })
   .superRefine((values, ctx) => {
+    if (values.mobile && !normalizeMobile(values.mobile)) {
+      ctx.addIssue({ code: "custom", path: ["mobile"], message: "Enter a valid 10-digit mobile number" });
+    }
     if (!values.wantsLogin || values.removeLogin) return;
-    if (!values.email || !z.string().email().safeParse(values.email).success) {
-      ctx.addIssue({ code: "custom", path: ["email"], message: "Valid email required for login access" });
+    if (values.email && !z.string().email().safeParse(values.email).success) {
+      ctx.addIssue({ code: "custom", path: ["email"], message: "Enter a valid email" });
+    }
+    if (!values.email && !values.mobile) {
+      ctx.addIssue({ code: "custom", path: ["email"], message: "An email or a mobile number is needed to sign in" });
     }
     if (values.password && values.password.length < 8) {
       ctx.addIssue({ code: "custom", path: ["password"], message: "Must be at least 8 characters" });
@@ -96,6 +104,7 @@ export function AdminAccountForm({ id, startWithLogin = false, onSaved }: AdminA
         name: existing.name ?? "",
         wantsLogin: existing.hasLogin || startWithLogin,
         email: existing.email ?? "",
+        mobile: existing.mobile ?? "",
         password: "",
         removeLogin: false,
         isActive: existing.isActive,
@@ -109,6 +118,7 @@ export function AdminAccountForm({ id, startWithLogin = false, onSaved }: AdminA
         name: "",
         wantsLogin: startWithLogin,
         email: "",
+        mobile: "",
         password: "",
         removeLogin: false,
         isActive: true,
@@ -160,9 +170,10 @@ export function AdminAccountForm({ id, startWithLogin = false, onSaved }: AdminA
         id: existing.id,
         input: {
           name: values.name || null,
-          // Email only changes here when we're granting login for the
-          // first time — an already-login account keeps its email fixed.
-          email: !alreadyHasLogin && values.wantsLogin ? values.email : undefined,
+          // Email is fixed once it's someone's sign-in; until then (a guest,
+          // or an account signing in by mobile) it can be set.
+          email: !existing.email && values.wantsLogin && values.email ? values.email : undefined,
+          mobile: values.mobile ? normalizeMobile(values.mobile) : null,
           password: values.removeLogin ? undefined : values.password || undefined,
           removeLogin: values.removeLogin || undefined,
           isActive: values.isActive,
@@ -172,6 +183,7 @@ export function AdminAccountForm({ id, startWithLogin = false, onSaved }: AdminA
     } else {
       await createAccount.mutateAsync({
         email: values.wantsLogin ? values.email || null : null,
+        mobile: values.mobile ? normalizeMobile(values.mobile) : null,
         password: values.wantsLogin ? values.password || null : null,
         name: values.name || null,
         ...accessFlags,
@@ -189,6 +201,21 @@ export function AdminAccountForm({ id, startWithLogin = false, onSaved }: AdminA
         defaultValue=""
         render={({ field }) => <InputComp label="Name" required {...field} error={errors.name?.message} />}
       />
+      <Controller
+        name="mobile"
+        control={control}
+        defaultValue=""
+        render={({ field }) => (
+          <InputComp
+            label="Mobile number (optional — can be used to sign in)"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            {...field}
+            error={errors.mobile?.message}
+          />
+        )}
+      />
 
       <Controller
         name="wantsLogin"
@@ -204,7 +231,7 @@ export function AdminAccountForm({ id, startWithLogin = false, onSaved }: AdminA
               onChange={(e) => field.onChange(e.target.checked)}
             />
             <label className="form-check-label" htmlFor="wantsLogin">
-              Grant login access (email &amp; password)
+              Grant login access (email or mobile number, and a password)
             </label>
           </div>
         )}
@@ -245,13 +272,12 @@ export function AdminAccountForm({ id, startWithLogin = false, onSaved }: AdminA
             defaultValue=""
             render={({ field }) => (
               <InputComp
-                label="Email"
+                label="Email (optional if a mobile number is set)"
                 type="email"
                 inputMode="email"
                 autoCapitalize="none"
                 spellCheck={false}
-                required
-                readOnly={alreadyHasLogin}
+                readOnly={alreadyHasLogin && Boolean(existing?.email)}
                 {...field}
                 error={errors.email?.message}
               />

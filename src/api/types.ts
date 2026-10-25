@@ -160,6 +160,8 @@ export interface AdminUserAccount extends AdminUserRef {
   hasPortfolioAccess: boolean;
   hasExpensesAccess: boolean;
   hasSavingsAccess: boolean;
+  // Digits only; an alternative to email for signing in.
+  mobile: string | null;
   createdAt: string;
   // Expenses, savings etc. pointing at this person. 0 = can be deleted
   // outright; otherwise they can only be deactivated.

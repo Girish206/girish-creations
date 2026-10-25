@@ -23,6 +23,18 @@
    admin route is mounted — see useAdminBodyClass.ts. */
 body.admin-page {
   padding: 0;
+  /* Same type as the Girish Creations site (see site.css --gc-font-*):
+     Inter for body text, Space Grotesk for headings. */
+  --font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+body.admin-page h1,
+body.admin-page h2,
+body.admin-page h3,
+body.admin-page h4,
+body.admin-page h5,
+body.admin-page h6 {
+  font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
 }
 
 .admin-shell {

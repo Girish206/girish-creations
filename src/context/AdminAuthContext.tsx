@@ -13,7 +13,8 @@ export type AdminModule = "portfolio" | "expense";
 
 interface AdminIdentity {
   sub: string;
-  email: string;
+  // Null for an account that signs in with its mobile number.
+  email: string | null;
   name: string | null;
   isOwner: boolean;
   // Sees every account's data in the admin panel (the owner always does).
@@ -26,7 +27,8 @@ interface AdminIdentity {
 interface AdminAuthContextValue {
   isAuthenticated: boolean;
   admin: AdminIdentity | null;
-  login: (email: string, password: string) => Promise<void>;
+  // `identifier` is an email address or a mobile number.
+  login: (identifier: string, password: string) => Promise<void>;
   logout: () => void;
   // Ported from the reference DMS app's AuthContext: a user-selectable
   // background tint for the admin shell (swatches live in the Navbar's
@@ -56,7 +58,7 @@ function decodeAdminFromToken(token: string): AdminIdentity | null {
     const payload = JSON.parse(atob(segment.padEnd(Math.ceil(segment.length / 4) * 4, "=")));
     return {
       sub: payload.sub,
-      email: payload.email,
+      email: payload.email ?? null,
       name: payload.name ?? null,
       isOwner: Boolean(payload.isOwner),
       isSuperAdmin: Boolean(payload.isSuperAdmin || payload.isOwner),
@@ -99,18 +101,22 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     setActiveModuleState(module);
   }
 
-  async function login(email: string, password: string) {
+  async function login(identifier: string, password: string) {
     const { data } = await apiClient.post<ApiEnvelope<{ token: string }>>(
       "/admin/auth/login",
-      { email, password },
+      { email: identifier, password },
     );
+    // Same source as a page reload: the response's `admin` carries `id`, not
+    // the `sub` the rest of the app reads.
+    const identity = decodeAdminFromToken(data.data.token);
+    // A cricket-only (CrickVerse) account has nothing to open here.
+    if (identity && !identity.hasPortfolioAccess && !hasAnyExpenseAccess(identity)) {
+      throw new NoAdminModuleError();
+    }
     setAdminToken(data.data.token);
     // Admin data (own portfolio, contact messages, ...) is per account.
     setPortfolioTarget(null);
     queryClient.clear();
-    // Same source as a page reload: the response's `admin` carries `id`, not
-    // the `sub` the rest of the app reads.
-    const identity = decodeAdminFromToken(data.data.token);
     setAdmin(identity);
     setActiveModuleState(defaultModuleFor(identity));
   }
@@ -138,6 +144,13 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
       {children}
     </AdminAuthContext.Provider>
   );
+}
+
+// Signed in fine, but the account has neither portfolio nor expense access.
+export class NoAdminModuleError extends Error {
+  constructor() {
+    super("This account has no access to the Girish Creations admin. Cricket players sign in to CrickVerse instead.");
+  }
 }
 
 export function useAdminAuth() {

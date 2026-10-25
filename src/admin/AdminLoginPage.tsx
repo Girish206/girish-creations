@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAdminAuth } from "../context/AdminAuthContext";
+import { NoAdminModuleError, useAdminAuth } from "../context/AdminAuthContext";
 import InputComp from "./dms/components/InputComp";
 import CustomButton from "./dms/components/CustomButton";
 import { useAdminBodyClass } from "./useAdminBodyClass";
@@ -32,8 +32,8 @@ export function AdminLoginPage() {
     try {
       await login(email, password);
       navigate("/admin", { replace: true });
-    } catch {
-      setError("Invalid email or password.");
+    } catch (err) {
+      setError(err instanceof NoAdminModuleError ? err.message : "Invalid email/mobile number or password.");
     } finally {
       setLoading(false);
     }
@@ -51,21 +51,24 @@ export function AdminLoginPage() {
 
         <span className="admin-login-badge">Girish Creations</span>
         <h1 className="admin-login-heading">Welcome Back</h1>
-        <p className="admin-login-subtitle">Sign in to manage your portfolio</p>
+        <p className="admin-login-subtitle">Sign in with your email or mobile number</p>
 
         <form onSubmit={handleSubmit} noValidate className="admin-login-form">
           {error && <div className="alert alert-danger py-2 text-center">{error}</div>}
 
           <InputComp
-            type="email"
+            type="text"
             name="email"
+            autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             floating={true}
             required
             icon="fa-solid fa-circle-user"
             iconPosition="right"
-            label="Email"
+            label="Email or mobile number"
           />
 
           <InputComp

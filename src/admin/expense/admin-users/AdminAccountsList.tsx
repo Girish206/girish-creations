@@ -183,9 +183,9 @@ export function AdminAccountsList() {
                             </span>
                           )}
                         </p>
-                        {item.name && item.email && (
-                          <p className="admin-user-email" title={item.email}>
-                            {item.email}
+                        {item.name && (item.email || item.mobile) && (
+                          <p className="admin-user-email" title={item.email ?? item.mobile ?? ""}>
+                            {[item.email, item.mobile].filter(Boolean).join(" · ")}
                           </p>
                         )}
                       </div>
