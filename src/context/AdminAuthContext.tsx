@@ -104,7 +104,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   async function login(identifier: string, password: string) {
     const { data } = await apiClient.post<ApiEnvelope<{ token: string }>>(
       "/admin/auth/login",
-      { email: identifier, password },
+      { app: "admin", email: identifier, password },
     );
     // Same source as a page reload: the response's `admin` carries `id`, not
     // the `sub` the rest of the app reads.

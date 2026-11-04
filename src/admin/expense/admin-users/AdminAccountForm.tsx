@@ -97,6 +97,9 @@ export function AdminAccountForm({ id, startWithLogin = false, onSaved }: AdminA
   // deactivated account), shown in the form as well as the toast.
   const [saveError, setSaveError] = useState("");
   const alreadyHasLogin = Boolean(existing?.hasLogin);
+  // The server spots someone already on RunMitra, who keeps their password if
+  // this is left blank. It asks for one if they turn out to be new.
+  const passwordOptional = alreadyHasLogin || !isEdit;
 
   useEffect(() => {
     if (existing) {
@@ -140,7 +143,7 @@ export function AdminAccountForm({ id, startWithLogin = false, onSaved }: AdminA
     // keeps the current one.
     const grantingLoginNow = values.wantsLogin && !alreadyHasLogin;
     // A guest's email may already be stored (login was removed earlier).
-    if (grantingLoginNow && !values.password) {
+    if (grantingLoginNow && !values.password && !passwordOptional) {
       setError("password", { message: "Required" });
       return;
     }
@@ -185,6 +188,7 @@ export function AdminAccountForm({ id, startWithLogin = false, onSaved }: AdminA
         email: values.wantsLogin ? values.email || null : null,
         mobile: values.mobile ? normalizeMobile(values.mobile) : null,
         password: values.wantsLogin ? values.password || null : null,
+        grantLogin: values.wantsLogin,
         name: values.name || null,
         ...accessFlags,
       });
@@ -289,13 +293,19 @@ export function AdminAccountForm({ id, startWithLogin = false, onSaved }: AdminA
             defaultValue=""
             render={({ field }) => (
               <InputComp
-                label={alreadyHasLogin ? "New Password (leave blank to keep current)" : "Password"}
+                label={
+                  alreadyHasLogin
+                    ? "New Password, also changes RunMitra (leave blank to keep current)"
+                    : !isEdit
+                      ? "Password (leave blank if they're already on RunMitra)"
+                      : "Password"
+                }
                 type={showPassword ? "text" : "password"}
                 icon={`fa-solid ${showPassword ? "fa-eye-slash" : "fa-eye"}`}
                 iconOnClick={() => setShowPassword((shown) => !shown)}
                 autoCapitalize="none"
                 spellCheck={false}
-                required={!alreadyHasLogin}
+                required={!passwordOptional}
                 {...field}
                 error={errors.password?.message}
               />

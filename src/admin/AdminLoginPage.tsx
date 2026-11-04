@@ -1,21 +1,49 @@
-import { useState, type FormEvent } from "react";
+import { useLayoutEffect, useState, type FormEvent } from "react";
+import { isAxiosError } from "axios";
 import { useNavigate } from "react-router-dom";
+import { messageFor } from "../api/mutationErrors";
+import { normalizeMobile } from "../utils/mobile";
 import { NoAdminModuleError, useAdminAuth } from "../context/AdminAuthContext";
 import InputComp from "./dms/components/InputComp";
 import CustomButton from "./dms/components/CustomButton";
 import { useAdminBodyClass } from "./useAdminBodyClass";
-import { useAdminTheme } from "./useAdminTheme";
 import "./dms/global.css";
 import "./dms/css/Login.css";
 
-// A bold, single-focus centered login screen: a soft pastel logo-color
-// gradient backdrop with the same ambient "ash" shapes the public site
-// floats in its own page corners, and one card. Still built entirely from
+// A bold, single-focus centered login screen: a white card on the brand
+// gradient, whichever theme is saved, so the login always pins Bootstrap's
+// light palette instead of using useAdminTheme. Still built entirely from
 // the ported DMS components (InputComp/CustomButton); only the layout and
 // ./dms/css/Login.css's styling are new.
+type LoginField = "identifier" | "password";
+
+// Which input a failed sign-in is about (the server's error codes).
+const FIELD_FOR_CODE: Record<string, LoginField> = {
+  INVALID_IDENTIFIER: "identifier",
+  UNKNOWN_ACCOUNT: "identifier",
+  ACCOUNT_INACTIVE: "identifier",
+  NO_LOGIN: "identifier",
+  NO_PASSWORD: "identifier",
+  WRONG_PASSWORD: "password",
+};
+
+function identifierProblem(identifier: string) {
+  const value = identifier.trim();
+  if (!value) return "Enter your email or mobile number";
+  if (value.includes("@")) return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? "" : "Enter a valid email";
+  return normalizeMobile(value) ? "" : "Enter a valid 10-digit mobile number";
+}
+
 export function AdminLoginPage() {
   useAdminBodyClass();
-  useAdminTheme();
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    root.setAttribute("data-bs-theme", "light");
+    // Left behind when arriving from a dark page; the next page's useDarkTheme
+    // sets it again.
+    document.body.classList.remove("dark-theme");
+    return () => root.removeAttribute("data-bs-theme");
+  }, []);
   const { login } = useAdminAuth();
   const navigate = useNavigate();
 
@@ -23,17 +51,32 @@ export function AdminLoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<LoginField, string>>>({});
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
+    const problems = {
+      identifier: identifierProblem(email),
+      password: password ? "" : "Enter your password",
+    };
+    setFieldErrors(problems);
+    if (problems.identifier || problems.password) return;
+
     setLoading(true);
     try {
       await login(email, password);
       navigate("/admin", { replace: true });
     } catch (err) {
-      setError(err instanceof NoAdminModuleError ? err.message : "Invalid email/mobile number or password.");
+      if (err instanceof NoAdminModuleError) {
+        setError(err.message);
+      } else {
+        const code = isAxiosError(err) ? err.response?.data?.error?.code : undefined;
+        const field = FIELD_FOR_CODE[code];
+        if (field) setFieldErrors({ [field]: messageFor(err) });
+        else setError(messageFor(err));
+      }
     } finally {
       setLoading(false);
     }
@@ -63,7 +106,11 @@ export function AdminLoginPage() {
             autoCapitalize="none"
             spellCheck={false}
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setFieldErrors((current) => ({ ...current, identifier: "" }));
+            }}
+            error={fieldErrors.identifier}
             floating={true}
             required
             icon="fa-solid fa-circle-user"
@@ -76,7 +123,11 @@ export function AdminLoginPage() {
             name="password"
             label="Password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setFieldErrors((current) => ({ ...current, password: "" }));
+            }}
+            error={fieldErrors.password}
             floating={true}
             required
             icon={`fa-solid ${showPassword ? "fa-eye" : "fa-eye-slash"}`}

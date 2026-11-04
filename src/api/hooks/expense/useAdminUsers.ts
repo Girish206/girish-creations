@@ -8,6 +8,9 @@ export interface AdminUserCreateInput {
   // Digits only; also a sign-in.
   mobile?: string | null;
   password?: string | null;
+  // Asks for login access. For someone who already has a RunMitra account, a
+  // blank password keeps the one they have; a new one changes it in both apps.
+  grantLogin?: boolean;
   name?: string | null;
   hasPortfolioAccess: boolean;
   hasExpensesAccess: boolean;
