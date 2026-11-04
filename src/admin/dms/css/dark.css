@@ -24,11 +24,11 @@
   --adm-text: #f1eff9;
   --adm-text-2: #c9c7de;
 
-  /* Brand: the vivid orange reads on navy (deep orange is too dark). */
-  --primary: var(--brand-orange);
-  --primary-rgb: var(--brand-orange-rgb);
+  /* Brand: the vivid indigo reads on navy (deep indigo is too dark). */
+  --primary: var(--brand-primary);
+  --primary-rgb: var(--brand-primary-rgb);
   --primary-gradient: var(--brand-gradient-night);
-  --secondary: var(--brand-amber-bright);
+  --secondary: var(--brand-highlight-bright);
 
   /* "light" tints are used as soft backgrounds → mix into the surface;
      "dark" shades are used as stronger text → mix towards white. */
@@ -61,9 +61,9 @@
   --background-color: rgba(255, 255, 255, 0.04);
 
   --logo-navy-light: var(--adm-bg);
-  --logo-crimson-light: color-mix(in srgb, var(--brand-crimson) 10%, var(--adm-bg));
-  --logo-orange-light: color-mix(in srgb, var(--brand-orange) 8%, var(--adm-bg));
-  --logo-gold-light: color-mix(in srgb, var(--brand-amber) 6%, var(--adm-bg));
+  --logo-accent-light: color-mix(in srgb, var(--brand-accent) 10%, var(--adm-bg));
+  --logo-primary-light: color-mix(in srgb, var(--brand-primary) 8%, var(--adm-bg));
+  --logo-highlight-light: color-mix(in srgb, var(--brand-highlight) 6%, var(--adm-bg));
 
   /* Legacy template variables still read by admin.css */
   --black: var(--adm-text);
@@ -86,8 +86,8 @@
   --bs-tertiary-bg: #12143a;
   --bs-border-color: var(--adm-line-strong);
   --bs-border-color-translucent: var(--adm-line);
-  --bs-link-color: var(--brand-orange-bright);
-  --bs-link-hover-color: var(--brand-amber-bright);
+  --bs-link-color: var(--brand-primary-bright);
+  --bs-link-hover-color: var(--brand-highlight-bright);
 }
 
 /* ---------- Shell ---------- */
@@ -409,7 +409,7 @@
   background-color: var(--adm-raised) !important;
 }
 :root[data-bs-theme="dark"] .table-report .report-total-col {
-  background-color: rgba(var(--brand-amber-rgb), 0.08) !important;
+  background-color: rgba(var(--brand-highlight-rgb), 0.08) !important;
 }
 :root[data-bs-theme="dark"] .sticky-right-1,
 :root[data-bs-theme="dark"] .sticky-right-2,
@@ -471,11 +471,6 @@
 :root[data-bs-theme="dark"] .modal-close-btn {
   border-color: var(--adm-line-strong);
 }
-:root[data-bs-theme="dark"] .admin-login-card {
-  background: var(--adm-surface);
-  border: 1px solid var(--adm-line);
-  box-shadow: 0 30px 70px rgba(var(--primary-rgb), 0.18), 0 6px 20px rgba(0, 0, 0, 0.5);
-}
 
 /* ---------- SweetAlert (confirmDelete) ---------- */
 
@@ -489,4 +484,12 @@
 }
 :root[data-bs-theme="dark"] .swal2-html-container {
   color: var(--adm-text-2);
+}
+
+/* --secondary is a bright cyan on navy, so text on it has to be dark. */
+:root[data-bs-theme="dark"] .btn-custom-secondary,
+:root[data-bs-theme="dark"] .btn-outline-custom-secondary:hover,
+:root[data-bs-theme="dark"] .badge-modern-secondary,
+:root[data-bs-theme="dark"] .badge-bg-custom-primary:hover {
+  color: var(--brand-navy) !important;
 }

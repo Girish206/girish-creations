@@ -250,7 +250,7 @@
 
 .bg-swatch.selected {
   border: 2px solid var(--primary-dark-2);
-  box-shadow: 0 0 0 2px rgba(128, 17, 26, 0.15);
+  box-shadow: 0 0 0 2px rgba(var(--brand-primary-rgb), 0.15);
 }
 
 .bg-swatch .check {
@@ -444,7 +444,7 @@
 }
 
 .notif-dropdown-item.unread {
-  background: #fff8f8;
+  background: var(--primary-light-7);
 }
 
 .notif-icon-circle {

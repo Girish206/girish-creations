@@ -17,7 +17,7 @@ createTheme(
         context: { background: "#171a42", text: "#f1eff9" },
         divider: { default: "rgba(255,255,255,0.09)" },
         button: { default: "#c9c7de", hover: "rgba(255,255,255,0.08)", focus: "rgba(255,255,255,0.12)", disabled: "rgba(255,255,255,0.25)" },
-        selected: { default: "rgba(243,106,34,0.15)", text: "#f1eff9" },
+        selected: { default: "rgba(99,102,241,0.15)", text: "#f1eff9" },
         highlightOnHover: { default: "#171a42", text: "#f1eff9" },
         striped: { default: "#11133a", text: "#c9c7de" },
     },
@@ -55,9 +55,9 @@ const baseHoverColor = "#f1f1f1";
 const customStyles = {
     headCells: {
         style: {
-            backgroundColor: "#fce8e9",
+            backgroundColor: "var(--primary-light-6)",
             fontWeight: "bold",
-            color: "#84161d",
+            color: "var(--primary-dark-1)",
             fontSize: baseFontSize,
             padding: baseCellPadding,
             border: baseBorder,
@@ -65,7 +65,7 @@ const customStyles = {
     },
     headRow: {
         style: {
-            backgroundColor: "#fce8e9", // Ensures header row (including checkbox) gets same color
+            backgroundColor: "var(--primary-light-6)", // Ensures header row (including checkbox) gets same color
         },
     },
     cells: {
@@ -94,7 +94,7 @@ const customStyles = {
             appearance: "none",
             width: "20px",
             height: "20px",
-            border: "2px solid #fc6a03",
+            border: "2px solid var(--primary)",
             borderRadius: "0px",
             outline: "none",
             cursor: "pointer",
@@ -475,8 +475,8 @@ const VirtualTable: React.FC<VirtualTableProps> = ({
                                 gridTemplateColumns: `repeat(${
                                     columns.length || 6
                                 }, 1fr)`,
-                                backgroundColor: "#fce8e9",
-                                borderBottom: "2px solid #f5c2c7",
+                                backgroundColor: "var(--primary-light-6)",
+                                borderBottom: "2px solid var(--primary-light-4)",
                             }}
                         >
                             {Array.from({ length: columns.length || 6 }).map(
@@ -484,7 +484,7 @@ const VirtualTable: React.FC<VirtualTableProps> = ({
                                     <div key={i} style={{ padding: "14px 12px" }}>
                                         <Skeleton
                                             height={16}
-                                            baseColor="#f8d7da"
+                                            baseColor="var(--primary-light-5)"
                                             highlightColor="#ffffff"
                                             width={`${60 + ((i * 17) % 35)}%`}
                                         />
@@ -505,7 +505,7 @@ const VirtualTable: React.FC<VirtualTableProps> = ({
                                         backgroundColor:
                                             rowIndex % 2 === 0
                                                 ? "#ffffff"
-                                                : "#fdfbfb",
+                                                : "#fbfbfe",
                                         borderBottom:
                                             rowIndex < 7
                                                 ? "1px solid #f1f3f5"

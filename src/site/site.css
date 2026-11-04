@@ -10,27 +10,27 @@
 
 .gc {
   /* Colours come from the shared logo palette in src/styles/brand.css. */
-  --gc-bg: #fbf8f4;
+  --gc-bg: #f7f8fd;
   --gc-surface: #ffffff;
-  --gc-surface-2: #f4eee7;
+  --gc-surface-2: #eef0f9;
   --gc-glass: rgba(255, 255, 255, 0.74);
   --gc-ink: var(--brand-navy);
   --gc-ink-2: #3d3f5c;
   --gc-muted: #6c6d86;
-  --gc-line: #ebe3d9;
-  --gc-line-strong: #dbd0c3;
-  --gc-accent: var(--brand-orange-deep);
-  --gc-accent-hover: #a8380a;
-  --gc-accent-2: #d97706;
-  --gc-accent-3: var(--brand-crimson-deep);
+  --gc-line: #e3e6f2;
+  --gc-line-strong: #cfd4e6;
+  --gc-accent: var(--brand-primary-deep);
+  --gc-accent-hover: #3730a3;
+  --gc-accent-2: var(--brand-highlight-deep);
+  --gc-accent-3: var(--brand-accent-deep);
   --gc-accent-ink: #ffffff;
-  --gc-accent-soft: rgba(var(--brand-orange-deep-rgb), 0.1);
+  --gc-accent-soft: rgba(var(--brand-primary-deep-rgb), 0.1);
   --gc-grad: var(--brand-gradient);
   --gc-grad-text: var(--brand-gradient-text);
-  --gc-glow: rgba(var(--brand-orange-rgb), 0.3);
-  --gc-aurora-1: rgba(var(--brand-orange-rgb), 0.18);
-  --gc-aurora-2: rgba(var(--brand-amber-rgb), 0.16);
-  --gc-aurora-3: rgba(var(--brand-crimson-rgb), 0.1);
+  --gc-glow: rgba(var(--brand-primary-rgb), 0.3);
+  --gc-aurora-1: rgba(var(--brand-primary-rgb), 0.18);
+  --gc-aurora-2: rgba(var(--brand-highlight-rgb), 0.16);
+  --gc-aurora-3: rgba(var(--brand-accent-rgb), 0.1);
   --gc-grid-line: rgba(var(--brand-navy-rgb), 0.05);
   --gc-success: #16a34a;
   --gc-danger: #dc2626;
@@ -69,18 +69,18 @@ body.dark-theme .gc {
   --gc-muted: #8a89aa;
   --gc-line: rgba(255, 255, 255, 0.08);
   --gc-line-strong: rgba(255, 255, 255, 0.16);
-  --gc-accent: var(--brand-orange-bright);
-  --gc-accent-hover: #ff9350;
-  --gc-accent-2: var(--brand-amber-bright);
-  --gc-accent-3: var(--brand-crimson-bright);
+  --gc-accent: var(--brand-primary-bright);
+  --gc-accent-hover: #a5b4fc;
+  --gc-accent-2: var(--brand-highlight-bright);
+  --gc-accent-3: var(--brand-accent-bright);
   --gc-accent-ink: #ffffff;
-  --gc-accent-soft: rgba(var(--brand-orange-rgb), 0.14);
+  --gc-accent-soft: rgba(var(--brand-primary-rgb), 0.14);
   --gc-grad: var(--brand-gradient-night);
   --gc-grad-text: var(--brand-gradient-text-night);
-  --gc-glow: rgba(var(--brand-orange-rgb), 0.4);
-  --gc-aurora-1: rgba(var(--brand-crimson-rgb), 0.22);
-  --gc-aurora-2: rgba(var(--brand-orange-rgb), 0.18);
-  --gc-aurora-3: rgba(var(--brand-amber-rgb), 0.1);
+  --gc-glow: rgba(var(--brand-primary-rgb), 0.4);
+  --gc-aurora-1: rgba(var(--brand-accent-rgb), 0.22);
+  --gc-aurora-2: rgba(var(--brand-primary-rgb), 0.18);
+  --gc-aurora-3: rgba(var(--brand-highlight-rgb), 0.1);
   --gc-grid-line: rgba(255, 255, 255, 0.045);
   --gc-success: #4ade80;
   --gc-danger: #f87171;
@@ -91,7 +91,7 @@ body.dark-theme .gc {
 /* The template gives <body> padding and its own background. */
 body.gc-body {
   padding: 0;
-  background: #fbf8f4;
+  background: #f7f8fd;
 }
 body.gc-body.dark-theme {
   background: var(--brand-navy-night);
@@ -428,16 +428,21 @@ body.gc-body.dark-theme {
   letter-spacing: -0.02em;
   color: var(--gc-ink) !important;
 }
-.gc-brand img {
-  width: 34px;
-  height: 34px;
-  object-fit: contain;
+.gc-brand-logo {
+  display: block;
+  height: 48px;
+  width: auto;
 }
-.gc-brand-accent {
-  background: var(--gc-grad-text);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+.gc-header .gc-brand-logo,
+.gc-drawer-head .gc-brand-logo {
+  height: 38px;
+}
+.gc-brand-logo-dark,
+body.dark-theme .gc .gc-brand-logo-light {
+  display: none;
+}
+body.dark-theme .gc .gc-brand-logo-dark {
+  display: block;
 }
 .gc-nav {
   margin-left: auto;

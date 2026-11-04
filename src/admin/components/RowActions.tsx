@@ -14,7 +14,7 @@ export interface RowActionsProps {
 // VirtualTable "Actions" cell (Contact Messages), a timeline card header
 // (Experience/Education), or a card-grid item (Certifications/Skills/
 // Tools/Projects/Blog). Icon-only circular buttons in the logo colours
-// (view = navy, edit = orange, delete = crimson — see RowActions.css). View opens
+// (view = navy, edit = indigo, delete = red — see RowActions.css). View opens
 // a read-only DetailView modal with every field (the card/row itself only
 // shows a truncated summary); Edit opens that row's record in the shared
 // DefaultModal form (see the owning List component) rather than navigating

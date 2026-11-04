@@ -1,8 +1,7 @@
-/* Admin login screen: a soft pastel wash of the logo's own colors
-   (--logo-*-light in index.css — navy/crimson/orange/gold mixed ~18% into
-   white) under two slowly rotating glows in the logo colours (CSS radial
-   gradients from src/styles/brand.css, 60s linear rotateAnimation), sized
-   large so they still span most of the page. */
+/* Admin login screen: always a white card on the brand gradient, in either
+   theme (AdminLoginPage pins the light palette). Two soft white glows add depth
+   to the gradient; they are CSS radial gradients, sized large so they still
+   span most of the page. */
 
 .admin-login-shell {
   position: relative;
@@ -13,13 +12,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: linear-gradient(
-    135deg,
-    var(--logo-navy-light) 0%,
-    var(--logo-crimson-light) 35%,
-    var(--logo-orange-light) 65%,
-    var(--logo-gold-light) 100%
-  );
+  background: var(--brand-gradient-vivid);
 }
 
 .admin-login-ash {
@@ -28,36 +21,18 @@
   height: 65vmax;
   pointer-events: none;
   z-index: 0;
-  animation: rotateAnimation 60s infinite linear;
-  /* Soft glow in the logo colours (src/styles/brand.css), drawn in CSS
-     instead of the old template's purple banner-shape-1.png. */
   border-radius: 50%;
-  background: radial-gradient(
-    circle at 50% 50%,
-    rgba(var(--brand-orange-rgb), 0.32) 0%,
-    rgba(var(--brand-crimson-rgb), 0.18) 38%,
-    rgba(var(--brand-amber-rgb), 0.12) 58%,
-    transparent 72%
-  );
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.08) 40%, transparent 70%);
 }
 
 .admin-login-ash-1 {
-  top: -20%;
+  top: -25%;
   left: -20%;
 }
 
 .admin-login-ash-2 {
-  bottom: -20%;
+  bottom: -25%;
   right: -20%;
-}
-
-@keyframes rotateAnimation {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 /* Card */
@@ -72,8 +47,8 @@
   text-align: center;
   overflow: hidden;
   box-shadow:
-    0 30px 70px rgba(var(--primary-rgb), 0.35),
-    0 6px 20px rgba(0, 0, 0, 0.1);
+    0 30px 70px rgba(var(--brand-navy-rgb), 0.45),
+    0 6px 20px rgba(var(--brand-navy-rgb), 0.2);
 }
 
 .admin-login-card::before {
@@ -83,7 +58,7 @@
   left: 0;
   right: 0;
   height: 7px;
-  background: linear-gradient(90deg, var(--logo-gold) 0%, var(--logo-orange) 40%, var(--logo-crimson) 75%, var(--logo-navy) 100%);
+  background: linear-gradient(90deg, var(--logo-highlight) 0%, var(--logo-primary) 50%, var(--logo-accent) 100%);
 }
 
 /* Glow ring behind the logo */
@@ -96,7 +71,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(var(--secondary-rgb), 0.28) 0%, rgba(var(--brand-crimson-rgb), 0.12) 60%, transparent 75%);
+  background: radial-gradient(circle, rgba(var(--secondary-rgb), 0.28) 0%, rgba(var(--brand-accent-rgb), 0.12) 60%, transparent 75%);
 }
 
 .admin-login-logo-ring::before {
@@ -117,8 +92,8 @@
 .admin-login-logo {
   position: relative;
   z-index: 1;
-  width: 68px;
-  height: 68px;
+  width: 82px;
+  height: 82px;
   object-fit: contain;
   filter: drop-shadow(0 4px 10px rgba(var(--primary-rgb), 0.35));
 }
@@ -155,6 +130,18 @@
 
 .admin-login-form {
   text-align: left;
+}
+
+/* CustomButton always adds a 4px margin (m-1) on top of w-100, which would
+   push it past the right edge of the inputs. */
+/* InputComp's error text is in the brand colour; on a login it has to read as
+   an error. */
+.admin-login-form small {
+  color: var(--brand-danger) !important;
+}
+
+.admin-login-form .btn {
+  width: calc(100% - 8px) !important;
 }
 
 .admin-login-footnote {

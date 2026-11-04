@@ -61,10 +61,8 @@ export function Navbar() {
   // nav is the current person's portfolio home.
   const brand = (onClick?: () => void) => (
     <Link to="/" className="gc-brand" aria-label="Girish Creations — all portfolios" onClick={onClick}>
-      <img src="/logo/logo.png" alt="" />
-      <span>
-        Girish<span className="gc-brand-accent">Creations</span>
-      </span>
+      <img className="gc-brand-logo gc-brand-logo-light" src="/logo/logo-wordmark-light.svg" alt="" />
+      <img className="gc-brand-logo gc-brand-logo-dark" src="/logo/logo-wordmark-dark.svg" alt="" />
     </Link>
   );
 

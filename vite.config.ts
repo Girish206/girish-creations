@@ -36,7 +36,7 @@ export default defineConfig({
       workbox: {
         // Precache the app shell only; template images and the resume are
         // cached at runtime as they're requested.
-        globPatterns: ['**/*.{js,css,html,woff2}', 'logo/*.{png,ico}'],
+        globPatterns: ['**/*.{js,css,html,woff2}', 'logo/*.{png,ico,svg}'],
         globIgnores: ['assets/js/**'],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         // API calls must always hit the network, never the SPA fallback, and

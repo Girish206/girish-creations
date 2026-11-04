@@ -375,7 +375,7 @@
   width: 44px;
   height: 44px;
   /* A solid gradient rather than DMS's original pale --primary-light-4
-     tint (orange text on a near-white pink background read as washed out
+     tint (brand text on a near-white tint read as washed out
      / low-contrast, both in the sidebar footer and reused in the navbar). */
   background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
   border: 2px solid #fff;

@@ -28,7 +28,7 @@
   align-items: center;
   gap: 20px;
   padding: 28px 28px 22px;
-  /* Soft brand tints: a warm glow behind the avatar fading to an amber
+  /* Soft brand tints: a soft glow behind the avatar fading to a cyan
      wash on the right, light enough to keep the text crisp. */
   background:
     radial-gradient(circle at 12% 30%, var(--primary-light-5), transparent 45%),
@@ -452,7 +452,7 @@
 }
 
 .admin-style-preview-tech i {
-  background: linear-gradient(90deg, #e8174f, #f36a22, #ffb308);
+  background: var(--brand-gradient-vivid);
 }
 
 .admin-style-preview-tech b {

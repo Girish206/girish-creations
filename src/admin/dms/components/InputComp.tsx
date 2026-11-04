@@ -83,7 +83,7 @@ const InputComp: React.FC<TextInputProps> = ({
             className={`input-icon ${iconPosition === "left" ? "input-icon-left" : "input-icon-right"
                 }`}
         >
-            <i className={icon} style={{ color: "#f97316" }}></i>
+            <i className={icon} style={{ color: "var(--primary)" }}></i>
         </span>
     );
 

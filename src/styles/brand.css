@@ -1,13 +1,13 @@
 /* ==========================================================================
    Brand colours — the single source of truth for both the public portfolio
-   (src/site/*.css) and the admin (src/admin/dms/index.css). Every colour
-   here comes from the logo (public/logo/logo.png): the navy outline, the
-   crimson brain, the orange bulb and the amber rays. Change a value here and
-   both sites follow.
+   (src/site/*.css) and the admin (src/admin/dms/index.css). The palette is
+   the logo's gradient (public/logo/logo.svg): violet → indigo → cyan, on
+   navy. Names describe the role, not the hue, so a re-theme only touches
+   this file (plus the logo's stops in scripts/generate-logo.mjs).
 
    Which variant to use:
-   - plain (--brand-orange …): the logo's vivid colours — gradients,
-     decoration, icons on dark backgrounds.
+   - plain (--brand-primary …): the vivid colours — gradients, decoration,
+     icons on dark backgrounds.
    - -deep: darker shades that keep white text on them, and small text on a
      white background, readable (≥ 4.5:1). Use for buttons and links on
      light backgrounds.
@@ -15,21 +15,23 @@
    ========================================================================== */
 
 :root {
-  /* Logo colours */
   --brand-navy: #0d0f2e;
-  --brand-crimson: #e8174f;
-  --brand-orange: #f36a22;
-  --brand-amber: #ffb308;
+  --brand-accent: #8b5cf6; /* violet: gradient start */
+  --brand-primary: #6366f1; /* indigo: main colour */
+  --brand-highlight: #22d3ee; /* cyan: gradient end */
 
   /* Readable on white / under white text */
-  --brand-crimson-deep: #c8103e;
-  --brand-orange-deep: #c2410c;
-  --brand-amber-deep: #b45309;
+  --brand-accent-deep: #6d28d9;
+  --brand-primary-deep: #4338ca;
+  --brand-highlight-deep: #0e7490;
 
   /* Readable on navy */
-  --brand-crimson-bright: #ff4d6d;
-  --brand-orange-bright: #ff7a2e;
-  --brand-amber-bright: #ffc23d;
+  --brand-accent-bright: #a78bfa;
+  --brand-primary-bright: #818cf8;
+  --brand-highlight-bright: #67e8f9;
+
+  /* Not part of the gradient: destructive actions stay red in any theme. */
+  --brand-danger: #c8103e;
 
   /* Navy surfaces (dark theme) */
   --brand-navy-night: #070820;
@@ -38,22 +40,22 @@
 
   /* "r, g, b" triplets, for rgba(var(--brand-…-rgb), alpha) */
   --brand-navy-rgb: 13, 15, 46;
-  --brand-crimson-rgb: 232, 23, 79;
-  --brand-orange-rgb: 243, 106, 34;
-  --brand-orange-deep-rgb: 194, 65, 12;
-  --brand-amber-rgb: 255, 179, 8;
+  --brand-accent-rgb: 139, 92, 246;
+  --brand-primary-rgb: 99, 102, 241;
+  --brand-primary-deep-rgb: 67, 56, 202;
+  --brand-highlight-rgb: 34, 211, 238;
+  --brand-highlight-deep-rgb: 14, 116, 144;
 
-  /* Gradients (crimson → orange → amber, like the bulb). The button
-     gradients stop at orange so white text stays readable; amber only
-     appears in text and decorative gradients. */
-  --brand-gradient: linear-gradient(120deg, var(--brand-crimson-deep) 0%, #d63a14 55%, var(--brand-orange-deep) 100%);
-  --brand-gradient-night: linear-gradient(120deg, var(--brand-crimson) 0%, #e8451c 55%, #dc4a12 100%);
-  --brand-gradient-vivid: linear-gradient(120deg, var(--brand-crimson) 0%, var(--brand-orange) 55%, var(--brand-amber) 100%);
-  --brand-gradient-text: linear-gradient(100deg, var(--brand-crimson-deep) 0%, #e2520f 50%, #d97706 100%);
+  /* Gradients. The button gradients end on a dark blue so white text stays
+     readable; the bright cyan only appears in text and decorative gradients. */
+  --brand-gradient: linear-gradient(120deg, var(--brand-accent-deep) 0%, var(--brand-primary-deep) 55%, #0369a1 100%);
+  --brand-gradient-night: linear-gradient(120deg, #7c3aed 0%, #4f46e5 55%, #0277b6 100%);
+  --brand-gradient-vivid: linear-gradient(120deg, var(--brand-accent) 0%, var(--brand-primary) 55%, var(--brand-highlight) 100%);
+  --brand-gradient-text: linear-gradient(100deg, var(--brand-accent-deep) 0%, var(--brand-primary-deep) 50%, var(--brand-highlight-deep) 100%);
   --brand-gradient-text-night: linear-gradient(
     100deg,
-    var(--brand-crimson-bright) 0%,
-    var(--brand-orange-bright) 45%,
-    var(--brand-amber-bright) 100%
+    var(--brand-accent-bright) 0%,
+    var(--brand-primary-bright) 45%,
+    var(--brand-highlight-bright) 100%
   );
 }

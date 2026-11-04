@@ -14,8 +14,8 @@
   line-height: 1;
 }
 
-/* Logo colours instead of Bootstrap's stock cyan/green/red: view = navy,
-   edit = orange, delete = crimson (still reads as the "danger" action). */
+/* Brand colours instead of Bootstrap's stock cyan/green/red: view = navy,
+   edit = indigo, delete = red (the "danger" action). */
 .admin-row-action-btn.btn-info,
 .admin-row-action-btn.btn-success,
 .admin-row-action-btn.btn-danger {
@@ -27,10 +27,10 @@
   background-color: var(--brand-navy);
 }
 .admin-row-action-btn.btn-success {
-  background-color: var(--brand-orange-deep);
+  background-color: var(--brand-primary-deep);
 }
 .admin-row-action-btn.btn-danger {
-  background-color: var(--brand-crimson-deep);
+  background-color: var(--brand-danger);
 }
 .admin-row-action-btn.btn-info:hover,
 .admin-row-action-btn.btn-success:hover,

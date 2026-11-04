@@ -462,7 +462,7 @@ body.admin-page h6 {
 }
 
 .admin-btn-primary:hover {
-  background-color: #c33636;
+  background-color: var(--primary-dark-1);
   color: var(--white);
 }
 
@@ -548,7 +548,7 @@ body.admin-page h6 {
 }
 
 .admin-link:hover {
-  background-color: rgba(214, 67, 14, 0.08);
+  background-color: rgba(var(--brand-primary-deep-rgb), 0.08);
 }
 
 .admin-empty-state {
@@ -644,7 +644,7 @@ body.admin-page h6 {
 }
 
 .admin-login-brand-panel h2 .primary {
-  color: #ffb98a;
+  color: var(--brand-highlight-bright);
 }
 
 .admin-login-brand-panel p {
@@ -682,7 +682,7 @@ body.admin-page h6 {
   left: 0;
   right: 0;
   height: 6px;
-  background: linear-gradient(90deg, var(--orange), #ffb98a);
+  background: linear-gradient(90deg, var(--orange), var(--brand-highlight-bright));
 }
 
 .admin-login-card .admin-sidebar-brand {
@@ -942,7 +942,7 @@ body.admin-page h6 {
   border-radius: 999px !important;
   font-size: 0.85rem;
 }
-/* Extra row-action colours: grant login = amber, deactivate = slate,
+/* Extra row-action colours: grant login = teal, deactivate = slate,
    activate = green. */
 .admin-row-action-btn.btn-warning,
 .admin-row-action-btn.btn-secondary,
@@ -951,7 +951,7 @@ body.admin-page h6 {
   color: #fff;
 }
 .admin-row-action-btn.btn-warning {
-  background-color: var(--brand-amber-deep);
+  background-color: var(--brand-highlight-deep);
 }
 .admin-row-action-btn.btn-secondary {
   background-color: #64748b;

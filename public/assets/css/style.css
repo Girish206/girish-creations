@@ -34,7 +34,7 @@
 	--font-family: "Bricolage Grotesque", sans-serif;
 	--primary: #4770FF;
 	--danger: #b41b25;
-	--orange: #d6430e;
+	--orange: var(--brand-primary-deep, #4338ca);
 	--black: #1A1F2C;
 	--light-black: #576076;
 	--white: #ffffff;
@@ -462,7 +462,7 @@ p {
 }
 
 .common-button-groups .btn:hover {
-	background-color: #891a0c;
+	background-color: #3730a3;
 }
 
 .common-button-groups .btn .icon {
@@ -2025,7 +2025,7 @@ p {
 }
 
 .leave-comments-area .comments-box .submit-btn:hover {
-	background-color: #c33636;
+	background-color: #3730a3;
 }
 
 .leave-comments-area .comments-box .submit-btn .icon {

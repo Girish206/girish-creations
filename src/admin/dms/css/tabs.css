@@ -54,11 +54,11 @@
 }
 
 .custom-tabs .nav-link.active {
-  color: rgb(178, 35, 49);
-  border-color: rgb(178, 35, 49);
+  color: var(--primary);
+  border-color: var(--primary);
   background-color: transparent;
 }
 
 .custom-tabs .nav-link:hover {
-  color: rgb(178, 35, 49);
+  color: var(--primary);
 }

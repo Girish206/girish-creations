@@ -2,7 +2,7 @@
 
 .btn-custom-primary {
   background-color: var(--primary) !important;
-  /* Same crimson → orange gradient as the public site's buttons. */
+  /* Same violet → blue gradient as the public site's buttons. */
   background-image: var(--primary-gradient) !important;
   color: var(--theme-text-light) !important;
   border: none !important;
@@ -99,13 +99,13 @@
   border-radius: 10px !important;
   padding: 0.5rem 1.5rem !important;
   font-weight: 500 !important;
-  box-shadow: 0 2px 8px rgba(165, 27, 36, 0.2) !important;
+  box-shadow: 0 2px 8px rgba(var(--brand-primary-rgb), 0.2) !important;
   transition: all 0.3s ease !important;
 }
 
 .btn-search-primary:hover {
   background-color: var(--primary-dark-1) !important;
-  box-shadow: 0 4px 12px rgba(165, 27, 36, 0.3) !important;
+  box-shadow: 0 4px 12px rgba(var(--brand-primary-rgb), 0.3) !important;
   transform: translateY(-1px);
 }
 
@@ -138,7 +138,7 @@
 
 .badge-modern-secondary {
   background-color: var(--secondary) !important;
-  color: var(--theme-text-dark) !important;
+  color: var(--theme-text-light) !important;
   border-radius: 20px !important;
   padding: 0.5rem 1rem !important;
   font-weight: 500 !important;

@@ -4,11 +4,11 @@
    src/styles/brand.css, so the admin matches the public portfolio: change a
    brand colour there and both follow. */
 :root {
-  /* Primary: the logo's orange (deep shade, readable under white text) */
-  --primary: var(--brand-orange-deep);
+  /* Primary: the logo's indigo (deep shade, readable under white text) */
+  --primary: var(--brand-primary-deep);
   /* Same as --primary, as an "r, g, b" triplet for rgba(var(--primary-rgb), alpha) */
-  --primary-rgb: var(--brand-orange-deep-rgb);
-  /* Crimson → orange, for primary buttons and highlights */
+  --primary-rgb: var(--brand-primary-deep-rgb);
+  /* Violet → blue, for primary buttons and highlights */
   --primary-gradient: var(--brand-gradient);
 
   /* Lighter shades (tints) */
@@ -26,10 +26,10 @@
   --primary-dark-3: color-mix(in srgb, var(--primary) 42%, #000);
   --primary-dark-4: color-mix(in srgb, var(--primary) 20%, #000);
 
-  /* Secondary: the logo's amber rays */
-  --secondary: var(--brand-amber);
+  /* Secondary: the cyan end of the logo's gradient */
+  --secondary: var(--brand-highlight-deep);
   /* Same as --secondary, as an "r, g, b" triplet for rgba(var(--secondary-rgb), alpha) */
-  --secondary-rgb: var(--brand-amber-rgb);
+  --secondary-rgb: var(--brand-highlight-deep-rgb);
 
   /* Lighter shades (tints) */
   --secondary-light-1: color-mix(in srgb, var(--secondary) 88%, #fff);
@@ -48,21 +48,21 @@
   /* Common */
   --theme-text-dark: var(--brand-navy);
   --muted-color: #5b5d78;
-  --border-color: #e2dfe6;
-  --background-color: #f6f3ef;
+  --border-color: #e1e3ef;
+  --background-color: #f3f4fa;
   --theme-text-light: #ffffff;
 
   /* The four logo colours, for the login screen's gradient and other
      places that echo the logo itself rather than primary/secondary. */
   --logo-navy: var(--brand-navy);
-  --logo-crimson: var(--brand-crimson);
-  --logo-orange: var(--brand-orange);
-  --logo-gold: var(--brand-amber);
+  --logo-accent: var(--brand-accent);
+  --logo-primary: var(--brand-primary);
+  --logo-highlight: var(--brand-highlight);
 
   /* Same 4 logo colours mixed ~18% into white: a soft pastel background
      wash (used by the login screen's backdrop and the admin shell). */
   --logo-navy-light: color-mix(in srgb, var(--brand-navy) 18%, #fff);
-  --logo-crimson-light: color-mix(in srgb, var(--brand-crimson) 18%, #fff);
-  --logo-orange-light: color-mix(in srgb, var(--brand-orange) 18%, #fff);
-  --logo-gold-light: color-mix(in srgb, var(--brand-amber) 18%, #fff);
+  --logo-accent-light: color-mix(in srgb, var(--brand-accent) 18%, #fff);
+  --logo-primary-light: color-mix(in srgb, var(--brand-primary) 18%, #fff);
+  --logo-highlight-light: color-mix(in srgb, var(--brand-highlight) 18%, #fff);
 }

@@ -31,11 +31,9 @@ export function Footer() {
       <div className="gc-container">
         <div className="gc-footer-grid">
           <div className="gc-footer-about">
-            <Link to="/" className="gc-brand">
-              <img src="/logo/logo.png" alt="" />
-              <span>
-                Girish<span className="gc-brand-accent">Creations</span>
-              </span>
+            <Link to="/" className="gc-brand" aria-label="Girish Creations">
+              <img className="gc-brand-logo gc-brand-logo-light" src="/logo/logo-wordmark-light.svg" alt="" />
+              <img className="gc-brand-logo gc-brand-logo-dark" src="/logo/logo-wordmark-dark.svg" alt="" />
             </Link>
             <p>
               {profile

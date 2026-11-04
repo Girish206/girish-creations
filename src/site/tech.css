@@ -197,8 +197,8 @@
 
 /* CTA band: dark panel with aurora glow and a grid, in both themes. */
 .gc-cta {
-  background: radial-gradient(90% 140% at 100% 0%, rgba(var(--brand-orange-rgb), 0.5), transparent 55%),
-    radial-gradient(70% 120% at 0% 100%, rgba(var(--brand-crimson-rgb), 0.35), transparent 55%), var(--brand-navy);
+  background: radial-gradient(90% 140% at 100% 0%, rgba(var(--brand-primary-rgb), 0.5), transparent 55%),
+    radial-gradient(70% 120% at 0% 100%, rgba(var(--brand-accent-rgb), 0.35), transparent 55%), var(--brand-navy);
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.1);
   align-items: center;
@@ -351,20 +351,20 @@
   text-overflow: ellipsis;
 }
 .gc-terminal-prompt {
-  color: var(--brand-amber-bright);
+  color: var(--brand-highlight-bright);
 }
 .gc-terminal-cmd {
   color: #fff;
 }
 .gc .gc-terminal-body .gc-terminal-out {
-  color: var(--brand-orange-bright);
+  color: var(--brand-primary-bright);
 }
 .gc-caret {
   display: inline-block !important;
   width: 7px;
   height: 14px;
   vertical-align: -2px;
-  background: var(--brand-amber-bright);
+  background: var(--brand-highlight-bright);
   animation: gc-blink 1.1s steps(1) infinite;
 }
 @keyframes gc-blink {
