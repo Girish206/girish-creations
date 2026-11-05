@@ -204,13 +204,12 @@ export const router = createBrowserRouter([
                 ],
               },
               {
-                // "Admin Accounts" for super admins; "Members" (people they
-                // added for expenses/savings) for everyone else here. The
-                // server scopes what each one sees and may change.
+                // Just the Money Hub's people, without RunMitra-only accounts.
+                // The server scopes what each person sees and may change.
                 path: "admin-users",
                 lazy: async () => {
-                  const { AdminAccountsList } = await import("../admin/expense/admin-users/AdminAccountsList");
-                  return { Component: AdminAccountsList };
+                  const { MoneyHubPeopleList } = await import("../admin/expense/admin-users/MoneyHubPeopleList");
+                  return { Component: MoneyHubPeopleList };
                 },
               },
             ],

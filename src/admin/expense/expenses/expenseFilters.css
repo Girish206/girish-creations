@@ -1,0 +1,40 @@
+/* The search / month / category row above the Expenses list. */
+.admin-expense-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.admin-expense-filter-search {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.admin-expense-filter-month {
+  flex: 0 1 170px;
+  min-width: 0;
+}
+
+.admin-expense-filter-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted-color);
+}
+
+/* Room for the scrollbar, so it doesn't sit on top of the rows' right edge. */
+.admin-txn-scroll-area {
+  padding-right: 6px;
+}
+
+/* One person's amount in a custom split. */
+.admin-split-share-input {
+  width: 110px;
+  flex-shrink: 0;
+  text-align: right;
+}

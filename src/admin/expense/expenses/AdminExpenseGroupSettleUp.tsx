@@ -1,26 +1,28 @@
-import { useState } from "react";
 import {
   useAddExpenseGroupSettlement,
   useDeleteExpenseGroupSettlement,
   useSetExpenseGroupClosed,
 } from "../../../api/hooks/expense/useExpenseGroups";
-import type { Expense, ExpenseGroup } from "../../../api/types";
+import type { ReactNode } from "react";
+import type { ExpenseGroup } from "../../../api/types";
 import { useAdminAuth } from "../../../context/AdminAuthContext";
 import { confirmAction, confirmDelete } from "../../components/confirmDelete";
 import CustomButton from "../../dms/components/CustomButton";
 import { ModalActions } from "../../components/ModalActions";
 import { formatCurrency } from "../currency";
-import { computeGroupBalances, suggestTransfers, type SuggestedTransfer } from "./groupSettlement";
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
-}
+import { formatDay, todayLocal } from "../dates";
+import { suggestTransfers } from "./groupSettlement";
+import { SettleTransferRow } from "./SettleTransferRow";
+// The repayment rows reuse the remove button styled there.
+import "../savings/savingsGoals.css";
 
 const fromCents = (cents: number) => cents / 100;
 
 export interface AdminExpenseGroupSettleUpProps {
   group: ExpenseGroup;
-  expenses: Expense[];
+  // Extra sections: under the summary figures, and above the footer action.
+  afterStats?: ReactNode;
+  beforeActions?: ReactNode;
 }
 
 // Settle-up view for one trip/event group: who paid what, each person's
@@ -28,47 +30,21 @@ export interface AdminExpenseGroupSettleUpProps {
 // the transfers that would square everyone up, each recordable in one
 // click (amount editable for partial repayments). Closing the group freezes
 // its expenses and settlements.
-export function AdminExpenseGroupSettleUp({ group, expenses }: AdminExpenseGroupSettleUpProps) {
+export function AdminExpenseGroupSettleUp({ group, afterStats, beforeActions }: AdminExpenseGroupSettleUpProps) {
   const { admin } = useAdminAuth();
+  const myId = admin?.sub ? Number(admin.sub) : null;
+  // A repayment is between two people (the server enforces this too).
+  const isPartOf = (fromId: number, toId: number) =>
+    Boolean(admin?.isSuperAdmin) || fromId === myId || toId === myId;
   const addSettlement = useAddExpenseGroupSettlement();
   const deleteSettlement = useDeleteExpenseGroupSettlement();
   const setGroupClosed = useSetExpenseGroupClosed();
-  // Editable amount per suggested transfer, keyed "from-to".
-  const [amounts, setAmounts] = useState<Record<string, string>>({});
-  const [recordingKey, setRecordingKey] = useState<string | null>(null);
 
   const isClosed = group.closedAt !== null;
-  const balances = computeGroupBalances(expenses, group.settlements);
+  const balances = group.balances;
   const transfers = suggestTransfers(balances);
-  const totalCents = balances.reduce((sum, b) => sum + b.paidCents, 0);
+  const totalCents = group.totalCents;
   const pendingCents = balances.reduce((sum, b) => sum + Math.max(0, b.pendingCents), 0);
-
-  const transferKey = (t: SuggestedTransfer) => `${t.fromAdminUserId}-${t.toAdminUserId}`;
-
-  async function handleRecord(t: SuggestedTransfer) {
-    const key = transferKey(t);
-    const amount = amounts[key] ?? fromCents(t.amountCents).toFixed(2);
-    if (!(Number(amount) > 0)) return;
-    setRecordingKey(key);
-    try {
-      await addSettlement.mutateAsync({
-        groupId: group.id,
-        input: {
-          amount,
-          date: new Date().toISOString().slice(0, 10),
-          fromAdminUserId: t.fromAdminUserId,
-          toAdminUserId: t.toAdminUserId,
-        },
-      });
-      setAmounts((prev) => {
-        const next = { ...prev };
-        delete next[key];
-        return next;
-      });
-    } finally {
-      setRecordingKey(null);
-    }
-  }
 
   async function handleDeleteSettlement(settlementId: number) {
     if (await confirmDelete("settlement")) {
@@ -104,7 +80,7 @@ export function AdminExpenseGroupSettleUp({ group, expenses }: AdminExpenseGroup
         </div>
         <div>
           <span className="admin-settle-stat-label">Expenses</span>
-          <strong>{expenses.length}</strong>
+          <strong>{group.expenseCount}</strong>
         </div>
         <div>
           <span className="admin-settle-stat-label">Still pending</span>
@@ -114,15 +90,11 @@ export function AdminExpenseGroupSettleUp({ group, expenses }: AdminExpenseGroup
         </div>
         <div>
           <span className="admin-settle-stat-label">Status</span>
-          <strong>{isClosed ? `Closed ${formatDate(group.closedAt!)}` : "Open"}</strong>
+          <strong>{isClosed ? `Closed ${new Date(group.closedAt!).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}` : "Open"}</strong>
         </div>
       </div>
 
-      {!admin?.isSuperAdmin && (
-        <p className="admin-settle-note">
-          <i className="fa-solid fa-circle-info"></i> Based on the expenses in this group that you can see.
-        </p>
-      )}
+      {afterStats}
 
       <h5 className="admin-settle-heading">Per person</h5>
       {balances.length === 0 ? (
@@ -177,39 +149,24 @@ export function AdminExpenseGroupSettleUp({ group, expenses }: AdminExpenseGroup
         <>
           <h5 className="admin-settle-heading">To settle up</h5>
           <ul className="admin-settle-list">
-            {transfers.map((t) => {
-              const key = transferKey(t);
-              return (
-                <li key={key}>
-                  <span>
-                    <strong>{t.fromName}</strong> pays <strong>{t.toName}</strong>{" "}
-                    {formatCurrency(fromCents(t.amountCents))}
-                  </span>
-                  {!isClosed && (
-                    <span className="admin-settle-record">
-                      <input
-                        type="number"
-                        className="form-control form-control-sm"
-                        min="0.01"
-                        step="0.01"
-                        aria-label="Amount paid"
-                        value={amounts[key] ?? fromCents(t.amountCents).toFixed(2)}
-                        onChange={(e) => setAmounts((prev) => ({ ...prev, [key]: e.target.value }))}
-                      />
-                      <CustomButton
-                        size="sm"
-                        className="m-0"
-                        loading={recordingKey === key}
-                        onClick={() => handleRecord(t)}
-                        title="Record this repayment"
-                      >
-                        Mark paid
-                      </CustomButton>
-                    </span>
-                  )}
-                </li>
-              );
-            })}
+            {transfers.map((t) => (
+              <SettleTransferRow
+                key={`${t.fromAdminUserId}-${t.toAdminUserId}`}
+                transfer={t}
+                readOnly={isClosed || !isPartOf(t.fromAdminUserId, t.toAdminUserId)}
+                onRecord={(amount) =>
+                  addSettlement.mutateAsync({
+                    groupId: group.id,
+                    input: {
+                      amount,
+                      date: todayLocal(),
+                      fromAdminUserId: t.fromAdminUserId,
+                      toAdminUserId: t.toAdminUserId,
+                    },
+                  })
+                }
+              />
+            ))}
           </ul>
         </>
       )}
@@ -222,9 +179,9 @@ export function AdminExpenseGroupSettleUp({ group, expenses }: AdminExpenseGroup
               <li key={s.id}>
                 <span>
                   {s.fromAdminUser.name || s.fromAdminUser.email} paid {s.toAdminUser.name || s.toAdminUser.email}{" "}
-                  <strong>{formatCurrency(s.amount)}</strong> · {formatDate(s.date)}
+                  <strong>{formatCurrency(s.amount)}</strong> · {formatDay(s.date)}
                 </span>
-                {!isClosed && (
+                {!isClosed && isPartOf(s.fromAdminUser.id, s.toAdminUser.id) && (
                   <button
                     type="button"
                     className="admin-savings-contribution-remove"
@@ -240,6 +197,8 @@ export function AdminExpenseGroupSettleUp({ group, expenses }: AdminExpenseGroup
           </ul>
         </>
       )}
+
+      {beforeActions}
 
       <ModalActions>
         <CustomButton

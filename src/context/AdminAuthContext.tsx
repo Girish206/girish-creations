@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiClient, getAdminToken, setAdminToken } from "../api/client";
 import { setPortfolioTarget } from "../portfolio/adminPortfolioTarget";
@@ -29,6 +29,10 @@ interface AdminAuthContextValue {
   admin: AdminIdentity | null;
   // `identifier` is an email address or a mobile number.
   login: (identifier: string, password: string) => Promise<void>;
+  // Sign in with a code emailed to the account.
+  loginWithCode: (identifier: string, code: string) => Promise<void>;
+  // Sets a new password using a code emailed to the account, and signs in.
+  resetPassword: (identifier: string, code: string, newPassword: string) => Promise<void>;
   logout: () => void;
   // Ported from the reference DMS app's AuthContext: a user-selectable
   // background tint for the admin shell (swatches live in the Navbar's
@@ -91,6 +95,28 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   const [mainBg, setMainBgState] = useState(() => localStorage.getItem("admin_mainBg") || "bg-light");
   const [activeModule, setActiveModuleState] = useState<AdminModule>(() => defaultModuleFor(admin));
 
+  // The token holds what the account could do when it was issued, so the menus
+  // catch up with any change when the admin opens. The server checks every
+  // request regardless; an ended session gets a 401, which goes to the login page.
+  useEffect(() => {
+    const token = getAdminToken();
+    if (!token || !window.location.pathname.startsWith("/admin")) return;
+    apiClient
+      .post<ApiEnvelope<{ token: string }>>("/admin/auth/refresh")
+      .then(({ data }) => {
+        // They signed out or in as someone else while this was on its way.
+        if (getAdminToken() !== token) return;
+        const identity = decodeAdminFromToken(data.data.token);
+        setAdminToken(data.data.token);
+        if (!identity?.isSuperAdmin) setPortfolioTarget(null);
+        setAdmin(identity);
+        setActiveModuleState(defaultModuleFor(identity));
+      })
+      .catch(() => {
+        // Offline or a server hiccup: carry on with what we have.
+      });
+  }, []);
+
   function setMainBg(bg: string) {
     localStorage.setItem("admin_mainBg", bg);
     setMainBgState(bg);
@@ -101,24 +127,44 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     setActiveModuleState(module);
   }
 
-  async function login(identifier: string, password: string) {
-    const { data } = await apiClient.post<ApiEnvelope<{ token: string }>>(
-      "/admin/auth/login",
-      { app: "admin", email: identifier, password },
-    );
+  function startSession(token: string) {
     // Same source as a page reload: the response's `admin` carries `id`, not
     // the `sub` the rest of the app reads.
-    const identity = decodeAdminFromToken(data.data.token);
+    const identity = decodeAdminFromToken(token);
     // A cricket-only (CrickVerse) account has nothing to open here.
     if (identity && !identity.hasPortfolioAccess && !hasAnyExpenseAccess(identity)) {
       throw new NoAdminModuleError();
     }
-    setAdminToken(data.data.token);
+    setAdminToken(token);
     // Admin data (own portfolio, contact messages, ...) is per account.
     setPortfolioTarget(null);
     queryClient.clear();
     setAdmin(identity);
     setActiveModuleState(defaultModuleFor(identity));
+  }
+
+  async function login(identifier: string, password: string) {
+    const { data } = await apiClient.post<ApiEnvelope<{ token: string }>>(
+      "/admin/auth/login",
+      { app: "admin", email: identifier, password },
+    );
+    startSession(data.data.token);
+  }
+
+  async function loginWithCode(identifier: string, code: string) {
+    const { data } = await apiClient.post<ApiEnvelope<{ token: string }>>(
+      "/admin/auth/otp/login",
+      { app: "admin", email: identifier, code },
+    );
+    startSession(data.data.token);
+  }
+
+  async function resetPassword(identifier: string, code: string, newPassword: string) {
+    const { data } = await apiClient.post<ApiEnvelope<{ token: string }>>(
+      "/admin/auth/password/reset",
+      { app: "admin", email: identifier, code, newPassword },
+    );
+    startSession(data.data.token);
   }
 
   function logout() {
@@ -134,6 +180,8 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: admin !== null,
         admin,
         login,
+        loginWithCode,
+        resetPassword,
         logout,
         mainBg,
         setMainBg,

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useOutletContext } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useProfile } from "../api/hooks/useProfile";
 import { useExperience } from "../api/hooks/useExperience";
@@ -11,6 +11,7 @@ import { useBlogList } from "../api/hooks/useBlogPosts";
 import { apiClient } from "../api/client";
 import { usePortfolioScope } from "../portfolio/PortfolioScope";
 import type { ApiEnvelope, ContactMessage, PaginatedResponse } from "../api/types";
+import type { AdminOutletContext } from "./dms/layout/LayoutWrapper";
 import "./dms/css/adminDisplays.css";
 import "./admin.css";
 
@@ -28,6 +29,7 @@ function useContactCount() {
 }
 
 export function DashboardHomePage() {
+  const { heroPicker } = useOutletContext<AdminOutletContext>();
   const { data: profile } = useProfile();
   const { data: experience } = useExperience();
   const { data: education } = useEducation();
@@ -68,15 +70,16 @@ export function DashboardHomePage() {
 
   return (
     <div>
-      <div className="admin-dashboard-hero">
-        <div>
+      <div className="admin-dashboard-hero is-stacked">
+        <div className="admin-dashboard-hero-top">
           <span className="admin-dashboard-hero-badge">Dashboard</span>
-          <h1>Welcome back{profile ? `, ${profile.fullName}` : ""}</h1>
-          <p>Here's what's currently published on your portfolio.</p>
+          <span className="admin-dashboard-hero-date">
+            <i className="fa-solid fa-calendar-days"></i> {today}
+          </span>
         </div>
-        <span className="admin-dashboard-hero-date">
-          <i className="fa-solid fa-calendar-days"></i> {today}
-        </span>
+        <h1>Welcome back{profile ? `, ${profile.fullName}` : ""}</h1>
+        <p>Here's what's currently published on your portfolio.</p>
+        {heroPicker}
       </div>
 
       <div className="admin-card-grid">

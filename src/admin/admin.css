@@ -725,6 +725,11 @@ body.admin-page h6 {
   margin-bottom: 24px;
 }
 
+/* The dark theme's --primary is a pale shade, too light under this white text. */
+:root[data-bs-theme="dark"] .admin-dashboard-hero {
+  background: var(--brand-gradient-night);
+}
+
 .admin-dashboard-hero-badge {
   display: inline-block;
   margin-bottom: 8px;
@@ -752,6 +757,23 @@ body.admin-page h6 {
   font-size: 0.92rem;
 }
 
+/* Portfolio dashboard: badge and date on top, the picker strip along the bottom. */
+.admin-dashboard-hero.is-stacked {
+  display: block;
+  padding: 24px 32px;
+}
+.admin-dashboard-hero-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 14px;
+}
+.admin-dashboard-hero-top .admin-dashboard-hero-badge {
+  margin-bottom: 0;
+}
+
 .admin-dashboard-hero-date {
   display: inline-flex;
   align-items: center;
@@ -764,6 +786,19 @@ body.admin-page h6 {
   font-weight: 600;
   white-space: nowrap;
   flex-shrink: 0;
+}
+.admin-dashboard-hero-top .admin-dashboard-hero-date {
+  padding: 0;
+  background: none;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.82rem;
+  white-space: normal;
+}
+
+@media (max-width: 576px) {
+  .admin-dashboard-hero.is-stacked {
+    padding: 20px;
+  }
 }
 
 .admin-dashboard-stat-card {
@@ -880,47 +915,6 @@ body.admin-page h6 {
   justify-content: space-between;
   gap: 10px;
   margin-bottom: 12px;
-}
-.admin-filter-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.admin-filter-chips button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--muted-color);
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-}
-.admin-filter-chips button:hover {
-  border-color: var(--primary);
-  color: var(--theme-text-dark);
-}
-.admin-filter-chips button.active {
-  border-color: transparent;
-  background: var(--primary-gradient);
-  color: #fff;
-}
-.admin-filter-count {
-  min-width: 20px;
-  padding: 0 6px;
-  border-radius: 999px;
-  background: rgba(var(--primary-rgb), 0.12);
-  font-size: 0.7rem;
-  line-height: 18px;
-  text-align: center;
-}
-.admin-filter-chips button.active .admin-filter-count {
-  background: rgba(255, 255, 255, 0.25);
 }
 .admin-accounts-search {
   position: relative;

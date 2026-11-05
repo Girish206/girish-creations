@@ -1,0 +1,166 @@
+/* The group details modal: people and expenses, around the settle-up sections. */
+.admin-group-people {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.admin-group-people li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 4px;
+  border-radius: 999px;
+  background: var(--background-color);
+  font-size: 0.84rem;
+  min-width: 0;
+}
+
+.admin-group-person-avatar {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.admin-group-person-remove {
+  border: none;
+  background: none;
+  color: var(--muted-color);
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 0.72rem;
+}
+
+.admin-group-person-remove:hover {
+  color: #c0392b;
+}
+
+.admin-group-people-add {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.admin-group-people-picker {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-group-people-add .btn {
+  flex-shrink: 0;
+  margin-bottom: 4px !important;
+}
+
+.admin-group-expenses {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-group-expense {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--background-color);
+}
+
+.admin-group-expense-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.admin-group-expense-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-group-expense-title {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.admin-group-expense-meta {
+  margin: 2px 0 0;
+  font-size: 0.74rem;
+  color: var(--muted-color);
+}
+
+.admin-group-expense-amount {
+  flex-shrink: 0;
+  font-size: 0.9rem;
+}
+
+.admin-group-expense-shares {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 8px 0 0;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+}
+
+.admin-group-expense-shares li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-group-expense-unsplit {
+  margin: 8px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-color);
+  font-size: 0.76rem;
+  color: var(--muted-color);
+}
+
+/* The group's name in the Expenses list opens these details. */
+.admin-expense-group-name-btn {
+  border: none;
+  background: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.admin-expense-group-name-btn:hover {
+  text-decoration: underline;
+}
+
+.admin-group-expense-title {
+  color: var(--theme-text-dark);
+}
+
+/* On a phone, Pending has to stay in view. Repayments are listed separately,
+   so the Settled column is the one to give up. */
+@media (max-width: 575.98px) {
+  .admin-settle-table th:nth-child(4),
+  .admin-settle-table td:nth-child(4) {
+    display: none;
+  }
+
+  .admin-settle-table th,
+  .admin-settle-table td {
+    padding: 8px !important;
+    font-size: 0.8rem;
+  }
+}

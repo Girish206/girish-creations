@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { useExpenses, useDeleteExpense, useUpdateExpense } from "../../../api/hooks/expense/useExpenses";
+import { useDirectBalances, useExpenses, useDeleteExpense, useUpdateExpense } from "../../../api/hooks/expense/useExpenses";
 import { useDeleteExpenseGroup, useExpenseGroups } from "../../../api/hooks/expense/useExpenseGroups";
 import type { Expense, ExpenseGroup } from "../../../api/types";
+import { useAdminAuth } from "../../../context/AdminAuthContext";
 import { ListCard } from "../../components/ListCard";
 import { Button } from "../../components/Button";
 import { RowActions } from "../../components/RowActions";
@@ -12,18 +13,18 @@ import CustomButton from "../../dms/components/CustomButton";
 import { AdminExpenseForm } from "./AdminExpenseForm";
 import { AdminExpenseGroupQuickForm } from "./AdminExpenseGroupQuickForm";
 import { AdminExpenseBulkMoveForm } from "./AdminExpenseBulkMoveForm";
-import { AdminExpenseGroupSettleUp } from "./AdminExpenseGroupSettleUp";
+import { AdminExpenseGroupDetails } from "./AdminExpenseGroupDetails";
+import { AdminDirectSettleUp } from "./AdminDirectSettleUp";
+import { PillSelect } from "../../../components/PillSelect";
 import { formatCurrency } from "../currency";
+import { formatDay as formatDate } from "../dates";
 import { CategoryIcon } from "../categories/CategoryIcon";
 import { resolveCategoryIcon } from "../categories/categoryIcons";
 import "../../dms/css/adminDisplays.css";
 import "../../admin.css";
+import "./expenseFilters.css";
 
 type ModalState = { mode: "new" } | { mode: "edit"; id: number } | null;
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
-}
 
 // Buckets expenses by their trip/event group, in the order each group's
 // most recent expense appears (items already come sorted date-desc) — any
@@ -66,26 +67,37 @@ function formatWindow(group: ExpenseGroup): string | null {
   return null;
 }
 
-// KPI figures for one group's tile: total spent, everyone involved (payers
-// + split participants), and expense count — from the expenses this
-// account can see.
-function groupStats(expenses: Expense[]) {
-  const people = new Set<number>();
-  let total = 0;
-  for (const expense of expenses) {
-    total += Number(expense.amount);
-    people.add(expense.paidByAdminUserId);
-    for (const participant of expense.splitParticipants) people.add(participant.adminUserId);
-  }
-  return { total, people: people.size, count: expenses.length };
+// One person sharing it means the payer covered it for them.
+function splitLabel(item: Expense) {
+  const sharers = item.splitParticipants;
+  if (sharers.length !== 1) return `Split ${sharers.length} ways`;
+  return `Paid for ${sharers[0].adminUser.name || sharers[0].adminUser.email}`;
+}
+
+// What the search box looks through.
+function searchableText(item: Expense) {
+  return [
+    item.description,
+    item.category.name,
+    item.paidBy.name,
+    item.paidBy.email,
+    item.savingsGoal?.name,
+    item.expenseGroup?.name,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
 }
 
 export function AdminExpensesList() {
+  const { admin } = useAdminAuth();
+  const myId = admin?.sub ? Number(admin.sub) : null;
   const { data: items, isLoading } = useExpenses();
   const deleteExpense = useDeleteExpense();
   const updateExpense = useUpdateExpense();
   const { data: expenseGroups } = useExpenseGroups();
   const deleteExpenseGroup = useDeleteExpenseGroup();
+  const { data: directBalances } = useDirectBalances();
 
   const [modal, setModal] = useState<ModalState>(null);
   const [viewId, setViewId] = useState<number | null>(null);
@@ -95,12 +107,42 @@ export function AdminExpensesList() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [settleGroupId, setSettleGroupId] = useState<number | null>(null);
+  const [directSettleOpen, setDirectSettleOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [month, setMonth] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+
+  const filtersActive = search.trim() !== "" || month !== "" || categoryFilter !== "all";
+  const query = search.trim().toLowerCase();
+  const visibleItems = (items ?? []).filter(
+    (item) =>
+      (!month || item.date.slice(0, 7) === month) &&
+      (categoryFilter === "all" || String(item.categoryId) === categoryFilter) &&
+      (!query || searchableText(item).includes(query)),
+  );
+  const visibleTotal = visibleItems.reduce((sum, item) => sum + Number(item.amount), 0);
+  // Categories in use, not the whole list, so a filter can't come up empty.
+  const categoryOptions = [
+    { value: "all", label: "All categories" },
+    ...Array.from(new Map((items ?? []).map((item) => [item.categoryId, item.category.name])))
+      .sort((a, b) => a[1].localeCompare(b[1]))
+      .map(([id, name]) => ({ value: String(id), label: name })),
+  ];
+
+  const directTransfers = directBalances?.transfers ?? [];
+  const directPendingCents = directTransfers.reduce((sum, transfer) => sum + transfer.amountCents, 0);
+  // Worth showing once there's anything to settle, or a repayment to review.
+  const hasDirectActivity = directTransfers.length > 0 || Boolean(directBalances?.settlements.length);
 
   const groupById = new Map((expenseGroups ?? []).map((g) => [g.id, g]));
   const settleGroup = settleGroupId !== null ? groupById.get(settleGroupId) : undefined;
   // Expenses in a closed (settled) group are frozen — view only.
-  const isLocked = (item: Expense) =>
+  const isInClosedGroup = (item: Expense) =>
     item.expenseGroupId !== null && Boolean(groupById.get(item.expenseGroupId)?.closedAt);
+  // Whoever paid or logged an expense can change it; sharing it only shows it
+  // (the server enforces this too).
+  const mayChange = (item: Expense) =>
+    Boolean(admin?.isSuperAdmin) || item.paidByAdminUserId === myId || item.createdByAdminUserId === myId;
 
   const viewItem = viewId !== null ? items?.find((item) => item.id === viewId) : undefined;
 
@@ -129,11 +171,31 @@ export function AdminExpensesList() {
     setSelectedIds(new Set());
   }
 
-  async function handleBulkMove(expenseGroupId: number) {
-    await Promise.all(
-      Array.from(selectedIds).map((id) => updateExpense.mutateAsync({ id, input: { expenseGroupId } })),
-    );
+  // Changing a filter drops the selection, so a bulk action can never touch
+  // rows that have just been filtered out of view.
+  function changeFilter(apply: () => void) {
+    apply();
     clearSelection();
+  }
+
+  function clearFilters() {
+    changeFilter(() => {
+      setSearch("");
+      setMonth("");
+      setCategoryFilter("all");
+    });
+  }
+
+  // Whatever failed stays selected to retry (each failure shows its own
+  // error); what succeeded drops out, rather than all-or-nothing.
+  async function runOnSelected(action: (id: number) => Promise<unknown>) {
+    const ids = Array.from(selectedIds);
+    const results = await Promise.allSettled(ids.map(action));
+    setSelectedIds(new Set(ids.filter((_, index) => results[index].status === "rejected")));
+  }
+
+  async function handleBulkMove(expenseGroupId: number) {
+    await runOnSelected((id) => updateExpense.mutateAsync({ id, input: { expenseGroupId } }));
   }
 
   async function handleBulkDelete() {
@@ -141,8 +203,7 @@ export function AdminExpensesList() {
     if (!(await confirmDelete(`${selectedIds.size} selected expense${selectedIds.size === 1 ? "" : "s"}`))) return;
     setBulkDeleting(true);
     try {
-      await Promise.all(Array.from(selectedIds).map((id) => deleteExpense.mutateAsync(id)));
-      clearSelection();
+      await runOnSelected((id) => deleteExpense.mutateAsync(id));
     } finally {
       setBulkDeleting(false);
     }
@@ -164,20 +225,40 @@ export function AdminExpensesList() {
       className="admin-card-scrollable"
       bodyClassName="admin-card-body-compact admin-card-body-scroll"
     >
-      {!!expenseGroups?.length && (
+      {(!!expenseGroups?.length || hasDirectActivity) && (
         <div className="admin-group-tiles" aria-label="Expense groups">
-          {expenseGroups.map((g) => {
-            const stats = groupStats((items ?? []).filter((item) => item.expenseGroupId === g.id));
+          {hasDirectActivity && (
+            <button
+              type="button"
+              className="admin-group-tile"
+              onClick={() => setDirectSettleOpen(true)}
+              title="Settle splits on Daily Expenses"
+            >
+              <span className="admin-group-tile-head">
+                <span className="admin-group-tile-name">Daily splits</span>
+              </span>
+              <span className="admin-group-tile-total">
+                {directPendingCents > 0 ? formatCurrency(directPendingCents / 100) : "All settled"}
+              </span>
+              <span className="admin-group-tile-meta">
+                <span>
+                  <i className="fa-solid fa-scale-balanced"></i>{" "}
+                  {directTransfers.length > 0
+                    ? `${directTransfers.length} to settle`
+                    : "Nothing pending"}
+                </span>
+              </span>
+            </button>
+          )}
+          {(expenseGroups ?? []).map((g) => {
             const dateRange = formatWindow(g);
             return (
               <button
                 type="button"
                 key={g.id}
                 className={`admin-group-tile ${g.closedAt ? "admin-group-tile-closed" : ""}`}
-                onClick={() =>
-                  document.getElementById(`expense-group-${g.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" })
-                }
-                title={`Jump to ${g.name}`}
+                onClick={() => setSettleGroupId(g.id)}
+                title={`Open ${g.name}`}
               >
                 <span className="admin-group-tile-head">
                   <span className="admin-group-tile-name">{g.name}</span>
@@ -188,18 +269,53 @@ export function AdminExpensesList() {
                     <i className="fa-solid fa-calendar-days"></i> {dateRange}
                   </span>
                 )}
-                <span className="admin-group-tile-total">{formatCurrency(stats.total)}</span>
+                <span className="admin-group-tile-total">{formatCurrency(g.totalCents / 100)}</span>
                 <span className="admin-group-tile-meta">
                   <span>
-                    <i className="fa-solid fa-users"></i> {stats.people} {stats.people === 1 ? "person" : "people"}
+                    <i className="fa-solid fa-users"></i> {g.members.length || g.balances.length}{" "}
+                    {(g.members.length || g.balances.length) === 1 ? "person" : "people"}
                   </span>
                   <span>
-                    <i className="fa-solid fa-receipt"></i> {stats.count} expense{stats.count === 1 ? "" : "s"}
+                    <i className="fa-solid fa-receipt"></i> {g.expenseCount} expense{g.expenseCount === 1 ? "" : "s"}
                   </span>
                 </span>
               </button>
             );
           })}
+        </div>
+      )}
+
+      {!!items?.length && (
+        <div className="admin-expense-filters" role="search" aria-label="Filter expenses">
+          <input
+            type="search"
+            className="form-control shadow-none admin-expense-filter-search"
+            placeholder="Search description, category, person…"
+            aria-label="Search expenses"
+            value={search}
+            onChange={(e) => changeFilter(() => setSearch(e.target.value))}
+          />
+          <input
+            type="month"
+            className="form-control shadow-none admin-expense-filter-month"
+            aria-label="Filter by month"
+            value={month}
+            onChange={(e) => changeFilter(() => setMonth(e.target.value))}
+          />
+          <PillSelect
+            label="Filter by category"
+            value={categoryFilter}
+            options={categoryOptions}
+            onChange={(value) => changeFilter(() => setCategoryFilter(value))}
+          />
+          {filtersActive && (
+            <span className="admin-expense-filter-summary">
+              {visibleItems.length} expense{visibleItems.length === 1 ? "" : "s"} · {formatCurrency(visibleTotal)}
+              <Button variant="link" onClick={clearFilters}>
+                Clear
+              </Button>
+            </span>
+          )}
         </div>
       )}
 
@@ -242,11 +358,19 @@ export function AdminExpensesList() {
         <p>Loading...</p>
       ) : !items?.length && !expenseGroups?.length ? (
         <div className="admin-empty-state">No expenses logged yet.</div>
+      ) : filtersActive && visibleItems.length === 0 ? (
+        <div className="admin-empty-state">No expenses match these filters.</div>
       ) : (
-        groupExpenses(items ?? [], expenseGroups ?? []).map((group) => {
-          const total = group.items.reduce((sum, item) => sum + Number(item.amount), 0);
+        groupExpenses(visibleItems, filtersActive ? [] : (expenseGroups ?? [])).map((group) => {
+          const shownTotal = group.items.reduce((sum, item) => sum + Number(item.amount), 0);
           const groupRecord = group.key === "daily" ? undefined : groupById.get(Number(group.key));
           const groupClosed = Boolean(groupRecord?.closedAt);
+          // Filtered: what's on screen. Otherwise a group's real total, which
+          // can include expenses private to other people in it.
+          const useGroupTotals = groupRecord !== undefined && !filtersActive;
+          const total = useGroupTotals ? groupRecord.totalCents / 100 : shownTotal;
+          const count = useGroupTotals ? groupRecord.expenseCount : group.items.length;
+          const hiddenCount = count - group.items.length;
           return (
             <div
               className={`admin-expense-group ${groupClosed ? "admin-expense-group-closed" : ""}`}
@@ -256,7 +380,18 @@ export function AdminExpensesList() {
               <div className="admin-expense-group-header">
                 <h4 className="admin-expense-group-title">
                   <i className={group.key === "daily" ? "fa-solid fa-calendar-day" : "fa-solid fa-suitcase-rolling"}></i>
-                  {group.label}
+                  {groupRecord ? (
+                    <button
+                      type="button"
+                      className="admin-expense-group-name-btn"
+                      onClick={() => setSettleGroupId(groupRecord.id)}
+                      title={`Open ${group.label}`}
+                    >
+                      {group.label}
+                    </button>
+                  ) : (
+                    group.label
+                  )}
                   {groupRecord && formatWindow(groupRecord) && (
                     <span className="admin-expense-group-dates">{formatWindow(groupRecord)}</span>
                   )}
@@ -267,7 +402,17 @@ export function AdminExpensesList() {
                   )}
                 </h4>
                 <span className="admin-expense-group-stats">
-                  {formatCurrency(total)} · {group.items.length} expense{group.items.length === 1 ? "" : "s"}
+                  {formatCurrency(total)} · {count} expense{count === 1 ? "" : "s"}
+                  {hiddenCount > 0 && ` (${group.items.length} shown)`}
+                  {group.key === "daily" && hasDirectActivity && (
+                    <button
+                      type="button"
+                      className="admin-expense-group-settle-btn"
+                      onClick={() => setDirectSettleOpen(true)}
+                    >
+                      <i className="fa-solid fa-scale-balanced"></i> Settle up
+                    </button>
+                  )}
                   {groupRecord && (
                     <button
                       type="button"
@@ -281,10 +426,10 @@ export function AdminExpensesList() {
                     <span className="d-inline-flex align-items-center gap-1">
                       <RowActions
                         onEdit={() => setGroupModal(groupRecord)}
-                        onDelete={group.items.length === 0 ? () => handleDeleteGroup(groupRecord) : undefined}
+                        onDelete={groupRecord.expenseCount === 0 ? () => handleDeleteGroup(groupRecord) : undefined}
                       />
                       {/* Only an empty group can be deleted (the server enforces this too). */}
-                      {group.items.length > 0 && (
+                      {groupRecord.expenseCount > 0 && (
                         <span title="Move or delete this group's expenses before deleting it">
                           <CustomButton
                             size="sm"
@@ -303,12 +448,17 @@ export function AdminExpensesList() {
                 </span>
               </div>
               {group.items.length === 0 && (
-                <p className="admin-expense-group-empty">No expenses in this group yet.</p>
+                <p className="admin-expense-group-empty">
+                  {hiddenCount > 0
+                    ? "Its expenses are private to the people involved in them."
+                    : "No expenses in this group yet."}
+                </p>
               )}
               <div className="admin-txn-list">
                 {group.items.map((item) => {
                   const isSelected = selectedIds.has(item.id);
-                  const locked = isLocked(item);
+                  const closed = isInClosedGroup(item);
+                  const locked = closed || !mayChange(item);
                   return (
                     <div
                       className={`admin-txn-row ${isSelected ? "selected" : ""}`}
@@ -319,7 +469,13 @@ export function AdminExpensesList() {
                         type="checkbox"
                         className="admin-txn-checkbox"
                         disabled={locked}
-                        title={locked ? "This group is closed" : undefined}
+                        title={
+                          closed
+                            ? "This group is closed"
+                            : locked
+                              ? "Only the person who paid or logged this can change it"
+                              : undefined
+                        }
                         checked={isSelected}
                         onChange={() => toggleSelected(item.id)}
                         onClick={(e) => e.stopPropagation()}
@@ -345,10 +501,10 @@ export function AdminExpensesList() {
                           {item.splitParticipants.length > 0 && (
                             <span
                               className="admin-txn-tag admin-txn-tag-split"
-                              title={`Split ${item.splitParticipants.length} ways`}
+                              title={splitLabel(item)}
                             >
                               <i className="fa-solid fa-users"></i>
-                              <span className="admin-txn-tag-label">Split {item.splitParticipants.length} ways</span>
+                              <span className="admin-txn-tag-label">{splitLabel(item)}</span>
                             </span>
                           )}
                         </div>
@@ -366,7 +522,7 @@ export function AdminExpensesList() {
                           onEdit={locked ? undefined : () => setModal({ mode: "edit", id: item.id })}
                           onDelete={locked ? undefined : () => handleDelete(item.id)}
                         />
-                        <span className="admin-txn-creator" title={`Logged by ${item.paidBy.name || item.paidBy.email}`}>
+                        <span className="admin-txn-creator" title={`Paid by ${item.paidBy.name || item.paidBy.email}`}>
                           <i className="fa-solid fa-user"></i>
                           <span className="admin-txn-creator-name">{item.paidBy.name || item.paidBy.email}</span>
                         </span>
@@ -407,6 +563,13 @@ export function AdminExpensesList() {
                 { label: "Category", value: viewItem.category.name },
                 { label: "Group", value: viewItem.expenseGroup?.name ?? "Daily Expenses (ungrouped)" },
                 { label: "Paid By", value: viewItem.paidBy.name || viewItem.paidBy.email },
+                {
+                  label: "Logged By",
+                  value:
+                    viewItem.createdBy && viewItem.createdBy.id !== viewItem.paidByAdminUserId
+                      ? viewItem.createdBy.name || viewItem.createdBy.email
+                      : null,
+                },
                 { label: "Spent From Savings", value: viewItem.savingsGoal?.name ?? null },
                 {
                   label: "Split Between",
@@ -426,22 +589,29 @@ export function AdminExpensesList() {
 
       {settleGroup && (
         <DefaultModal
-          title={`${settleGroup.name} — Settle Up`}
+          title={settleGroup.name}
           onClose={() => setSettleGroupId(null)}
           showFooter={false}
           size="lg"
           component={
-            <AdminExpenseGroupSettleUp
-              group={settleGroup}
-              expenses={(items ?? []).filter((item) => item.expenseGroupId === settleGroup.id)}
-            />
+            <AdminExpenseGroupDetails group={settleGroup} />
           }
+        />
+      )}
+
+      {directSettleOpen && (
+        <DefaultModal
+          title="Daily Splits — Settle Up"
+          onClose={() => setDirectSettleOpen(false)}
+          showFooter={false}
+          size="lg"
+          component={<AdminDirectSettleUp />}
         />
       )}
 
       {groupModal && (
         <DefaultModal
-          title={groupModal === "new" ? "New Expense Group" : "Rename Expense Group"}
+          title={groupModal === "new" ? "New Expense Group" : "Edit Expense Group"}
           onClose={() => setGroupModal(null)}
           showFooter={false}
           size="md"

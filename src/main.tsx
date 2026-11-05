@@ -6,6 +6,7 @@ import { RouterProvider } from "react-router-dom";
 import { router } from "./routes/router";
 import { AdminAuthProvider } from "./context/AdminAuthContext";
 import { showMutationError } from "./api/mutationErrors";
+import { AppToaster } from "./components/AppToaster";
 import { setupAppManifest } from "./pwa/appManifest";
 
 const queryClient = new QueryClient({
@@ -13,7 +14,7 @@ const queryClient = new QueryClient({
     // A mutation that renders its own error UI opts out via
     // meta: { skipGlobalError: true } (e.g. the public contact form).
     onError: (error, _variables, _context, mutation) => {
-      if (!mutation.meta?.skipGlobalError) void showMutationError(error);
+      if (!mutation.meta?.skipGlobalError) showMutationError(error);
     },
   }),
   defaultOptions: {
@@ -31,6 +32,7 @@ createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <AdminAuthProvider>
         <RouterProvider router={router} />
+        <AppToaster />
       </AdminAuthProvider>
     </QueryClientProvider>
   </StrictMode>,

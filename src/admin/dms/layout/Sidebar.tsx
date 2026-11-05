@@ -165,11 +165,11 @@ const Sidebar = ({
         // Super admins manage every account; other members get "Members" —
         // the same page, limited to people they add for expenses/savings.
         {
-            label: admin?.isSuperAdmin ? "Administration" : "People",
+            label: "People",
             items: [
                 {
                     id: "expense-admin-users",
-                    label: admin?.isSuperAdmin ? "Admin Accounts" : "Members",
+                    label: "People",
                     icon: admin?.isSuperAdmin ? "fa-solid fa-user-shield" : "fa-solid fa-users",
                     link: "/admin/expense/admin-users",
                     submenu: [],

@@ -901,8 +901,15 @@
 
 .admin-settle-record {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 6px;
+}
+
+.admin-settle-record .btn {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .admin-settle-record input {

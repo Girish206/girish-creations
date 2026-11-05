@@ -15,15 +15,13 @@ import CustomButton from "../../dms/components/CustomButton";
 import { AdminSavingsGoalForm } from "./AdminSavingsGoalForm";
 import { AdminSavingsContributionForm } from "./AdminSavingsContributionForm";
 import { formatCurrency } from "../currency";
+import { formatDay as formatDate, todayLocal } from "../dates";
 import "../../dms/css/adminDisplays.css";
 import type { SavingsGoal } from "../../../api/types";
+import { useAdminAuth } from "../../../context/AdminAuthContext";
 import "./savingsGoals.css";
 
 type ModalState = { mode: "new" } | { mode: "edit"; id: number } | null;
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
-}
 
 // Per-person contribution totals, largest first.
 function totalsByContributor(goal: SavingsGoal) {
@@ -40,6 +38,15 @@ function totalsByContributor(goal: SavingsGoal) {
 }
 
 export function AdminSavingsGoalsList() {
+  const { admin } = useAdminAuth();
+  const myId = admin?.sub ? Number(admin.sub) : null;
+  // The same rules the server enforces: whoever created the goal or holds its
+  // account manages it (an older goal with neither stays open to those who see it).
+  const managesGoal = (goal: SavingsGoal) =>
+    Boolean(admin?.isSuperAdmin) ||
+    (!goal.createdBy && goal.accountHolderAdminUserId === null) ||
+    goal.createdBy?.id === myId ||
+    goal.accountHolderAdminUserId === myId;
   const { data: items, isLoading } = useSavingsGoals();
   const deleteGoal = useDeleteSavingsGoal();
   const deleteContribution = useDeleteSavingsContribution();
@@ -95,8 +102,15 @@ export function AdminSavingsGoalsList() {
             const saved = goal.contributions.reduce((sum, c) => sum + Number(c.amount), 0);
             const hasTarget = goal.targetAmount !== null;
             const target = hasTarget ? Number(goal.targetAmount) : 0;
-            const percent = hasTarget && target > 0 ? Math.min(100, Math.round((saved / target) * 100)) : 0;
+            // Floored, so it can't read 100% until the target is actually met.
+            const percent = hasTarget && target > 0 ? Math.min(100, Math.floor((saved / target) * 100)) : 0;
             const isClosed = goal.closedAt !== null;
+            const manages = managesGoal(goal);
+            const reached = hasTarget && saved >= target;
+            const spent = Number(goal.spentAmount);
+            const balance = saved - spent;
+            const overdue =
+              !isClosed && hasTarget && !reached && goal.targetDate !== null && goal.targetDate.slice(0, 10) < todayLocal();
 
             return (
               <div className={`card admin-item-card ${isClosed ? "admin-savings-closed" : ""}`} key={goal.id}>
@@ -115,7 +129,15 @@ export function AdminSavingsGoalsList() {
                         )}
                       </h3>
                       {goal.targetDate && (
-                        <p className="admin-item-card-subtitle">Target: {formatDate(goal.targetDate)}</p>
+                        <p className="admin-item-card-subtitle">
+                          Target: {formatDate(goal.targetDate)}
+                          {overdue && (
+                            <>
+                              {" · "}
+                              <span className="admin-settle-owes">past target date</span>
+                            </>
+                          )}
+                        </p>
                       )}
                       {(goal.bankName || goal.accountHolder) && (
                         <p className="admin-item-card-subtitle">
@@ -126,7 +148,7 @@ export function AdminSavingsGoalsList() {
                       )}
                       {goal.members.length > 0 && (
                         <p className="admin-item-card-subtitle">
-                          <i className="fa-solid fa-lock"></i> Restricted to:{" "}
+                          <i className="fa-solid fa-users"></i> Shared with:{" "}
                           {goal.members.map((m) => m.adminUser.name || m.adminUser.email).join(", ")}
                         </p>
                       )}
@@ -141,11 +163,26 @@ export function AdminSavingsGoalsList() {
                     </div>
                     <p className="admin-savings-progress-label">
                       {formatCurrency(saved)} of {formatCurrency(target)} ({percent}%)
+                      {reached && (
+                        <span className="admin-settle-gets">
+                          {" "}
+                          <i className="fa-solid fa-check"></i> Target reached
+                        </span>
+                      )}
                     </p>
                   </>
                 ) : (
                   <p className="admin-savings-progress-label">
                     <i className="fa-solid fa-piggy-bank"></i> {formatCurrency(saved)} saved so far · no target set
+                  </p>
+                )}
+
+                {spent > 0 && (
+                  <p className="admin-savings-progress-label">
+                    Spent {formatCurrency(spent)} ·{" "}
+                    <span className={balance < 0 ? "admin-settle-owes" : undefined}>
+                      {balance < 0 ? `Overspent by ${formatCurrency(-balance)}` : `${formatCurrency(balance)} left`}
+                    </span>
                   </p>
                 )}
 
@@ -156,7 +193,7 @@ export function AdminSavingsGoalsList() {
                         <span>
                           {formatCurrency(Number(c.amount))} · {formatDate(c.date)} · {c.contributedBy.name || c.contributedBy.email}
                         </span>
-                        {!isClosed && <button
+                        {!isClosed && (manages || c.contributedByAdminUserId === myId) && <button
                           type="button"
                           className="admin-savings-contribution-remove"
                           onClick={() => handleDeleteContribution(goal.id, c.id)}
@@ -184,20 +221,22 @@ export function AdminSavingsGoalsList() {
                   <div className="admin-savings-card-actions">
                     <RowActions
                       onView={() => setViewId(goal.id)}
-                      onEdit={() => setModal({ mode: "edit", id: goal.id })}
-                      onDelete={() => handleDelete(goal.id)}
+                      onEdit={manages ? () => setModal({ mode: "edit", id: goal.id }) : undefined}
+                      onDelete={manages ? () => handleDelete(goal.id) : undefined}
                     >
-                      <CustomButton
-                        size="sm"
-                        bg={isClosed ? "success" : "secondary"}
-                        rounded
-                        className="m-0 admin-row-action-btn"
-                        onClick={() => handleToggleClosed(goal)}
-                        title={isClosed ? "Reopen goal" : "Close goal"}
-                        aria-label={isClosed ? "Reopen goal" : "Close goal"}
-                      >
-                        <i className={`fa-solid ${isClosed ? "fa-lock-open" : "fa-lock"}`} aria-hidden="true"></i>
-                      </CustomButton>
+                      {manages && (
+                        <CustomButton
+                          size="sm"
+                          bg={isClosed ? "success" : "secondary"}
+                          rounded
+                          className="m-0 admin-row-action-btn"
+                          onClick={() => handleToggleClosed(goal)}
+                          title={isClosed ? "Reopen goal" : "Close goal"}
+                          aria-label={isClosed ? "Reopen goal" : "Close goal"}
+                        >
+                          <i className={`fa-solid ${isClosed ? "fa-lock-open" : "fa-lock"}`} aria-hidden="true"></i>
+                        </CustomButton>
+                      )}
                     </RowActions>
                   </div>
                 </div>
@@ -226,6 +265,17 @@ export function AdminSavingsGoalsList() {
                   label: "Saved So Far",
                   value: formatCurrency(viewItem.contributions.reduce((sum, c) => sum + Number(c.amount), 0)),
                 },
+                { label: "Spent", value: Number(viewItem.spentAmount) > 0 ? formatCurrency(viewItem.spentAmount) : null },
+                {
+                  label: "Left",
+                  value:
+                    Number(viewItem.spentAmount) > 0
+                      ? formatCurrency(
+                          viewItem.contributions.reduce((sum, c) => sum + Number(c.amount), 0) -
+                            Number(viewItem.spentAmount),
+                        )
+                      : null,
+                },
                 {
                   label: "By Person",
                   value:
@@ -242,11 +292,11 @@ export function AdminSavingsGoalsList() {
                   value: viewItem.accountHolder ? viewItem.accountHolder.name || viewItem.accountHolder.email : null,
                 },
                 {
-                  label: "Restricted To",
+                  label: "Shared With",
                   value:
                     viewItem.members.length > 0
                       ? viewItem.members.map((m) => m.adminUser.name || m.adminUser.email).join(", ")
-                      : "Everyone with Savings access",
+                      : "Only the owner, account holder and contributors",
                 },
                 {
                   label: "Contributions",
@@ -287,7 +337,11 @@ export function AdminSavingsGoalsList() {
           showFooter={false}
           size="md"
           component={
-            <AdminSavingsContributionForm goalId={contributionGoalId} onSaved={() => setContributionGoalId(null)} />
+            <AdminSavingsContributionForm
+              goalId={contributionGoalId}
+              canChooseContributor={items?.some((goal) => goal.id === contributionGoalId && managesGoal(goal)) ?? false}
+              onSaved={() => setContributionGoalId(null)}
+            />
           }
         />
       )}

@@ -1,0 +1,86 @@
+/* The panels under the Money Hub dashboard's stat cards. */
+.admin-money-panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.admin-money-panel {
+  padding: 16px;
+  min-width: 0;
+}
+
+.admin-money-panel-title {
+  margin: 0 0 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.admin-money-panel-empty {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted-color);
+}
+
+.admin-money-bars,
+.admin-money-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-money-bar-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.82rem;
+  margin-bottom: 4px;
+}
+
+.admin-money-bar-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-money-bar-track {
+  display: block;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--background-color);
+}
+
+.admin-money-bar-fill {
+  display: block;
+  height: 100%;
+  min-width: 4px;
+  border-radius: 4px;
+  background: var(--primary);
+}
+
+.admin-money-rows li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.85rem;
+}
+
+.admin-money-row-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-money-row-name small {
+  display: block;
+  color: var(--muted-color);
+}
+
+.admin-money-rows li > :last-child {
+  flex-shrink: 0;
+}

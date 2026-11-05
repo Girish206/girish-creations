@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../../client";
-import type { ApiEnvelope, ExpenseGroup } from "../../types";
+import type { ApiEnvelope, Expense, ExpenseGroup } from "../../types";
 
 export function useExpenseGroups(enabled = true) {
   return useQuery({
@@ -10,6 +10,17 @@ export function useExpenseGroups(enabled = true) {
       return data.data;
     },
     enabled,
+  });
+}
+
+// Under ["expenses"], so saving any expense refreshes it too.
+export function useExpenseGroupExpenses(groupId: number) {
+  return useQuery({
+    queryKey: ["expenses", "group", groupId],
+    queryFn: async () => {
+      const { data } = await apiClient.get<ApiEnvelope<Expense[]>>(`/admin/expense-groups/${groupId}/expenses`);
+      return data.data;
+    },
   });
 }
 

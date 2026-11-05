@@ -1,0 +1,261 @@
+/* The Money Hub's People page and a person's details. */
+.people-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.people-stats > div {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  column-gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+}
+
+.people-stats i {
+  grid-row: span 2;
+  color: var(--primary);
+}
+
+.people-stats strong {
+  font-size: 1.15rem;
+  line-height: 1.2;
+}
+
+.people-stats span {
+  font-size: 0.74rem;
+  color: var(--muted-color);
+}
+
+.people-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr));
+  gap: 12px;
+}
+
+.people-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.08), rgba(var(--primary-rgb), 0.01));
+  color: var(--theme-text-dark);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.people-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary);
+}
+
+.people-card.is-inactive {
+  opacity: 0.65;
+}
+
+.people-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.people-card-identity {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.people-card-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.people-card-contact {
+  font-size: 0.74rem;
+  color: var(--muted-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.people-card-go {
+  font-size: 0.7rem;
+  color: var(--muted-color);
+  flex-shrink: 0;
+}
+
+.people-card-activity {
+  margin-top: auto;
+  font-size: 0.76rem;
+  color: var(--muted-color);
+}
+
+.people-avatar {
+  position: relative;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 700;
+}
+
+.people-avatar.is-large {
+  width: 64px;
+  height: 64px;
+  font-size: 1.5rem;
+}
+
+.people-status-dot {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 2px solid var(--background-color);
+  background: var(--muted-color);
+}
+
+.people-status-dot.is-active {
+  background: #1e8e3e;
+}
+
+.people-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.people-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  font-size: 0.7rem;
+  color: var(--muted-color);
+}
+
+.people-chip.is-on {
+  border-color: rgba(var(--primary-rgb), 0.5);
+  color: var(--primary-dark-1);
+}
+
+.people-chip.is-off {
+  border-color: #c0392b;
+  color: #c0392b;
+}
+
+.people-muted {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--muted-color);
+}
+
+.people-details-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.people-details-identity {
+  min-width: 0;
+}
+
+.people-details-identity h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  overflow-wrap: anywhere;
+}
+
+.people-details-identity p {
+  margin: 2px 0 6px;
+  font-size: 0.8rem;
+  color: var(--muted-color);
+  overflow-wrap: anywhere;
+}
+
+.people-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.people-figures > div {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--background-color);
+}
+
+.people-figures strong {
+  font-size: 1.05rem;
+}
+
+.people-figures span {
+  font-size: 0.7rem;
+  color: var(--muted-color);
+}
+
+.people-rows {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.people-rows li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--background-color);
+  font-size: 0.84rem;
+}
+
+.people-rows li > :last-child {
+  flex-shrink: 0;
+}
+
+.people-row-main {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.people-row-main small {
+  color: var(--muted-color);
+}
+
+.people-details-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+}

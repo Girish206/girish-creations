@@ -1,10 +1,14 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Layout from "./Layout";
 import { PortfolioScopeProvider, type PortfolioScope } from "../../../portfolio/PortfolioScope";
 import { getPortfolioTarget, setPortfolioTarget } from "../../../portfolio/adminPortfolioTarget";
 import { useAdminAuth } from "../../../context/AdminAuthContext";
 import { PortfolioPicker } from "../../portfolio/PortfolioPicker";
+
+export interface AdminOutletContext {
+    heroPicker: ReactNode;
+}
 
 const LayoutWrapper = () => {
     const { admin } = useAdminAuth();
@@ -25,6 +29,8 @@ const LayoutWrapper = () => {
     );
     const path = location.pathname;
     const isExpenseModule = path.startsWith("/admin/expense");
+    const isDashboard = path === "/admin" || path === "/admin/";
+    const showPicker = admin?.isSuperAdmin && !isExpenseModule;
 
     const getActiveItem = () => {
         if (isExpenseModule) {
@@ -52,12 +58,22 @@ const LayoutWrapper = () => {
     return (
         <PortfolioScopeProvider value={scope}>
             <Layout activeItem={getActiveItem()} activeSubItem="">
-                {admin?.isSuperAdmin && !isExpenseModule && (
+                {/* The dashboard shows the picker inside its hero instead. */}
+                {showPicker && !isDashboard && (
                     <PortfolioPicker adminId={admin.sub} target={portfolioTarget} onChange={choosePortfolio} />
                 )}
                 {/* Remount on switch so forms (e.g. the autosaving profile)
                     load the newly chosen portfolio instead of keeping state. */}
-                <Outlet key={portfolioTarget ?? "me"} />
+                <Outlet
+                    key={portfolioTarget ?? "me"}
+                    context={
+                        {
+                            heroPicker: showPicker && (
+                                <PortfolioPicker adminId={admin.sub} target={portfolioTarget} onChange={choosePortfolio} inHero />
+                            ),
+                        } satisfies AdminOutletContext
+                    }
+                />
             </Layout>
         </PortfolioScopeProvider>
     );

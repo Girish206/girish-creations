@@ -9,7 +9,7 @@ export interface SavingsGoalFormInput {
   targetDate?: string | null;
   bankName?: string | null;
   accountHolderAdminUserId?: number | null;
-  // Who can see/use this goal — omitted/empty means everyone with access.
+  // Who else can see/use this goal — omitted/empty keeps it private.
   memberAdminUserIds?: number[];
 }
 
@@ -32,6 +32,8 @@ export function useSavingsGoals(enabled = true) {
 
 function invalidate(queryClient: ReturnType<typeof useQueryClient>) {
   queryClient.invalidateQueries({ queryKey: ["savings-goals"] });
+  // Expenses embed their goal's name, so renames and deletes show there too.
+  queryClient.invalidateQueries({ queryKey: ["expenses"] });
 }
 
 export function useCreateSavingsGoal() {

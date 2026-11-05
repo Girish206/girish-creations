@@ -37,11 +37,17 @@ export interface AdminUserUpdateInput {
   isSuperAdmin?: boolean;
 }
 
-export function useAdminUsers() {
+// "money-hub" leaves out accounts that only use RunMitra or the portfolio;
+// "portfolio" is only the accounts with portfolio access.
+export type AccountScope = "money-hub" | "portfolio";
+
+export function useAdminUsers(scope?: AccountScope) {
   return useQuery({
-    queryKey: ["admin-users"],
+    queryKey: ["admin-users", scope ?? "all"],
     queryFn: async () => {
-      const { data } = await apiClient.get<ApiEnvelope<AdminUserAccount[]>>("/admin/admin-users");
+      const { data } = await apiClient.get<ApiEnvelope<AdminUserAccount[]>>("/admin/admin-users", {
+        params: scope ? { scope } : undefined,
+      });
       return data.data;
     },
   });
@@ -49,13 +55,19 @@ export function useAdminUsers() {
 
 function invalidate(queryClient: ReturnType<typeof useQueryClient>) {
   queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+  // New and renamed people have to show up in the Money Hub's pickers too.
+  queryClient.invalidateQueries({ queryKey: ["expense-members"] });
 }
 
 export function useCreateAdminUser() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input: AdminUserCreateInput) => {
-      const { data } = await apiClient.post<ApiEnvelope<AdminUserAccount>>("/admin/admin-users", input);
+      // addedToExisting: they already had an account, which got this access added.
+      const { data } = await apiClient.post<ApiEnvelope<AdminUserAccount & { addedToExisting?: boolean }>>(
+        "/admin/admin-users",
+        input,
+      );
       return data.data;
     },
     onSuccess: () => invalidate(queryClient),
@@ -78,6 +90,17 @@ export function useDeactivateAdminUser() {
   return useMutation({
     mutationFn: async (id: number) => {
       await apiClient.delete(`/admin/admin-users/${id}`);
+    },
+    onSuccess: () => invalidate(queryClient),
+  });
+}
+
+export function useSendWelcomeEmail() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { data } = await apiClient.post<ApiEnvelope<AdminUserAccount>>(`/admin/admin-users/${id}/welcome-email`);
+      return data.data;
     },
     onSuccess: () => invalidate(queryClient),
   });

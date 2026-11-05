@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../../client";
-import type { ApiEnvelope, Expense } from "../../types";
+import type { ApiEnvelope, DirectBalances, Expense } from "../../types";
 
 export interface ExpenseFormInput {
   amount: string;
@@ -14,6 +14,15 @@ export interface ExpenseFormInput {
   expenseGroupId?: number | null;
   // Members to equally split this expense among — omitted/empty means no split.
   splitAdminUserIds?: number[];
+  // A custom split instead: each person's own amount, adding up to the expense.
+  splitShares?: { adminUserId: number; shareAmount: string }[];
+}
+
+export interface DirectSettlementInput {
+  amount: string;
+  date: string;
+  fromAdminUserId: number;
+  toAdminUserId: number;
 }
 
 export function useExpenses(enabled = true) {
@@ -29,6 +38,42 @@ export function useExpenses(enabled = true) {
 
 function invalidate(queryClient: ReturnType<typeof useQueryClient>) {
   queryClient.invalidateQueries({ queryKey: ["expenses"] });
+  // A group's balances and a goal's spent total both come from expenses.
+  queryClient.invalidateQueries({ queryKey: ["expense-groups"] });
+  queryClient.invalidateQueries({ queryKey: ["savings-goals"] });
+  queryClient.invalidateQueries({ queryKey: ["expense-direct-balances"] });
+}
+
+export function useDirectBalances(enabled = true) {
+  return useQuery({
+    queryKey: ["expense-direct-balances"],
+    queryFn: async () => {
+      const { data } = await apiClient.get<ApiEnvelope<DirectBalances>>("/admin/expenses/direct-balances");
+      return data.data;
+    },
+    enabled,
+  });
+}
+
+export function useAddDirectSettlement() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: DirectSettlementInput) => {
+      const { data } = await apiClient.post<ApiEnvelope<DirectBalances>>("/admin/expenses/direct-settlements", input);
+      return data.data;
+    },
+    onSuccess: () => invalidate(queryClient),
+  });
+}
+
+export function useDeleteDirectSettlement() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await apiClient.delete(`/admin/expenses/direct-settlements/${id}`);
+    },
+    onSuccess: () => invalidate(queryClient),
+  });
 }
 
 export function useCreateExpense() {

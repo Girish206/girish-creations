@@ -6,7 +6,7 @@
   "start_url": "/admin",
   "scope": "/admin",
   "display": "standalone",
-  "theme_color": "#070820",
+  "theme_color": "#6366f1",
   "background_color": "#070820",
   "icons": [
     { "src": "/logo/pwa-64x64.png", "sizes": "64x64", "type": "image/png" },

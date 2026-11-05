@@ -13,31 +13,11 @@
 .admin-portfolio-picker > i {
   color: var(--primary);
 }
-.admin-portfolio-picker label {
-  margin: 0;
+.admin-portfolio-picker-label {
   font-weight: 600;
 }
-.admin-portfolio-picker-select {
-  min-width: 220px;
-}
-.admin-portfolio-picker-select > div {
-  margin: 0 !important;
-}
-/* Compact control — the shared SelectInput "sm" is still form-field height. */
-.admin-portfolio-picker-select .select__control {
-  min-height: 34px !important;
-  border-radius: 8px !important;
-  font-size: 13.5px;
-}
-.admin-portfolio-picker-select .select__value-container {
-  padding: 0 10px !important;
-}
-.admin-portfolio-picker-select .select__indicator {
-  padding: 6px !important;
-}
-.admin-portfolio-picker-select .select__input-container {
-  margin: 0 !important;
-  padding: 0 !important;
+.admin-portfolio-picker .pill-select {
+  margin-left: auto;
 }
 
 /* Viewing someone else's data: make it hard to miss. */
@@ -53,4 +33,39 @@
 .admin-portfolio-picker-note a {
   color: var(--primary);
   font-weight: 600;
+}
+
+/* On the main dashboard: a strip along the bottom of the gradient hero instead
+   of its own bar. White in both themes, because the hero text is white in both. */
+.admin-portfolio-picker.is-hero,
+.admin-portfolio-picker.is-hero.is-other {
+  margin: 18px 0 0;
+  padding: 10px 10px 10px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+.admin-portfolio-picker.is-hero > i {
+  color: #ffffff;
+}
+.admin-portfolio-picker.is-hero .pill-select-btn {
+  border-color: transparent;
+  background: #ffffff;
+  color: var(--brand-navy);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+.admin-portfolio-picker.is-hero .pill-select-btn svg {
+  color: var(--brand-primary-deep);
+}
+.admin-portfolio-picker.is-hero .pill-select-btn:focus-visible,
+.admin-portfolio-picker.is-hero .pill-select.is-open .pill-select-btn {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.45);
+}
+.admin-portfolio-picker.is-hero .admin-portfolio-picker-note {
+  color: rgba(255, 255, 255, 0.88);
+}
+.admin-portfolio-picker.is-hero .admin-portfolio-picker-note a {
+  color: #ffffff;
+  text-decoration: underline;
 }

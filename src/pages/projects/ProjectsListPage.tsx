@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { FaFolderOpen, FaMagnifyingGlass } from "react-icons/fa6";
 import { useProjectsList } from "../../api/hooks/useProjects";
+import { PillSelect } from "../../components/PillSelect";
 import { CtaBand, EmptyState, Metrics, PageHero, Reveal, WorkCard, WorkCardSkeleton } from "../../site/ui";
 import { usePageTitle } from "../../site/usePageTitle";
 import { ALL_PROJECTS } from "../home/constants";
@@ -53,16 +54,15 @@ export function ProjectsListPage() {
       <section className="gc-section-tight">
         <div className="gc-container">
           <div className="gc-toolbar">
-            <div className="gc-tabs" role="group" aria-label={classic ? "Filter by category" : "Filter by stack"}>
-              {["All", ...stacks].map((name) => (
-                <button key={name} type="button" className="gc-tab" aria-pressed={stack === name} onClick={() => setStack(name)}>
-                  {name}
-                  <span className="gc-tab-count">
-                    {name === "All" ? projects.length : projects.filter((p) => p.technologiesUsed.trim() === name).length}
-                  </span>
-                </button>
-              ))}
-            </div>
+            <PillSelect
+              label={classic ? "Filter by category" : "Filter by stack"}
+              value={stack}
+              options={["All", ...stacks].map((name) => ({
+                value: name,
+                label: `${name} (${name === "All" ? projects.length : projects.filter((p) => p.technologiesUsed.trim() === name).length})`,
+              }))}
+              onChange={setStack}
+            />
             <label className="gc-search">
               <span className="gc-visually-hidden">Search projects</span>
               <FaMagnifyingGlass aria-hidden="true" />

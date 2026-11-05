@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useExpenseCategories, useDeleteExpenseCategory } from "../../../api/hooks/expense/useExpenseCategories";
+import { useAdminAuth } from "../../../context/AdminAuthContext";
 import { ListCard } from "../../components/ListCard";
 import { Button } from "../../components/Button";
 import { RowActions } from "../../components/RowActions";
@@ -14,6 +15,7 @@ import "../../admin.css";
 type ModalState = { mode: "new" } | { mode: "edit"; id: number } | null;
 
 export function AdminExpenseCategoriesList() {
+  const { admin } = useAdminAuth();
   const { data: items, isLoading } = useExpenseCategories();
   const deleteCategory = useDeleteExpenseCategory();
   const [modal, setModal] = useState<ModalState>(null);
@@ -46,12 +48,15 @@ export function AdminExpenseCategoriesList() {
                   <CategoryIcon name={item.name} {...resolveCategoryIcon(item)} />
                   <h3 className="admin-item-card-title">{item.name}</h3>
                 </div>
-                <div className="admin-item-card-actions">
-                  <RowActions
-                    onEdit={() => setModal({ mode: "edit", id: item.id })}
-                    onDelete={() => handleDelete(item.id)}
-                  />
-                </div>
+                {/* Shared by everyone, so only a super admin changes them. */}
+                {admin?.isSuperAdmin && (
+                  <div className="admin-item-card-actions">
+                    <RowActions
+                      onEdit={() => setModal({ mode: "edit", id: item.id })}
+                      onDelete={() => handleDelete(item.id)}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           ))}

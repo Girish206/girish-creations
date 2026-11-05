@@ -162,10 +162,14 @@ export interface AdminUserAccount extends AdminUserRef {
   hasSavingsAccess: boolean;
   // Digits only; an alternative to email for signing in.
   mobile: string | null;
+  // Last time the welcome email was sent to them from the admin side.
+  welcomeEmailSentAt: string | null;
   createdAt: string;
   // Expenses, savings etc. pointing at this person. 0 = can be deleted
   // outright; otherwise they can only be deactivated.
   linkedRecords: number;
+  // How much they're involved in the Money Hub — counts only.
+  activity: { expensesPaid: number; splitShares: number; groups: number; contributions: number };
 }
 
 export type CategoryIconType = "icon" | "text" | "image";
@@ -187,7 +191,8 @@ export interface ExpenseGroupSettlement {
   amount: string;
   date: string;
   createdAt: string;
-  expenseGroupId: number;
+  // Null = it settles daily splits, between just these two people.
+  expenseGroupId: number | null;
   fromAdminUserId: number;
   fromAdminUser: AdminUserRef;
   toAdminUserId: number;
@@ -208,6 +213,40 @@ export interface ExpenseGroup {
   // The people on the trip/event — any of them can be marked as having paid
   // one of its expenses. Empty on groups created before members existed.
   members: ExpenseGroupMember[];
+  // Worked out on the server across everyone's expenses in the group, so
+  // they're the same for every member (the expense list only has their own).
+  balances: GroupMemberBalance[];
+  totalCents: number;
+  expenseCount: number;
+}
+
+// One person owing another, once everything between them has been netted off.
+export interface SettlementTransfer {
+  fromAdminUserId: number;
+  fromName: string;
+  toAdminUserId: number;
+  toName: string;
+  amountCents: number;
+}
+
+// Splits on expenses outside any group. Each person only gets the pairs
+// they're part of (a super admin gets them all).
+export interface DirectBalances {
+  transfers: SettlementTransfer[];
+  settlements: ExpenseGroupSettlement[];
+}
+
+export interface GroupMemberBalance {
+  adminUserId: number;
+  name: string;
+  // What they paid out of pocket for the group's expenses.
+  paidCents: number;
+  // Their fair share: split portions, plus unsplit expenses they paid.
+  shareCents: number;
+  sentCents: number;
+  receivedCents: number;
+  // > 0: others still owe them this much. < 0: they still owe this much.
+  pendingCents: number;
 }
 
 export interface ExpenseGroupMember {
@@ -245,6 +284,7 @@ export interface Expense {
   paidBy: AdminUserRef;
   // Who logged it; null on expenses from before this was recorded.
   createdByAdminUserId: number | null;
+  createdBy: AdminUserRef | null;
   savingsGoalId: number | null;
   savingsGoal: SavingsGoalRef | null;
   expenseGroupId: number | null;
@@ -282,9 +322,11 @@ export interface SavingsGoal {
   // Null for legacy goals created before per-goal ownership existed.
   createdBy: AdminUserRef | null;
   contributions: SavingsContribution[];
-  // Empty = visible to everyone with Savings access. Non-empty = restricted
-  // to just these people (plus the owner).
+  // Who it's shared with, besides its owner and account holder. Empty =
+  // private to those two, plus anyone who has contributed.
   members: SavingsGoalMember[];
+  // Total of the expenses marked as spent from this goal.
+  spentAmount: string;
 }
 
 export interface PaginatedResponse<T> {

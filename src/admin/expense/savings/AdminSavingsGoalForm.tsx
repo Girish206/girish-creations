@@ -9,10 +9,11 @@ import { ModalForm } from "../../components/ModalForm";
 import { SubmitButton } from "../../components/SubmitButton";
 import InputComp from "../../dms/components/InputComp";
 import SelectInput from "../../dms/components/SelectInput";
+import { INVALID_AMOUNT_MESSAGE, isValidAmount } from "../currency";
 import "../../admin.css";
 
 const schema = z.object({
-  name: z.string().min(1, "Required"),
+  name: z.string().trim().min(1, "Required"),
   hasTarget: z.boolean(),
   targetAmount: z.string().optional(),
   targetDate: z.string().optional(),
@@ -20,6 +21,9 @@ const schema = z.object({
   accountHolderAdminUserId: z.union([z.number(), z.literal("")]).optional(),
   restrictMembers: z.boolean(),
   memberAdminUserIds: z.array(z.number()),
+}).refine((values) => !values.hasTarget || isValidAmount(values.targetAmount), {
+  path: ["targetAmount"],
+  message: INVALID_AMOUNT_MESSAGE,
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -51,6 +55,9 @@ export function AdminSavingsGoalForm({ id, onSaved }: AdminSavingsGoalFormProps)
   // Owner: whoever created the goal, or the logged-in account for a new one.
   // Legacy goals have no recorded creator, so nobody is locked in for them.
   const ownerId = isEdit ? (existing?.createdBy?.id ?? null) : admin?.sub ? Number(admin.sub) : null;
+  // A goal from before owners were recorded is visible to everyone until
+  // it's shared with specific people.
+  const isLegacy = isEdit && !existing?.createdBy;
 
   const {
     control,
@@ -168,6 +175,9 @@ export function AdminSavingsGoalForm({ id, onSaved }: AdminSavingsGoalFormProps)
             <InputComp
               label="Target Amount"
               type="number"
+              min="0.01"
+              step="0.01"
+              inputMode="decimal"
               required
               {...field}
               error={errors.targetAmount?.message}
@@ -214,7 +224,7 @@ export function AdminSavingsGoalForm({ id, onSaved }: AdminSavingsGoalFormProps)
             className={!restrictMembers ? "active" : ""}
             onClick={() => setVisibility(false)}
           >
-            <i className="fa-solid fa-users" aria-hidden="true"></i> Everyone
+            <i className="fa-solid fa-user-lock" aria-hidden="true"></i> {isLegacy ? "Everyone" : "Private"}
           </button>
           <button
             type="button"
@@ -223,15 +233,17 @@ export function AdminSavingsGoalForm({ id, onSaved }: AdminSavingsGoalFormProps)
             className={restrictMembers ? "active" : ""}
             onClick={() => setVisibility(true)}
           >
-            <i className="fa-solid fa-user-lock" aria-hidden="true"></i> Only selected people
+            <i className="fa-solid fa-users" aria-hidden="true"></i> Selected people
           </button>
         </div>
         <small className="text-muted d-block mt-2 ps-1">
           {restrictMembers
             ? memberAdminUserIds.length <= 1
-              ? "Only you can see this goal. Add people to share it with them."
-              : `Shared with ${memberAdminUserIds.length} people, including you.`
-            : "Visible to everyone with Savings access."}
+              ? "Only the owner and the account holder can see this goal. Add people to share it with them."
+              : `Shared with ${memberAdminUserIds.length} people, plus the account holder if there is one.`
+            : isLegacy
+              ? "Visible to everyone with Savings access."
+              : "Only the owner and the account holder can see this goal."}
         </small>
       </div>
 

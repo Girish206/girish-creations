@@ -8,9 +8,11 @@ import { ModalForm } from "../../components/ModalForm";
 import { SubmitButton } from "../../components/SubmitButton";
 import InputComp from "../../dms/components/InputComp";
 import SelectInput from "../../dms/components/SelectInput";
+import { INVALID_AMOUNT_MESSAGE, isValidAmount } from "../currency";
+import { todayLocal } from "../dates";
 
 const schema = z.object({
-  amount: z.string().min(1, "Required"),
+  amount: z.string().min(1, "Required").refine(isValidAmount, INVALID_AMOUNT_MESSAGE),
   date: z.string().min(1, "Required"),
   contributedByAdminUserId: z.number({ message: "Required" }),
 });
@@ -19,13 +21,15 @@ type FormValues = z.infer<typeof schema>;
 
 export interface AdminSavingsContributionFormProps {
   goalId: number;
+  // Whether they manage the goal, and so can log this for someone else.
+  canChooseContributor: boolean;
   onSaved: () => void;
 }
 
-// "Contributed by" defaults to the logged-in account but can be changed, so
-// one person can log a deposit on someone else's behalf (e.g. a member who
-// handed over cash, or a guest member without a login).
-export function AdminSavingsContributionForm({ goalId, onSaved }: AdminSavingsContributionFormProps) {
+// Someone managing the goal gets a "Contributed by" picker, defaulting to
+// themselves, to log a deposit on someone else's behalf (e.g. a member who
+// handed over cash, or a guest member without a login). Anyone else adds their own.
+export function AdminSavingsContributionForm({ goalId, canChooseContributor, onSaved }: AdminSavingsContributionFormProps) {
   const { admin } = useAdminAuth();
   const { data: members } = useExpenseMembers();
   const {
@@ -36,7 +40,7 @@ export function AdminSavingsContributionForm({ goalId, onSaved }: AdminSavingsCo
     resolver: zodResolver(schema),
     defaultValues: {
       amount: "",
-      date: new Date().toISOString().slice(0, 10),
+      date: todayLocal(),
       contributedByAdminUserId: admin?.sub ? Number(admin.sub) : undefined,
     },
   });
@@ -55,26 +59,37 @@ export function AdminSavingsContributionForm({ goalId, onSaved }: AdminSavingsCo
 
   return (
     <ModalForm onSubmit={handleSubmit(onSubmit)}>
-      <Controller
-        name="contributedByAdminUserId"
-        control={control}
-        render={({ field }) => (
-          <SelectInput
-            label="Contributed By"
-            required
-            clearable={false}
-            options={memberOptions}
-            value={field.value}
-            onChange={field.onChange}
-            error={errors.contributedByAdminUserId?.message}
-          />
-        )}
-      />
+      {canChooseContributor && (
+        <Controller
+          name="contributedByAdminUserId"
+          control={control}
+          render={({ field }) => (
+            <SelectInput
+              label="Contributed By"
+              required
+              clearable={false}
+              options={memberOptions}
+              value={field.value}
+              onChange={field.onChange}
+              error={errors.contributedByAdminUserId?.message}
+            />
+          )}
+        />
+      )}
       <Controller
         name="amount"
         control={control}
         render={({ field }) => (
-          <InputComp label="Contribution Amount" type="number" required {...field} error={errors.amount?.message} />
+          <InputComp
+            label="Contribution Amount"
+            type="number"
+            min="0.01"
+            step="0.01"
+            inputMode="decimal"
+            required
+            {...field}
+            error={errors.amount?.message}
+          />
         )}
       />
       <Controller

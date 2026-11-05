@@ -9,7 +9,7 @@ import {
   useCreateExpenseGroup,
   useUpdateExpenseGroup,
 } from "../../../api/hooks/expense/useExpenseGroups";
-import type { ExpenseGroup } from "../../../api/types";
+import type { AdminUserRef, ExpenseGroup } from "../../../api/types";
 import { useSavingsGoals } from "../../../api/hooks/expense/useSavingsGoals";
 import { useExpenseMembers } from "../../../api/hooks/expense/useExpenseMembers";
 import { useAdminAuth } from "../../../context/AdminAuthContext";
@@ -18,13 +18,14 @@ import { SubmitButton } from "../../components/SubmitButton";
 import InputComp from "../../dms/components/InputComp";
 import TextareaInput from "../../dms/components/TextareaInput";
 import SelectInput from "../../dms/components/SelectInput";
-import { formatCurrency } from "../currency";
+import { formatCurrency, INVALID_AMOUNT_MESSAGE, isValidAmount } from "../currency";
+import { todayLocal } from "../dates";
 import "../../admin.css";
 
 const schema = z.object({
-  amount: z.string().min(1, "Required"),
+  amount: z.string().min(1, "Required").refine(isValidAmount, INVALID_AMOUNT_MESSAGE),
   date: z.string().min(1, "Required"),
-  categoryId: z.number(),
+  categoryId: z.number({ message: "Pick a category" }),
   description: z.string().optional(),
   savingsGoalId: z.union([z.number(), z.literal("")]).optional(),
   // Number = an existing group's id. Non-empty string = a new group name
@@ -36,6 +37,9 @@ const schema = z.object({
   paidByAdminUserId: z.number().nullable(),
   splitEnabled: z.boolean(),
   splitAdminUserIds: z.array(z.number()),
+  // "equal" divides it evenly; "custom" uses splitAmounts, keyed by person.
+  splitMode: z.enum(["equal", "custom"]),
+  splitAmounts: z.record(z.string(), z.string()),
 }).refine((values) => !values.splitEnabled || values.splitAdminUserIds.length >= 2, {
   path: ["splitAdminUserIds"],
   message: "Pick at least one other person to split with.",
@@ -55,6 +59,18 @@ function computeEqualShares(amount: string, count: number): number[] {
   const baseCents = Math.floor(totalCents / count);
   const remainder = totalCents - baseCents * count;
   return Array.from({ length: count }, (_, i) => (baseCents + (i < remainder ? 1 : 0)) / 100);
+}
+
+const toCents = (value: string | number) => Math.round(Number(value || 0) * 100);
+
+// Whether saved shares are just what an even split would give. Only then can
+// an expense reopen as "Equally": the payer must be sharing it, since an even
+// split always includes them.
+function isEqualSplit(amount: string, shares: { adminUserId: number; shareAmount: string }[], payerId: number) {
+  if (!shares.some((share) => share.adminUserId === payerId)) return false;
+  const saved = shares.map((share) => toCents(share.shareAmount)).sort((a, b) => a - b);
+  const even = computeEqualShares(amount, shares.length).map(toCents).sort((a, b) => a - b);
+  return saved.every((cents, index) => cents === even[index]);
 }
 
 // The payer is always one of the people splitting, and listed first.
@@ -100,10 +116,12 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
   const isEdit = id !== undefined;
   const { data: items } = useExpenses();
   const { data: categories } = useExpenseCategories();
-  const { data: savingsGoals } = useSavingsGoals();
+  const { admin } = useAdminAuth();
+  // Goals are behind their own access flag; without it, this would just 403.
+  const hasSavingsAccess = Boolean(admin?.hasSavingsAccess);
+  const { data: savingsGoals } = useSavingsGoals(hasSavingsAccess);
   const { data: groups } = useExpenseGroups();
   const { data: members } = useExpenseMembers();
-  const { admin } = useAdminAuth();
   const existing = isEdit ? items?.find((item) => item.id === id) : undefined;
   const myId = admin?.sub ? Number(admin.sub) : null;
 
@@ -120,6 +138,8 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
   const amount = useWatch({ control, name: "amount" });
   const splitEnabled = useWatch({ control, name: "splitEnabled" });
   const splitAdminUserIds = useWatch({ control, name: "splitAdminUserIds" }) ?? [];
+  const splitMode = useWatch({ control, name: "splitMode" }) ?? "equal";
+  const splitAmounts = useWatch({ control, name: "splitAmounts" }) ?? {};
   const selectedGroupId = useWatch({ control, name: "expenseGroupId" });
   const groupMemberIds = useWatch({ control, name: "groupMemberIds" }) ?? [];
   const paidBy = useWatch({ control, name: "paidByAdminUserId" });
@@ -150,7 +170,11 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
         description: existing.description ?? "",
         savingsGoalId: existing.savingsGoalId ?? "",
         expenseGroupId: existing.expenseGroupId ?? "",
-        groupMemberIds: existing.expenseGroupId ? groupMemberIdsOf(group, existing.paidByAdminUserId) : [],
+        // The payer is always listed, so "Paid by" can show them — older
+        // expenses may have been moved into a group they weren't in.
+        groupMemberIds: existing.expenseGroupId
+          ? [...new Set([...groupMemberIdsOf(group, existing.paidByAdminUserId), existing.paidByAdminUserId])]
+          : [],
         paidByAdminUserId: existing.paidByAdminUserId,
         splitEnabled: existing.splitParticipants.length > 0,
         splitAdminUserIds:
@@ -160,11 +184,17 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
                 existing.paidByAdminUserId,
               )
             : [],
+        splitMode:
+          existing.splitParticipants.length === 0 ||
+          isEqualSplit(existing.amount, existing.splitParticipants, existing.paidByAdminUserId)
+            ? "equal"
+            : "custom",
+        splitAmounts: Object.fromEntries(existing.splitParticipants.map((p) => [String(p.adminUserId), p.shareAmount])),
       });
     } else {
       reset({
         amount: "",
-        date: "",
+        date: todayLocal(),
         description: "",
         savingsGoalId: "",
         expenseGroupId: "",
@@ -172,6 +202,8 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
         paidByAdminUserId: myId,
         splitEnabled: false,
         splitAdminUserIds: [],
+        splitMode: "equal",
+        splitAmounts: {},
       });
     }
   }, [isEdit, existing, groups, myId, reset]);
@@ -208,6 +240,22 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
       return;
     }
 
+    // Checked before a typed-in group gets created below.
+    if (values.splitEnabled && values.splitMode === "custom") {
+      const entered = values.splitAdminUserIds.map((memberId) => values.splitAmounts[String(memberId)]?.trim() || "0");
+      if (!entered.every((value) => /^\d{1,12}(\.\d{1,2})?$/.test(value))) {
+        setError("splitAdminUserIds", { message: "Each share must be an amount with at most 2 decimals" });
+        return;
+      }
+      const totalCents = entered.reduce((sum, value) => sum + toCents(value), 0);
+      if (totalCents !== toCents(values.amount)) {
+        setError("splitAdminUserIds", {
+          message: `The shares add up to ${formatCurrency(totalCents / 100)}, but the expense is ${formatCurrency(values.amount)}`,
+        });
+        return;
+      }
+    }
+
     const grouped = values.expenseGroupId !== "" && values.expenseGroupId !== undefined;
     if (grouped && values.groupMemberIds.length === 0) {
       setError("groupMemberIds", { message: "Add at least one person to the group" });
@@ -238,6 +286,8 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
           memberAdminUserIds: values.groupMemberIds,
         });
         expenseGroupId = created.id;
+        // If saving the expense fails below, a retry must reuse this group.
+        setValue("expenseGroupId", created.id);
       }
     }
     const payer = grouped ? values.paidByAdminUserId : (existing?.paidByAdminUserId ?? myId);
@@ -250,7 +300,14 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
       savingsGoalId: values.savingsGoalId === "" ? null : values.savingsGoalId,
       expenseGroupId,
       ...(payer !== null ? { paidByAdminUserId: payer } : {}),
-      splitAdminUserIds: values.splitEnabled ? withPayerFirst(values.splitAdminUserIds, payer) : [],
+      ...(values.splitEnabled && values.splitMode === "custom"
+        ? {
+            splitShares: withPayerFirst(values.splitAdminUserIds, payer).map((memberId) => ({
+              adminUserId: memberId,
+              shareAmount: values.splitAmounts[String(memberId)]?.trim() || "0",
+            })),
+          }
+        : { splitAdminUserIds: values.splitEnabled ? withPayerFirst(values.splitAdminUserIds, payer) : [] }),
     };
     if (isEdit && existing) {
       await updateExpense.mutateAsync({ id: existing.id, input });
@@ -268,19 +325,58 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
   const savingsGoalOptions = (savingsGoals ?? [])
     .filter((g) => !g.closedAt || g.id === existing?.savingsGoalId)
     .map((g) => ({ value: g.id, label: g.closedAt ? `${g.name} (closed)` : g.name }));
+  // A goal this account can't see still has to show by name on its expense.
+  if (existing?.savingsGoal && !savingsGoalOptions.some((g) => g.value === existing.savingsGoalId)) {
+    savingsGoalOptions.push({ value: existing.savingsGoal.id, label: existing.savingsGoal.name });
+  }
   const groupOptions = (groups ?? [])
     .filter((g) => !g.closedAt || g.id === existing?.expenseGroupId)
     .map((g) => ({ value: g.id, label: g.name }));
+  // Everyone the pickers may need to name: former members (no longer in the
+  // member list) can still be on this expense or in its group, and would
+  // otherwise silently drop out of the split when it's saved.
+  const people = new Map<number, AdminUserRef>();
+  for (const member of members ?? []) people.set(member.id, member);
+  const addPerson = (person: AdminUserRef) => {
+    if (!people.has(person.id)) people.set(person.id, person);
+  };
+  if (existing) {
+    addPerson(existing.paidBy);
+    existing.splitParticipants.forEach((p) => addPerson(p.adminUser));
+  }
+  selectedGroup?.members.forEach((member) => addPerson(member.adminUser));
+  const peopleList = Array.from(people.values());
   const shares = splitEnabled ? computeEqualShares(amount, splitAdminUserIds.length) : [];
+  const customTotalCents = splitAdminUserIds.reduce(
+    (sum, memberId) => sum + toCents(splitAmounts[String(memberId)] ?? ""),
+    0,
+  );
+  const unassignedCents = toCents(amount) - customTotalCents;
+
+  // Starts from the even split, so it only needs adjusting. Shares already
+  // typed for these people are kept.
+  function chooseCustomSplit() {
+    const current = getValues("splitAmounts") ?? {};
+    setValue(
+      "splitAmounts",
+      Object.fromEntries(
+        splitAdminUserIds.map((memberId, i) => [
+          String(memberId),
+          current[String(memberId)] ?? (shares[i] !== undefined ? shares[i].toFixed(2) : ""),
+        ]),
+      ),
+    );
+    setValue("splitMode", "custom");
+  }
   const memberName = (memberId: number) => {
-    const member = members?.find((m) => m.id === memberId);
+    const member = people.get(memberId);
     return member?.name || member?.email || "Unknown member";
   };
-  const memberOptions = (members ?? []).map((member) => ({
+  const memberOptions = peopleList.map((member) => ({
     value: member.id,
     label: `${member.name || member.email}${member.id === payerId ? " (paid)" : ""}`,
   }));
-  const groupPeopleOptions = (members ?? []).map((member) => ({
+  const groupPeopleOptions = peopleList.map((member) => ({
     value: member.id,
     label: `${member.name || member.email}${member.id === myId ? " (you)" : ""}`,
   }));
@@ -296,7 +392,16 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
         control={control}
         defaultValue=""
         render={({ field }) => (
-          <InputComp label="Amount" type="number" required {...field} error={errors.amount?.message} />
+          <InputComp
+            label="Amount"
+            type="number"
+            min="0.01"
+            step="0.01"
+            inputMode="decimal"
+            required
+            {...field}
+            error={errors.amount?.message}
+          />
         )}
       />
       <Controller
@@ -392,19 +497,21 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
           <i className="fa-solid fa-calendar-days"></i> Expenses in {selectedGroup?.name} must be dated {windowText}.
         </p>
       )}
-      <Controller
-        name="savingsGoalId"
-        control={control}
-        render={({ field }) => (
-          <SelectInput
-            label="Spent From (Savings)"
-            placeholder="Not linked to a savings goal"
-            options={savingsGoalOptions}
-            value={field.value}
-            onChange={(value) => field.onChange(value === "" ? "" : value)}
-          />
-        )}
-      />
+      {hasSavingsAccess && (
+        <Controller
+          name="savingsGoalId"
+          control={control}
+          render={({ field }) => (
+            <SelectInput
+              label="Spent From (Savings)"
+              placeholder="Not linked to a savings goal"
+              options={savingsGoalOptions}
+              value={field.value}
+              onChange={(value) => field.onChange(value === "" ? "" : value)}
+            />
+          )}
+        />
+      )}
       <Controller
         name="description"
         control={control}
@@ -457,6 +564,32 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
                 onChange={(ids: number[]) => field.onChange(withPayerFirst(ids, payerId))}
                 error={errors.splitAdminUserIds?.message}
               />
+              <div className="admin-segmented mt-2" role="radiogroup" aria-label="How to split">
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={splitMode === "equal"}
+                  className={splitMode === "equal" ? "active" : ""}
+                  onClick={() => setValue("splitMode", "equal")}
+                >
+                  <i className="fa-solid fa-equals" aria-hidden="true"></i> Equally
+                </button>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={splitMode === "custom"}
+                  className={splitMode === "custom" ? "active" : ""}
+                  onClick={chooseCustomSplit}
+                >
+                  <i className="fa-solid fa-sliders" aria-hidden="true"></i> By amount
+                </button>
+              </div>
+              {!hasGroup && (
+                <p className="admin-form-hint">
+                  <i className="fa-solid fa-circle-info"></i> Not in a group, so repayments are settled one-to-one from
+                  Daily splits on the Expenses page.
+                </p>
+              )}
               {field.value.length > 0 && (
                 <ul className="admin-split-shares">
                   {field.value.map((memberId: number, i: number) => (
@@ -465,10 +598,37 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
                         {memberName(memberId)}
                         {memberId === payerId && <span className="admin-split-payer">Paid</span>}
                       </span>
-                      <strong>{shares[i] !== undefined ? formatCurrency(shares[i]) : "—"}</strong>
+                      {splitMode === "custom" ? (
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          inputMode="decimal"
+                          className="form-control form-control-sm admin-split-share-input"
+                          aria-label={`${memberName(memberId)}'s share`}
+                          value={splitAmounts[String(memberId)] ?? ""}
+                          onChange={(e) =>
+                            setValue("splitAmounts", { ...getValues("splitAmounts"), [String(memberId)]: e.target.value })
+                          }
+                        />
+                      ) : (
+                        <strong>{shares[i] !== undefined ? formatCurrency(shares[i]) : "—"}</strong>
+                      )}
                     </li>
                   ))}
                 </ul>
+              )}
+              {splitMode === "custom" && (
+                <p
+                  className={`admin-form-hint ${unassignedCents === 0 ? "admin-settle-gets" : "admin-settle-owes"}`}
+                  role="status"
+                >
+                  {unassignedCents === 0
+                    ? "Shares add up to the full amount."
+                    : unassignedCents > 0
+                      ? `${formatCurrency(unassignedCents / 100)} still to assign`
+                      : `${formatCurrency(-unassignedCents / 100)} too much`}
+                </p>
               )}
             </div>
           )}

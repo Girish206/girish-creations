@@ -4,12 +4,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
   useAdminUsers,
+  type AccountScope,
   useCreateAdminUser,
   useUpdateAdminUser,
 } from "../../../api/hooks/expense/useAdminUsers";
 import { ModalForm } from "../../components/ModalForm";
 import { SubmitButton } from "../../components/SubmitButton";
 import InputComp from "../../dms/components/InputComp";
+import { toast } from "sonner";
 import { messageFor } from "../../../api/mutationErrors";
 import { useAdminAuth } from "../../../context/AdminAuthContext";
 import { normalizeMobile } from "../../../utils/mobile";
@@ -50,6 +52,10 @@ export interface AdminAccountFormProps {
   id?: number;
   // Opened from a guest's "Grant login" action: start with login ticked.
   startWithLogin?: boolean;
+  // Adding from the Money Hub: portfolio and super admin access stay as they
+  // are, and are managed from Admin Accounts on the portfolio side. Adding from
+  // there starts with portfolio access ticked.
+  scope?: AccountScope;
   onSaved: () => void;
 }
 
@@ -65,21 +71,22 @@ const ACCESS_CHECKBOXES = [
 // access" reveals email/password to turn them into a real account; once an
 // account already has login, its email is locked (it's the login
 // identifier) but the password can still be rotated (leave blank to keep).
-export function AdminAccountForm({ id, startWithLogin = false, onSaved }: AdminAccountFormProps) {
+export function AdminAccountForm({ id, startWithLogin = false, scope, onSaved }: AdminAccountFormProps) {
   const isEdit = id !== undefined;
   const { admin } = useAdminAuth();
   // Only the owner hands out super admin (the server enforces it too).
   const canSetSuperAdmin = Boolean(admin?.isOwner);
   // Members without super admin add people for the Money Hub only: no
   // portfolio access, and at most the access they have themselves.
-  const accessCheckboxes = admin?.isSuperAdmin
+  const moneyHubOnly = scope === "money-hub";
+  const accessCheckboxes = admin?.isSuperAdmin && !moneyHubOnly
     ? ACCESS_CHECKBOXES
     : ACCESS_CHECKBOXES.filter(
         (checkbox) =>
           (checkbox.name === "hasExpensesAccess" && admin?.hasExpensesAccess) ||
           (checkbox.name === "hasSavingsAccess" && admin?.hasSavingsAccess),
       );
-  const { data: items } = useAdminUsers();
+  const { data: items } = useAdminUsers(scope);
   const existing = isEdit ? items?.find((item) => item.id === id) : undefined;
 
   const {
@@ -97,8 +104,8 @@ export function AdminAccountForm({ id, startWithLogin = false, onSaved }: AdminA
   // deactivated account), shown in the form as well as the toast.
   const [saveError, setSaveError] = useState("");
   const alreadyHasLogin = Boolean(existing?.hasLogin);
-  // The server spots someone already on RunMitra, who keeps their password if
-  // this is left blank. It asks for one if they turn out to be new.
+  // The server spots someone who already has an account, who keeps their
+  // password if this is left blank. It asks for one if they turn out to be new.
   const passwordOptional = alreadyHasLogin || !isEdit;
 
   useEffect(() => {
@@ -125,13 +132,13 @@ export function AdminAccountForm({ id, startWithLogin = false, onSaved }: AdminA
         password: "",
         removeLogin: false,
         isActive: true,
-        hasPortfolioAccess: false,
+        hasPortfolioAccess: scope === "portfolio",
         hasExpensesAccess: false,
         hasSavingsAccess: false,
         isSuperAdmin: false,
       });
     }
-  }, [existing, startWithLogin, reset]);
+  }, [existing, startWithLogin, scope, reset]);
 
   const createAccount = useCreateAdminUser();
   const updateAccount = useUpdateAdminUser();
@@ -145,6 +152,24 @@ export function AdminAccountForm({ id, startWithLogin = false, onSaved }: AdminA
     // A guest's email may already be stored (login was removed earlier).
     if (grantingLoginNow && !values.password && !passwordOptional) {
       setError("password", { message: "Required" });
+      return;
+    }
+
+    // A login with neither gives them nothing here, and they'd drop off People.
+    if (
+      moneyHubOnly &&
+      values.wantsLogin &&
+      !values.removeLogin &&
+      !values.hasExpensesAccess &&
+      !values.hasSavingsAccess
+    ) {
+      setSaveError("Give them Expenses or Savings access so they can use Pocket, or untick login access.");
+      return;
+    }
+
+    // They wouldn't show up in the list they're being added from.
+    if (scope === "portfolio" && !isEdit && !values.hasPortfolioAccess) {
+      setSaveError("Tick Portfolio module access to add them here, or add them from People in Pocket.");
       return;
     }
 
@@ -184,7 +209,7 @@ export function AdminAccountForm({ id, startWithLogin = false, onSaved }: AdminA
         },
       });
     } else {
-      await createAccount.mutateAsync({
+      const saved = await createAccount.mutateAsync({
         email: values.wantsLogin ? values.email || null : null,
         mobile: values.mobile ? normalizeMobile(values.mobile) : null,
         password: values.wantsLogin ? values.password || null : null,
@@ -192,6 +217,9 @@ export function AdminAccountForm({ id, startWithLogin = false, onSaved }: AdminA
         name: values.name || null,
         ...accessFlags,
       });
+      if (saved.addedToExisting) {
+        toast.success(`${saved.name || saved.email || saved.mobile} already had an account, so it was updated.`);
+      }
     }
   }
 
@@ -297,7 +325,7 @@ export function AdminAccountForm({ id, startWithLogin = false, onSaved }: AdminA
                   alreadyHasLogin
                     ? "New Password, also changes RunMitra (leave blank to keep current)"
                     : !isEdit
-                      ? "Password (leave blank if they're already on RunMitra)"
+                      ? "Password (leave blank if they already have an account)"
                       : "Password"
                 }
                 type={showPassword ? "text" : "password"}
@@ -336,7 +364,7 @@ export function AdminAccountForm({ id, startWithLogin = false, onSaved }: AdminA
             )}
           />
         ))}
-        {admin?.isSuperAdmin && wantsLogin && !removeLogin && (
+        {admin?.isSuperAdmin && !moneyHubOnly && wantsLogin && !removeLogin && (
           <Controller
             name="isSuperAdmin"
             control={control}

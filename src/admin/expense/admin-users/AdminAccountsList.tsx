@@ -1,11 +1,6 @@
+import { PillSelect } from "../../../components/PillSelect";
 import { useState } from "react";
-import Swal from "sweetalert2";
-import {
-  useAdminUsers,
-  useDeactivateAdminUser,
-  useDeleteAdminUserPermanently,
-  useUpdateAdminUser,
-} from "../../../api/hooks/expense/useAdminUsers";
+import { useAdminUsers } from "../../../api/hooks/expense/useAdminUsers";
 import type { AdminUserAccount } from "../../../api/types";
 import { ListCard } from "../../components/ListCard";
 import { Button } from "../../components/Button";
@@ -13,6 +8,7 @@ import { RowActions } from "../../components/RowActions";
 import CustomButton from "../../dms/components/CustomButton";
 import DefaultModal from "../../dms/components/DefaultModal";
 import { AdminAccountForm } from "./AdminAccountForm";
+import { canManageAccount, canSendWelcome, useAccountActions, welcomeSentOn } from "./useAccountActions";
 import { avatarColorFor } from "../avatarColor";
 import "../../dms/css/adminDisplays.css";
 import "../../admin.css";
@@ -37,49 +33,19 @@ const STATS: { label: string; icon: string; tone: string; matches: (item: AdminU
   { label: "Guests", icon: "fa-user-slash", tone: "guest", matches: (item) => !item.hasLogin },
 ];
 
-function themedDialog() {
-  return document.documentElement.getAttribute("data-bs-theme") === "dark" ? "dark" : "light";
-}
-
 export function AdminAccountsList() {
   const { admin } = useAdminAuth();
-  const { data: items, isLoading } = useAdminUsers();
-  const deactivateAccount = useDeactivateAdminUser();
-  const deleteAccount = useDeleteAdminUserPermanently();
-  const updateAccount = useUpdateAdminUser();
+  // Super admins get this app's accounts here, and the Money Hub's under People.
+  const scope = admin?.isSuperAdmin ? "portfolio" : undefined;
+  const { data: items, isLoading } = useAdminUsers(scope);
+  const {
+    sendWelcome: handleSendWelcome,
+    toggleActive: handleToggleActive,
+    deletePermanently: handleDeletePermanently,
+  } = useAccountActions();
   const [modal, setModal] = useState<ModalState>(null);
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
-
-  async function handleToggleActive(item: AdminUserAccount) {
-    if (item.isActive) {
-      const result = await Swal.fire({
-        title: `Deactivate ${item.name || item.email || "this account"}?`,
-        text: "They won't be able to sign in or be picked for new splits. Their records stay, and you can reactivate them any time.",
-        icon: "question",
-        theme: themedDialog(),
-        showCancelButton: true,
-        confirmButtonColor: getComputedStyle(document.documentElement).getPropertyValue("--primary").trim(),
-        confirmButtonText: "Deactivate",
-      });
-      if (result.isConfirmed) deactivateAccount.mutate(item.id);
-      return;
-    }
-    updateAccount.mutate({ id: item.id, input: { isActive: true } });
-  }
-
-  async function handleDeletePermanently(item: AdminUserAccount) {
-    const result = await Swal.fire({
-      title: `Delete ${item.name || item.email || "this account"} permanently?`,
-      text: "They have no expenses or savings records, so the account can be removed completely. This can't be undone.",
-      icon: "warning",
-      theme: themedDialog(),
-      showCancelButton: true,
-      confirmButtonColor: getComputedStyle(document.documentElement).getPropertyValue("--primary").trim(),
-      confirmButtonText: "Delete permanently",
-    });
-    if (result.isConfirmed) deleteAccount.mutate(item.id);
-  }
 
   const needle = query.trim().toLowerCase();
   const searched = (items ?? []).filter(
@@ -123,20 +89,15 @@ export function AdminAccountsList() {
           </div>
 
           <div className="admin-accounts-toolbar">
-            <div className="admin-filter-chips" role="group" aria-label="Filter accounts">
-              {FILTERS.map((f) => (
-                <button
-                  key={f.key}
-                  type="button"
-                  className={filter === f.key ? "active" : ""}
-                  aria-pressed={filter === f.key}
-                  onClick={() => setFilter(f.key)}
-                >
-                  {f.label}
-                  <span className="admin-filter-count">{searched.filter(f.matches).length}</span>
-                </button>
-              ))}
-            </div>
+            <PillSelect
+              label="Filter accounts"
+              value={filter}
+              options={FILTERS.map((f) => ({
+                value: f.key,
+                label: `${f.label} (${searched.filter(f.matches).length})`,
+              }))}
+              onChange={setFilter}
+            />
             <label className="admin-accounts-search">
               <i className="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
               <span className="visually-hidden">Search accounts</span>
@@ -156,6 +117,7 @@ export function AdminAccountsList() {
             <div className="admin-user-grid">
               {shown.map((item) => {
                 const displayName = item.name || item.email || "Unnamed";
+                const canManage = canManageAccount(item, admin);
                 const access = [
                   { on: item.hasPortfolioAccess, icon: "fa-briefcase", label: "Portfolio", tone: "portfolio" },
                   { on: item.hasExpensesAccess, icon: "fa-receipt", label: "Expenses", tone: "expenses" },
@@ -206,6 +168,12 @@ export function AdminAccountsList() {
                           Super admin
                         </span>
                       )}
+                      {item.welcomeEmailSentAt && (
+                        <span className="admin-user-badge">
+                          <i className="fa-solid fa-paper-plane" aria-hidden="true"></i>
+                          Welcomed {welcomeSentOn(item)}
+                        </span>
+                      )}
                     </div>
 
                     <div className="admin-user-access" aria-label="Module access">
@@ -223,15 +191,27 @@ export function AdminAccountsList() {
 
                     <footer className="admin-user-card-foot">
                       <RowActions
-                        // Only the owner edits the owner account (server-enforced).
-                        onEdit={
-                          !item.isOwner || admin?.isOwner ? () => setModal({ mode: "edit", id: item.id }) : undefined
-                        }
+                        onEdit={canManage ? () => setModal({ mode: "edit", id: item.id }) : undefined}
                         onDelete={
-                          !item.isOwner && item.linkedRecords === 0 ? () => handleDeletePermanently(item) : undefined
+                          canManage && !item.isOwner && item.linkedRecords === 0
+                            ? () => handleDeletePermanently(item)
+                            : undefined
                         }
                         deleteLabel="Delete permanently"
                       >
+                        {canSendWelcome(item) && (
+                          <CustomButton
+                            size="sm"
+                            bg="info"
+                            rounded
+                            className="m-0 admin-row-action-btn"
+                            onClick={() => handleSendWelcome(item)}
+                            title={item.welcomeEmailSentAt ? "Resend welcome email" : "Send welcome email"}
+                            aria-label={item.welcomeEmailSentAt ? "Resend welcome email" : "Send welcome email"}
+                          >
+                            <i className="fa-solid fa-paper-plane" aria-hidden="true"></i>
+                          </CustomButton>
+                        )}
                         {!item.isOwner && !item.hasLogin && (
                           <CustomButton
                             size="sm"
@@ -245,7 +225,7 @@ export function AdminAccountsList() {
                             <i className="fa-solid fa-key" aria-hidden="true"></i>
                           </CustomButton>
                         )}
-                        {!item.isOwner && (
+                        {canManage && !item.isOwner && (
                           <CustomButton
                             size="sm"
                             bg={item.isActive ? "secondary" : "primary"}
@@ -287,6 +267,7 @@ export function AdminAccountsList() {
             <AdminAccountForm
               id={modal.mode === "edit" ? modal.id : undefined}
               startWithLogin={modal.mode === "edit" && modal.grantLogin}
+              scope={scope}
               onSaved={() => setModal(null)}
             />
           }

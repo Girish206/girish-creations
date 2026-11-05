@@ -188,3 +188,47 @@
     font-size: 1.55rem;
   }
 }
+
+/* The ways to switch between password, emailed code and forgot password. */
+.admin-login-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px 16px;
+  margin-top: 0.85rem;
+}
+
+.admin-login-links button {
+  border: none;
+  background: none;
+  padding: 2px 0;
+  color: var(--primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-login-links button:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.admin-login-links button:disabled {
+  color: var(--muted-color, #6b7280);
+  cursor: default;
+}
+
+.admin-login-note {
+  margin: 0.6rem 0 0;
+  color: var(--muted-color, #6b7280);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+/* Confirms where the emailed code went: a quiet line, not a banner. */
+.admin-login-sent {
+  margin: 0 0 0.5rem;
+  color: #15803d;
+  font-size: 0.8rem;
+  text-align: center;
+  overflow-wrap: anywhere;
+}

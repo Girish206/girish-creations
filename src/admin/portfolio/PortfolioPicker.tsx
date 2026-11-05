@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "../../api/client";
 import type { ApiEnvelope } from "../../api/types";
-import SelectInput from "../dms/components/SelectInput";
+import { PillSelect } from "../../components/PillSelect";
 import "./portfolioPicker.css";
 
 interface ManageablePortfolio {
@@ -24,10 +24,13 @@ export function PortfolioPicker({
   adminId,
   target,
   onChange,
+  inHero = false,
 }: {
   adminId: string;
   target: string | null;
   onChange: (adminUserId: string | null) => void;
+  // Inside the dashboard's gradient hero rather than as its own bar.
+  inHero?: boolean;
 }) {
   const { data: accounts } = useQuery({
     queryKey: ["portfolio-accounts"],
@@ -40,26 +43,25 @@ export function PortfolioPicker({
   const others = accounts?.filter((account) => String(account.id) !== adminId) ?? [];
   const selected = target ? accounts?.find((account) => String(account.id) === target) : undefined;
   const viewingOther = Boolean(target && target !== adminId);
-  // "me" stands for the admin's own portfolio (SelectInput treats "" as empty).
+  // "me" stands for the admin's own portfolio.
   const options = [
     { value: "me", label: "Myself" },
     ...others.map((account) => ({ value: String(account.id), label: label(account) })),
+    // Until the accounts arrive the target has no name; without this the pill
+    // would read "Myself" while managing someone else's portfolio.
+    ...(viewingOther && !selected ? [{ value: target!, label: "Loading…" }] : []),
   ];
 
   return (
-    <div className={`admin-portfolio-picker${viewingOther ? " is-other" : ""}`}>
+    <div className={`admin-portfolio-picker${viewingOther ? " is-other" : ""}${inHero ? " is-hero" : ""}`}>
       <i className="fa-solid fa-user-shield" aria-hidden="true"></i>
-      <label htmlFor="admin-portfolio-picker">Managing portfolio of</label>
-      <div className="admin-portfolio-picker-select">
-        <SelectInput
-          id="admin-portfolio-picker"
-          options={options}
-          value={viewingOther ? target! : "me"}
-          clearable={false}
-          size="sm"
-          onChange={(value: string) => onChange(value && value !== "me" ? value : null)}
-        />
-      </div>
+      <span className="admin-portfolio-picker-label">Managing portfolio of</span>
+      <PillSelect
+        label="Managing portfolio of"
+        value={viewingOther ? target! : "me"}
+        options={options}
+        onChange={(value) => onChange(value !== "me" ? value : null)}
+      />
       {viewingOther && selected && (
         <span className="admin-portfolio-picker-note">
           Changes you make here are saved to {label(selected)}'s portfolio.

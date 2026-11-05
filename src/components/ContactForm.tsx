@@ -1,18 +1,20 @@
+import { isAxiosError } from "axios";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { FaArrowRight, FaCircleCheck, FaCircleExclamation } from "react-icons/fa6";
 import { useSubmitContactMessage } from "../api/hooks/useContact";
+import { messageFor } from "../api/mutationErrors";
 
 // The old Django `contact` view had a bug: it saved `subject = request.POST['email']`
 // instead of a real subject field, even though the template never rendered a
 // subject input either. The API now expects a genuine `subject` string, so this
 // form adds a real Subject field and validates it like the rest.
 const contactFormSchema = z.object({
-  name: z.string().trim().min(1, "Please enter your name"),
-  email: z.string().trim().min(1, "Please enter your email").email("Please enter a valid email address"),
-  subject: z.string().trim().min(1, "Please enter a subject"),
-  message: z.string().trim().min(1, "Please enter a message"),
+  name: z.string().trim().min(1, "Please enter your name").max(200, "Please keep your name under 200 characters"),
+  email: z.string().trim().min(1, "Please enter your email").email("Please enter a valid email address").max(320, "Please enter a valid email address"),
+  subject: z.string().trim().min(1, "Please enter a subject").max(300, "Please keep the subject under 300 characters"),
+  message: z.string().trim().min(1, "Please enter a message").max(10_000, "Please keep your message under 10,000 characters"),
 });
 
 type ContactFormValues = z.infer<typeof contactFormSchema>;
@@ -28,7 +30,9 @@ export function ContactForm() {
     defaultValues: { name: "", email: "", subject: "", message: "" },
   });
 
-  const { mutate, isPending, isSuccess, isError, reset: resetMutationState } = useSubmitContactMessage();
+  const { mutate, isPending, isSuccess, isError, error, reset: resetMutationState } = useSubmitContactMessage();
+  // Trying again straight away won't help once the limit is hit, so say when.
+  const rateLimited = isAxiosError(error) && error.response?.status === 429;
 
   function onSubmit(values: ContactFormValues) {
     resetMutationState();
@@ -50,7 +54,8 @@ export function ContactForm() {
       )}
       {isError && (
         <div className="gc-alert gc-alert-error" role="alert">
-          <FaCircleExclamation /> Something went wrong sending your message. Please try again.
+          <FaCircleExclamation />{" "}
+          {rateLimited ? messageFor(error) : "Something went wrong sending your message. Please try again."}
         </div>
       )}
 
