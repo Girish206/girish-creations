@@ -899,6 +899,15 @@
   color: var(--theme-text-dark);
 }
 
+/* The remove button stays beside its repayment, however long the text runs. */
+.admin-settle-repayments li {
+  flex-wrap: nowrap;
+}
+
+.admin-settle-repayments li > span {
+  min-width: 0;
+}
+
 .admin-settle-record {
   display: inline-flex;
   flex-wrap: wrap;

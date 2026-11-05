@@ -57,9 +57,22 @@
   min-width: 0;
 }
 
+.admin-group-people-picker .select__placeholder {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* As tall as the picker, with the same space below it (SelectInput's m-1), so
+   the two line up. It stays on the last row once the picker holds more names. */
 .admin-group-people-add .btn {
   flex-shrink: 0;
-  margin-bottom: 4px !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: calc(3rem + 2px);
+  margin: 0 0 4px !important;
 }
 
 .admin-group-expenses {

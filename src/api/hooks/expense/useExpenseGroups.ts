@@ -83,6 +83,22 @@ export function useSetExpenseGroupClosed() {
   });
 }
 
+export interface SplitEmailResult {
+  sent: number;
+  failed: number;
+  // The names of anyone in the group with no email address.
+  noEmail: string[];
+}
+
+export function useSendGroupSplitEmail() {
+  return useMutation({
+    mutationFn: async (groupId: number) => {
+      const { data } = await apiClient.post<ApiEnvelope<SplitEmailResult>>(`/admin/expense-groups/${groupId}/split-email`);
+      return data.data;
+    },
+  });
+}
+
 export interface ExpenseGroupSettlementInput {
   amount: string;
   date: string;

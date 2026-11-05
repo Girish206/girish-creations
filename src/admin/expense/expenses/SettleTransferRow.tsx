@@ -5,7 +5,8 @@ import { formatCurrency, INVALID_AMOUNT_MESSAGE, isValidAmount } from "../curren
 
 export interface SettleTransferRowProps {
   transfer: SettlementTransfer;
-  // A closed group shows what was left owing, with nothing to record.
+  // Shows what's owed with nothing to record: a closed group, or for anyone but
+  // the person getting the money.
   readOnly?: boolean;
   onRecord: (amount: string) => Promise<unknown>;
 }

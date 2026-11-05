@@ -111,7 +111,7 @@ function GroupPeople({ group }: { group: ExpenseGroup }) {
               isMulti
               creatable
               clearable={false}
-              placeholder="Choose someone, or type a new name…"
+              placeholder="Choose or type…"
               options={options}
               value={toAdd}
               onChange={setToAdd}

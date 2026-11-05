@@ -1,9 +1,11 @@
 import {
   useAddExpenseGroupSettlement,
   useDeleteExpenseGroupSettlement,
+  useSendGroupSplitEmail,
   useSetExpenseGroupClosed,
 } from "../../../api/hooks/expense/useExpenseGroups";
 import type { ReactNode } from "react";
+import { toast } from "sonner";
 import type { ExpenseGroup } from "../../../api/types";
 import { useAdminAuth } from "../../../context/AdminAuthContext";
 import { confirmAction, confirmDelete } from "../../components/confirmDelete";
@@ -11,7 +13,7 @@ import CustomButton from "../../dms/components/CustomButton";
 import { ModalActions } from "../../components/ModalActions";
 import { formatCurrency } from "../currency";
 import { formatDay, todayLocal } from "../dates";
-import { suggestTransfers } from "./groupSettlement";
+import { mayMarkPaid, suggestTransfers } from "./groupSettlement";
 import { SettleTransferRow } from "./SettleTransferRow";
 // The repayment rows reuse the remove button styled there.
 import "../savings/savingsGoals.css";
@@ -32,13 +34,10 @@ export interface AdminExpenseGroupSettleUpProps {
 // its expenses and settlements.
 export function AdminExpenseGroupSettleUp({ group, afterStats, beforeActions }: AdminExpenseGroupSettleUpProps) {
   const { admin } = useAdminAuth();
-  const myId = admin?.sub ? Number(admin.sub) : null;
-  // A repayment is between two people (the server enforces this too).
-  const isPartOf = (fromId: number, toId: number) =>
-    Boolean(admin?.isSuperAdmin) || fromId === myId || toId === myId;
   const addSettlement = useAddExpenseGroupSettlement();
   const deleteSettlement = useDeleteExpenseGroupSettlement();
   const setGroupClosed = useSetExpenseGroupClosed();
+  const sendSplitEmail = useSendGroupSplitEmail();
 
   const isClosed = group.closedAt !== null;
   const balances = group.balances;
@@ -49,6 +48,23 @@ export function AdminExpenseGroupSettleUp({ group, afterStats, beforeActions }: 
   async function handleDeleteSettlement(settlementId: number) {
     if (await confirmDelete("settlement")) {
       deleteSettlement.mutate({ groupId: group.id, settlementId });
+    }
+  }
+
+  async function handleSendSplitEmail() {
+    const confirmed = await confirmAction(
+      "Email the split-up?",
+      `Everyone in "${group.name}" with an email address gets what they pay or collect, and the group's totals.`,
+      "Send email",
+    );
+    if (!confirmed) return;
+    try {
+      const { sent, failed, noEmail } = await sendSplitEmail.mutateAsync(group.id);
+      toast.success(`Split-up emailed to ${sent} ${sent === 1 ? "person" : "people"}`);
+      if (failed > 0) toast.error(`${failed} couldn't be sent. Try again in a minute.`);
+      if (noEmail.length > 0) toast.info(`No email address for ${noEmail.join(", ")}`);
+    } catch {
+      // The failure is already shown (see showMutationError).
     }
   }
 
@@ -153,7 +169,7 @@ export function AdminExpenseGroupSettleUp({ group, afterStats, beforeActions }: 
               <SettleTransferRow
                 key={`${t.fromAdminUserId}-${t.toAdminUserId}`}
                 transfer={t}
-                readOnly={isClosed || !isPartOf(t.fromAdminUserId, t.toAdminUserId)}
+                readOnly={isClosed || !mayMarkPaid(admin, t.toAdminUserId)}
                 onRecord={(amount) =>
                   addSettlement.mutateAsync({
                     groupId: group.id,
@@ -174,14 +190,14 @@ export function AdminExpenseGroupSettleUp({ group, afterStats, beforeActions }: 
       {group.settlements.length > 0 && (
         <>
           <h5 className="admin-settle-heading">Recorded repayments</h5>
-          <ul className="admin-settle-list">
+          <ul className="admin-settle-list admin-settle-repayments">
             {group.settlements.map((s) => (
               <li key={s.id}>
                 <span>
                   {s.fromAdminUser.name || s.fromAdminUser.email} paid {s.toAdminUser.name || s.toAdminUser.email}{" "}
                   <strong>{formatCurrency(s.amount)}</strong> · {formatDay(s.date)}
                 </span>
-                {!isClosed && isPartOf(s.fromAdminUser.id, s.toAdminUser.id) && (
+                {!isClosed && mayMarkPaid(admin, s.toAdminUser.id) && (
                   <button
                     type="button"
                     className="admin-savings-contribution-remove"
@@ -201,6 +217,16 @@ export function AdminExpenseGroupSettleUp({ group, afterStats, beforeActions }: 
       {beforeActions}
 
       <ModalActions>
+        {group.expenseCount > 0 && (
+          <CustomButton
+            variant="outline"
+            className="m-0"
+            loading={sendSplitEmail.isPending}
+            onClick={handleSendSplitEmail}
+          >
+            <i className="fa-solid fa-paper-plane" aria-hidden="true"></i> Email split-up
+          </CustomButton>
+        )}
         <CustomButton
           variant={isClosed ? "normal" : "outline"}
           className="m-0"

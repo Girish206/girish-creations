@@ -3,9 +3,11 @@ import {
   useDeleteDirectSettlement,
   useDirectBalances,
 } from "../../../api/hooks/expense/useExpenses";
+import { useAdminAuth } from "../../../context/AdminAuthContext";
 import { confirmDelete } from "../../components/confirmDelete";
 import { formatCurrency } from "../currency";
 import { formatDay, todayLocal } from "../dates";
+import { mayMarkPaid } from "./groupSettlement";
 import { SettleTransferRow } from "./SettleTransferRow";
 // The repayment rows reuse the remove button styled there.
 import "../savings/savingsGoals.css";
@@ -14,6 +16,7 @@ import "../savings/savingsGoals.css";
 // between each pair of people, so nobody is told to pay someone they never
 // split anything with.
 export function AdminDirectSettleUp() {
+  const { admin } = useAdminAuth();
   const { data } = useDirectBalances();
   const addSettlement = useAddDirectSettlement();
   const deleteSettlement = useDeleteDirectSettlement();
@@ -47,6 +50,7 @@ export function AdminDirectSettleUp() {
             <SettleTransferRow
               key={`${t.fromAdminUserId}-${t.toAdminUserId}`}
               transfer={t}
+              readOnly={!mayMarkPaid(admin, t.toAdminUserId)}
               onRecord={(amount) =>
                 addSettlement.mutateAsync({
                   amount,
@@ -63,22 +67,24 @@ export function AdminDirectSettleUp() {
       {settlements.length > 0 && (
         <>
           <h5 className="admin-settle-heading">Recorded repayments</h5>
-          <ul className="admin-settle-list">
+          <ul className="admin-settle-list admin-settle-repayments">
             {settlements.map((s) => (
               <li key={s.id}>
                 <span>
                   {s.fromAdminUser.name || s.fromAdminUser.email} paid {s.toAdminUser.name || s.toAdminUser.email}{" "}
                   <strong>{formatCurrency(s.amount)}</strong> · {formatDay(s.date)}
                 </span>
-                <button
-                  type="button"
-                  className="admin-savings-contribution-remove"
-                  onClick={() => handleDelete(s.id)}
-                  aria-label="Remove repayment"
-                  title="Remove"
-                >
-                  <i className="fa-solid fa-xmark"></i>
-                </button>
+                {mayMarkPaid(admin, s.toAdminUser.id) && (
+                  <button
+                    type="button"
+                    className="admin-savings-contribution-remove"
+                    onClick={() => handleDelete(s.id)}
+                    aria-label="Remove repayment"
+                    title="Remove"
+                  >
+                    <i className="fa-solid fa-xmark"></i>
+                  </button>
+                )}
               </li>
             ))}
           </ul>
