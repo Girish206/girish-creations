@@ -38,7 +38,7 @@ function PersonCard({ person, index }: { person: PortfolioSummary; index: number
           {person.jobTitle && <span className="gc-person-role">{person.jobTitle}</span>}
           {years > 0 && (
             <span className="gc-person-exp">
-              {years}+ year{years === 1 ? "" : "s"} experience
+              {years}+ year{years === 1 ? "" : "s"} of experience
             </span>
           )}
         </span>

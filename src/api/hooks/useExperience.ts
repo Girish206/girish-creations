@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "../client";
 import { usePortfolioScope } from "../../portfolio/PortfolioScope";
 import type { ApiEnvelope, ExperienceDetails } from "../types";
+import { trimStrings } from "../../utils/format";
 
 export function useExperience() {
   const scope = usePortfolioScope();
@@ -9,7 +10,7 @@ export function useExperience() {
     queryKey: ["experience", scope?.cacheKey],
     queryFn: async () => {
       const { data } = await apiClient.get<ApiEnvelope<ExperienceDetails[]>>(`${scope?.apiBase}/experience`);
-      return data.data;
+      return data.data.map(trimStrings);
     },
     enabled: Boolean(scope),
   });

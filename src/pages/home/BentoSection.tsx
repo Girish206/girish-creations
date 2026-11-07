@@ -2,17 +2,13 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { FaBriefcase, FaCheck, FaCode, FaLocationDot, FaPaperPlane, FaRocket, FaUser, FaWandMagicSparkles } from "react-icons/fa6";
 import type { ExperienceDetails, Skill, Tool, UserProfile } from "../../api/types";
+import { formatBio } from "../../utils/bio";
 import { formatDuration } from "../../utils/date";
+import { cityOf, pluralize } from "../../utils/format";
 import { ArrowUpRight, Reveal, SectionHead } from "../../site/ui";
 import { SERVICES } from "./services";
 import { usePortfolioPath } from "../../portfolio/PortfolioScope";
 import { useIsClassic } from "../../portfolio/portfolioStyle";
-
-// "#26A, 5th cross, …, Bengaluru 560092" -> "Bengaluru": the full street
-// address belongs on the Contact page, not in a small tile.
-function cityOf(address: string): string {
-  return address.split(",").pop()?.replace(/\d+/g, "").trim() || address;
-}
 
 const LEVEL_ORDER = ["Expert", "Advanced", "Intermediate", "Beginner"];
 
@@ -50,7 +46,8 @@ export function BentoSection({
     .sort((a, b) => LEVEL_ORDER.indexOf(a.proficiencyLevel) - LEVEL_ORDER.indexOf(b.proficiencyLevel))
     .slice(0, 10);
   const firstName = profile.fullName.split(" ")[0];
-  const aboutText = profile.objective || profile.bio;
+  // The bio can hold "{{experience}}", which only formatBio fills in.
+  const aboutText = profile.objective || formatBio(profile.bio, profile.formattedExperience);
 
   const tiles: (Tile | false)[] = [
     Boolean(aboutText) && {
@@ -91,8 +88,8 @@ export function BentoSection({
           <FaRocket /> Projects
         </>
       ),
-      body: <span className="gc-tile-big">{projectCount}+</span>,
-      foot: <span className="gc-muted">projects completed</span>,
+      body: <span className="gc-tile-big">{projectCount}</span>,
+      foot: <span className="gc-muted">{pluralize(projectCount ?? 0, "project")} to date</span>,
     },
     currentRole !== undefined && {
       key: "current",

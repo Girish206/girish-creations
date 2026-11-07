@@ -10,12 +10,12 @@ import InputComp from "../dms/components/InputComp";
 import TextareaInput from "../dms/components/TextareaInput";
 
 const schema = z.object({
-  jobTitle: z.string().min(1, "Required"),
-  companyName: z.string().min(1, "Required"),
-  location: z.string().optional(),
+  jobTitle: z.string().trim().min(1, "Required"),
+  companyName: z.string().trim().min(1, "Required"),
+  location: z.string().trim().optional(),
   startDate: z.string().min(1, "Required"),
   endDate: z.string().optional(),
-  description: z.string().optional(),
+  description: z.string().trim().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;

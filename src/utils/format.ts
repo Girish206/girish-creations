@@ -56,6 +56,26 @@ export function blogImageFor(seed: number): string {
   return BLOG_PLACEHOLDER_IMAGES[index];
 }
 
+// "#26A, 5th cross, …, Bengaluru 560092" -> "Bengaluru": the full street
+// address belongs on the Contact page, not in a tile or a "Based in" line.
+export function cityOf(address: string): string {
+  return address.split(",").pop()?.replace(/\d+/g, "").trim() || address;
+}
+
+// "5 projects", "1 project".
+export function pluralize(count: number, singular: string, pluralForm = `${singular}s`): string {
+  return count === 1 ? singular : pluralForm;
+}
+
+// Text typed into the admin can carry stray spaces ("Application Developer "),
+// which then show up beside punctuation ("Application Developer ."). Trims
+// every string field of an API row.
+export function trimStrings<T extends object>(row: T): T {
+  return Object.fromEntries(
+    Object.entries(row).map(([key, value]) => [key, typeof value === "string" ? value.trim() : value]),
+  ) as T;
+}
+
 // "React Js" -> "RJ", "Python" -> "Py": a compact badge for a skill/tool.
 export function monogram(name: string): string {
   const words = name.replace(/[^A-Za-z0-9+#. ]/g, " ").split(/\s+/).filter(Boolean);

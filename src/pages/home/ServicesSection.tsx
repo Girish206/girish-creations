@@ -22,7 +22,7 @@ const FAQ_ITEMS = [
   {
     question: "What technologies do you work with?",
     answer:
-      "Mainly Python/Django and PHP/Laravel for back-end work, Node.js and React for full-stack JavaScript projects, and MySQL/PostgreSQL for data storage. The About page lists every skill and tool.",
+      "Mainly PHP/Laravel and Python/Django on the back end, React on the front end, and MySQL, PostgreSQL or SQL Server for the database, with some Node.js as well. The Skills page lists every skill and tool I use.",
   },
   {
     question: "Are you available for freelance or full-time opportunities?",

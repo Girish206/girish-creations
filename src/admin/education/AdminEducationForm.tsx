@@ -10,9 +10,9 @@ import InputComp from "../dms/components/InputComp";
 import "../admin.css";
 
 const schema = z.object({
-  course: z.string().min(1, "Required"),
-  institutionName: z.string().min(1, "Required"),
-  specialization: z.string().optional(),
+  course: z.string().trim().min(1, "Required"),
+  institutionName: z.string().trim().min(1, "Required"),
+  specialization: z.string().trim().optional(),
   startDate: z.string().min(1, "Required"),
   endDate: z.string().optional(),
   grade: z.string().min(1, "Required"),
@@ -114,7 +114,7 @@ export function AdminEducationForm({ id, onSaved }: AdminEducationFormProps) {
         control={control}
         defaultValue=""
         render={({ field }) => (
-          <InputComp label="Grade" type="number" step="0.01" required {...field} error={errors.grade?.message} />
+          <InputComp label="Grade (percentage or CGPA)" type="number" step="0.01" required {...field} error={errors.grade?.message} />
         )}
       />
       <SubmitButton loading={isSubmitting}>Save</SubmitButton>

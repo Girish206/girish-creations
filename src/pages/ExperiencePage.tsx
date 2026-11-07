@@ -2,8 +2,7 @@ import { FaBriefcase, FaBuilding, FaGraduationCap, FaLocationDot } from "react-i
 import { useExperience } from "../api/hooks/useExperience";
 import { useEducation } from "../api/hooks/useEducation";
 import { useProfile } from "../api/hooks/useProfile";
-import { endYearOrPresent, formatDuration, yearOf } from "../utils/date";
-import { formatFullDate } from "../utils/format";
+import { endYearOrPresent, formatDuration, formatGrade, formatMonthYear, yearOf } from "../utils/date";
 import { CtaBand, EmptyState, Metrics, PageHero, Reveal, SectionHead } from "../site/ui";
 import { usePageTitle } from "../site/usePageTitle";
 
@@ -37,8 +36,8 @@ export function ExperiencePage() {
           <Metrics
             items={[
               { value: profile?.formattedExperienceInYears ? `${profile.formattedExperienceInYears}+` : "—", label: "Years of experience" },
-              { value: experience?.length ?? "—", label: "Roles" },
-              { value: companies || "—", label: "Organisations" },
+              { value: experience?.length || "—", label: experience?.length === 1 ? "Role" : "Roles" },
+              { value: companies || "—", label: companies === 1 ? "Organisation" : "Organisations" },
             ]}
           />
         }
@@ -68,7 +67,7 @@ export function ExperiencePage() {
                       <div className="gc-tl-top">
                         <span className="gc-tl-when">
                           {!exp.endDate && <span className="gc-status-dot" aria-hidden="true" />}
-                          {formatFullDate(exp.startDate)} — {exp.endDate ? formatFullDate(exp.endDate) : "Present"}
+                          {formatMonthYear(exp.startDate)} — {exp.endDate ? formatMonthYear(exp.endDate) : "Present"}
                         </span>
                         <span className="gc-chip gc-chip-accent">{formatDuration(exp.startDate, exp.endDate)}</span>
                       </div>
@@ -104,26 +103,29 @@ export function ExperiencePage() {
           <div className="gc-container">
             <SectionHead eyebrow="Education" title="Academic background" />
             <ol className="gc-tl">
-              {education.map((edu, i) => (
-                <Reveal as="li" key={edu.id} delay={i * 60} className="gc-tl-item gc-glass gc-spot">
-                  <span className="gc-tl-node" aria-hidden="true" />
-                  <div className="gc-tl-top">
-                    <span className="gc-tl-when">
-                      {yearOf(edu.startDate)} — {endYearOrPresent(edu.endDate)}
-                    </span>
-                    <span className="gc-chip">{Number(edu.grade)}%</span>
-                  </div>
-                  <h3 className="gc-tl-title">
-                    {edu.course}
-                    {edu.specialization ? <span className="gc-muted"> · {edu.specialization}</span> : null}
-                  </h3>
-                  <div className="gc-tl-sub">
-                    <span>
-                      <FaGraduationCap aria-hidden="true" /> {edu.institutionName}
-                    </span>
-                  </div>
-                </Reveal>
-              ))}
+              {education.map((edu, i) => {
+                const grade = formatGrade(edu.grade);
+                return (
+                  <Reveal as="li" key={edu.id} delay={i * 60} className="gc-tl-item gc-glass gc-spot">
+                    <span className="gc-tl-node" aria-hidden="true" />
+                    <div className="gc-tl-top">
+                      <span className="gc-tl-when">
+                        {yearOf(edu.startDate)} — {endYearOrPresent(edu.endDate)}
+                      </span>
+                      {grade && <span className="gc-chip">{grade}</span>}
+                    </div>
+                    <h3 className="gc-tl-title">
+                      {edu.course}
+                      {edu.specialization ? <span className="gc-muted"> · {edu.specialization}</span> : null}
+                    </h3>
+                    <div className="gc-tl-sub">
+                      <span>
+                        <FaGraduationCap aria-hidden="true" /> {edu.institutionName}
+                      </span>
+                    </div>
+                  </Reveal>
+                );
+              })}
             </ol>
           </div>
         </section>

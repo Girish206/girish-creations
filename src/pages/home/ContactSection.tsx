@@ -68,7 +68,7 @@ export function ContactSection({ profile, isPage = false }: { profile: UserProfi
                     <FaLocationDot />
                   </span>
                   <div className="gc-contact-item-body">
-                    <span className="gc-contact-item-label">Based in</span>
+                    <span className="gc-contact-item-label">Address</span>
                     <span className="gc-contact-item-value">{profile.address}</span>
                   </div>
                 </div>

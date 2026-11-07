@@ -3,6 +3,7 @@ import { FaArrowRight, FaFilePdf } from "react-icons/fa6";
 import { uploadUrl } from "../../api/client";
 import type { ExperienceDetails, Skill, Tool, UserProfile } from "../../api/types";
 import { formatBio } from "../../utils/bio";
+import { pluralize } from "../../utils/format";
 import { useImageLightbox } from "../../components/lightbox/useImageLightbox";
 import { CopyEmailButton } from "../../components/CopyEmailButton";
 import { AvailabilityBadge, PortraitContent, Reveal, SocialLinks } from "../../site/ui";
@@ -104,11 +105,11 @@ export function HeroSection({ profile, experience, skills, tools, projectCount }
             )}
             {projectCount ? (
               <div className="gc-float-stat gc-float-stat-2">
-                <strong>{projectCount}+</strong>
+                <strong>{projectCount}</strong>
                 <span>
-                  projects
+                  {pluralize(projectCount, "project")}
                   <br />
-                  completed
+                  to date
                 </span>
               </div>
             ) : null}

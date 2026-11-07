@@ -8,6 +8,7 @@ import { useTools } from "../api/hooks/useTools";
 import { useProjectsList } from "../api/hooks/useProjects";
 import { uploadUrl } from "../api/client";
 import { formatBio } from "../utils/bio";
+import { cityOf } from "../utils/format";
 import { useImageLightbox } from "../components/lightbox/useImageLightbox";
 import { CopyEmailButton } from "../components/CopyEmailButton";
 import { ArrowUpRight, CtaBand, PortraitContent, Reveal, SectionHead, SocialLinks } from "../site/ui";
@@ -52,14 +53,24 @@ export function AboutPage() {
   // Only numbers worth showing: a new portfolio's zeros are left out.
   const stats = [
     { count: profile?.formattedExperienceInYears, value: `${profile?.formattedExperienceInYears}+`, label: "Years of experience" },
-    { count: projectsPage?.total, value: `${projectsPage?.total}+`, label: "Projects" },
+    { count: projectsPage?.total, value: String(projectsPage?.total), label: projectsPage?.total === 1 ? "Project" : "Projects" },
     { count: skills?.length, value: String(skills?.length), label: classic ? "Skills" : "Technologies" },
     { count: tools?.length, value: String(tools?.length), label: "Tools" },
   ].filter((stat) => stat.count);
   const facts = [
-    { label: "Current role", value: currentRole ? `${currentRole.jobTitle}, ${currentRole.companyName}` : undefined },
-    { label: "Experience", value: profile?.formattedExperience },
-    { label: "Based in", value: profile?.address ?? undefined },
+    {
+      label: currentRole?.endDate ? "Most recent role" : "Current role",
+      value: currentRole ? `${currentRole.jobTitle}, ${currentRole.companyName}` : undefined,
+    },
+    // The API words it for the middle of a sentence ("less than a month").
+    {
+      label: "Experience",
+      value: profile?.formattedExperience
+        ? profile.formattedExperience.charAt(0).toUpperCase() + profile.formattedExperience.slice(1)
+        : undefined,
+    },
+    // Just the city here; the full address is on the Contact page.
+    { label: "Based in", value: profile?.address ? cityOf(profile.address) : undefined },
     {
       label: "Phone",
       value: profile?.contactNumber ? `+91 ${profile.contactNumber}` : undefined,
@@ -79,7 +90,7 @@ export function AboutPage() {
       to: "/skills",
       icon: <FaCode />,
       title: "Skills & tools",
-      text: "Skills and the tools I use.",
+      text: classic ? "What I'm good at, and the tools I use." : "The stack I build with, and my everyday tools.",
     },
     counts && counts.projects > 0 && {
       to: "/projects",
