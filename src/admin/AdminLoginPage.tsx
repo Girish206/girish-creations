@@ -136,7 +136,7 @@ export function AdminLoginPage() {
   async function sendCode() {
     const { data } = await apiClient.post<ApiEnvelope<{ sentTo: string; resendInSeconds: number }>>(
       "/admin/auth/otp/request",
-      { app: "admin", email: email.trim(), purpose: mode === "reset" ? "reset" : "login" },
+      { email: email.trim(), purpose: mode === "reset" ? "reset" : "login" },
     );
     setSentTo(data.data.sentTo);
     setResendIn(data.data.resendInSeconds);

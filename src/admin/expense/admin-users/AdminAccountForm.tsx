@@ -323,7 +323,7 @@ export function AdminAccountForm({ id, startWithLogin = false, scope, onSaved }:
               <InputComp
                 label={
                   alreadyHasLogin
-                    ? "New Password, also changes RunMitra (leave blank to keep current)"
+                    ? "New Password (leave blank to keep current)"
                     : !isEdit
                       ? "Password (leave blank if they already have an account)"
                       : "Password"

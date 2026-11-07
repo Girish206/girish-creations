@@ -231,9 +231,9 @@ function PersonDetails({ item, canEdit, onEdit, onGrantLogin, onDeleted }: Perso
 
 type ModalState = { mode: "new" } | { mode: "edit"; id: number; grantLogin?: boolean } | null;
 
-// The Money Hub's people, leaving out accounts that only use RunMitra or the
-// portfolio (the server filters them; Admin Accounts on the portfolio side
-// lists the accounts with portfolio access).
+// The Money Hub's people, leaving out accounts that only use the portfolio or
+// have no access at all (the server filters them; Admin Accounts on the
+// portfolio side lists the accounts with portfolio access).
 export function MoneyHubPeopleList() {
   const { admin } = useAdminAuth();
   const { data: items, isLoading } = useAdminUsers("money-hub");

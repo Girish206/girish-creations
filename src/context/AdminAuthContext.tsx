@@ -131,7 +131,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     // Same source as a page reload: the response's `admin` carries `id`, not
     // the `sub` the rest of the app reads.
     const identity = decodeAdminFromToken(token);
-    // A cricket-only (CrickVerse) account has nothing to open here.
+    // An account with no access to any module has nothing to open here.
     if (identity && !identity.hasPortfolioAccess && !hasAnyExpenseAccess(identity)) {
       throw new NoAdminModuleError();
     }
@@ -146,7 +146,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   async function login(identifier: string, password: string) {
     const { data } = await apiClient.post<ApiEnvelope<{ token: string }>>(
       "/admin/auth/login",
-      { app: "admin", email: identifier, password },
+      { email: identifier, password },
     );
     startSession(data.data.token);
   }
@@ -154,7 +154,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   async function loginWithCode(identifier: string, code: string) {
     const { data } = await apiClient.post<ApiEnvelope<{ token: string }>>(
       "/admin/auth/otp/login",
-      { app: "admin", email: identifier, code },
+      { email: identifier, code },
     );
     startSession(data.data.token);
   }
@@ -162,7 +162,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   async function resetPassword(identifier: string, code: string, newPassword: string) {
     const { data } = await apiClient.post<ApiEnvelope<{ token: string }>>(
       "/admin/auth/password/reset",
-      { app: "admin", email: identifier, code, newPassword },
+      { email: identifier, code, newPassword },
     );
     startSession(data.data.token);
   }
@@ -197,7 +197,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
 // Signed in fine, but the account has neither portfolio nor expense access.
 export class NoAdminModuleError extends Error {
   constructor() {
-    super("This account has no access to the Girish Creations admin. Cricket players sign in to CrickVerse instead.");
+    super("This account has no access to the Girish Creations admin. Ask an administrator for access.");
   }
 }
 

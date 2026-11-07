@@ -204,7 +204,7 @@ export const router = createBrowserRouter([
                 ],
               },
               {
-                // Just the Money Hub's people, without RunMitra-only accounts.
+                // Just the Money Hub's people, without accounts it has no use for.
                 // The server scopes what each person sees and may change.
                 path: "admin-users",
                 lazy: async () => {

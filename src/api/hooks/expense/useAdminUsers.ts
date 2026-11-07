@@ -8,8 +8,8 @@ export interface AdminUserCreateInput {
   // Digits only; also a sign-in.
   mobile?: string | null;
   password?: string | null;
-  // Asks for login access. For someone who already has a RunMitra account, a
-  // blank password keeps the one they have; a new one changes it in both apps.
+  // Asks for login access. For someone who already has an account, a blank
+  // password keeps the one they have.
   grantLogin?: boolean;
   name?: string | null;
   hasPortfolioAccess: boolean;
@@ -37,8 +37,8 @@ export interface AdminUserUpdateInput {
   isSuperAdmin?: boolean;
 }
 
-// "money-hub" leaves out accounts that only use RunMitra or the portfolio;
-// "portfolio" is only the accounts with portfolio access.
+// "money-hub" leaves out accounts that only use the portfolio, or have no
+// access at all; "portfolio" is only the accounts with portfolio access.
 export type AccountScope = "money-hub" | "portfolio";
 
 export function useAdminUsers(scope?: AccountScope) {
