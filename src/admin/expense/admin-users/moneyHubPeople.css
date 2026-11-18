@@ -269,3 +269,23 @@
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+
+/* Merge a duplicate: explanation, picker, then Cancel / Merge. */
+.people-merge {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.people-merge-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.people-merge-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0 !important;
+}

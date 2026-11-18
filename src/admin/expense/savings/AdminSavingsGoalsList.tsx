@@ -181,8 +181,8 @@ export function AdminSavingsGoalsList() {
           </button>
         </div>
       }
-      className="admin-card-scrollable exl sgl"
-      bodyClassName="admin-card-body-compact admin-card-body-scroll"
+      className="exl sgl"
+      bodyClassName="admin-card-body-compact"
     >
       {all.length > 0 && (
         <div className="exl-strip" aria-label="Summary">

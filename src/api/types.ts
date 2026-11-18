@@ -149,6 +149,9 @@ export interface AdminUserRef {
   // Null for a guest member — added purely to appear in pickers, no login.
   email: string | null;
   name: string | null;
+  // Only from the pickers' list, when two people would show the same name:
+  // "added by you", "added by Ravi", or a number.
+  hint?: string | null;
 }
 
 export interface AdminUserAccount extends AdminUserRef {
@@ -219,6 +222,8 @@ export interface ExpenseGroup {
   // Worked out on the server across everyone's expenses in the group, so
   // they're the same for every member (the expense list only has their own).
   balances: GroupMemberBalance[];
+  // Whoever keeps the linked fund, when it's in the balances: everyone settles with them.
+  fundHolderId?: number | null;
   totalCents: number;
   expenseCount: number;
   // Set when the group was made for a shared fund: its expenses are paid from

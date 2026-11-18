@@ -199,7 +199,7 @@ export function ExpenseDashboardPage() {
     .filter((group) => !group.closedAt)
     .map((group) => {
       const cents = group.balances.find((balance) => balance.adminUserId === myId)?.pendingCents ?? 0;
-      const people = suggestTransfers(group.balances)
+      const people = suggestTransfers(group.balances, group.fundHolderId ?? null)
         .filter((t) => t.fromAdminUserId === myId || t.toAdminUserId === myId)
         .map((t) => {
           const iPay = t.fromAdminUserId === myId;

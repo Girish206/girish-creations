@@ -117,3 +117,15 @@ export function useDeleteAdminUserPermanently() {
     onSuccess: () => invalidate(queryClient),
   });
 }
+
+// Owner only: folds a duplicate guest into the person to keep. Their expenses,
+// splits, groups and savings all move over, so everything is refetched.
+export function useMergeAdminUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, intoId }: { id: number; intoId: number }) => {
+      await apiClient.post(`/admin/admin-users/${id}/merge`, { intoId });
+    },
+    onSuccess: () => queryClient.invalidateQueries(),
+  });
+}

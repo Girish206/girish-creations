@@ -10,6 +10,7 @@ import { ModalForm } from "../../components/ModalForm";
 import { SubmitButton } from "../../components/SubmitButton";
 import InputComp from "../../dms/components/InputComp";
 import SelectInput from "../../dms/components/SelectInput";
+import { memberLabel } from "../memberLabel";
 
 const schema = z
   .object({
@@ -129,7 +130,7 @@ export function AdminExpenseGroupQuickForm({ group, onSaved }: AdminExpenseGroup
               placeholder="Choose, or type a new name…"
               options={(members ?? []).map((member) => ({
                 value: member.id,
-                label: `${member.name || member.email}${member.id === myId ? " (you)" : ""}`,
+                label: `${memberLabel(member)}${member.id === myId ? " (you)" : ""}`,
               }))}
               value={field.value}
               onChange={field.onChange}

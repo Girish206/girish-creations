@@ -1,4 +1,5 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
+import { RouteError } from "../components/RouteError";
 import { MainLayout } from "../layouts/MainLayout";
 import { PortfolioLayout } from "../layouts/PortfolioLayout";
 import { PeopleDirectoryPage } from "../pages/directory/PeopleDirectoryPage";
@@ -31,186 +32,197 @@ import { ProtectedRoute, RequireModuleAccess, RequireSubModuleAccess } from "../
 // than seeing a 403 from every request.
 export const router = createBrowserRouter([
   {
-    element: <MainLayout />,
-    children: [
-      { path: "/", element: <PeopleDirectoryPage /> },
-      { path: "*", element: <NotFoundPage /> },
-    ],
-  },
-  {
-    // One person's portfolio. Static paths (/admin, /admin/login) rank above
-    // this dynamic segment, and the server refuses usernames that would
-    // collide with them.
-    path: "/:username",
-    element: <PortfolioLayout />,
-    children: [
-      { index: true, element: <HomePage /> },
-      { path: "about", element: <AboutPage /> },
-      { path: "experience", element: <ExperiencePage /> },
-      { path: "skills", element: <SkillsPage /> },
-      { path: "projects", element: <ProjectsListPage /> },
-      { path: "services", element: <ServicesPage /> },
-      { path: "contact", element: <ContactPage /> },
-      { path: "blog", element: <BlogListPage /> },
-      { path: "blog/:slug", element: <BlogDetailPage /> },
-      { path: "projects/:id", element: <ProjectDetailPage /> },
-      { path: "*", element: <NotFoundPage /> },
-    ],
-  },
-  {
-    path: "/admin/login",
-    lazy: async () => {
-      const { AdminLoginPage } = await import("../admin/AdminLoginPage");
-      return { Component: AdminLoginPage };
-    },
-  },
-  {
-    element: <ProtectedRoute />,
+    // Catches anything that fails to load or render below, including a
+    // stale build's missing chunks after a deploy (reloads into the new one).
+    errorElement: <RouteError />,
     children: [
       {
-        element: <RequireModuleAccess module="portfolio" />,
+        element: <MainLayout />,
         children: [
-          {
-            path: "/admin",
-            lazy: async () => {
-              const { default: AdminLayoutWrapper } = await import("../admin/dms/layout/LayoutWrapper");
-              return { Component: AdminLayoutWrapper };
-            },
-            children: [
-              {
-                index: true,
-                lazy: async () => {
-                  const { DashboardHomePage } = await import("../admin/DashboardHomePage");
-                  return { Component: DashboardHomePage };
-                },
-              },
-              {
-                path: "profile",
-                lazy: async () => {
-                  const { AdminProfileForm } = await import("../admin/profile/AdminProfileForm");
-                  return { Component: AdminProfileForm };
-                },
-              },
-              {
-                path: "experience",
-                lazy: async () => {
-                  const { AdminExperienceList } = await import("../admin/experience/AdminExperienceList");
-                  return { Component: AdminExperienceList };
-                },
-              },
-              {
-                path: "education",
-                lazy: async () => {
-                  const { AdminEducationList } = await import("../admin/education/AdminEducationList");
-                  return { Component: AdminEducationList };
-                },
-              },
-              {
-                // Skills, tools and certifications share one page, as tabs.
-                path: "skills",
-                lazy: async () => {
-                  const { AdminSkillsCredentialsPage } = await import("../admin/skills/AdminSkillsCredentialsPage");
-                  return { Component: AdminSkillsCredentialsPage };
-                },
-              },
-              { path: "tools", element: <Navigate to="/admin/skills?tab=tools" replace /> },
-              { path: "certifications", element: <Navigate to="/admin/skills?tab=certifications" replace /> },
-              {
-                path: "projects",
-                lazy: async () => {
-                  const { AdminProjectsList } = await import("../admin/projects/AdminProjectsList");
-                  return { Component: AdminProjectsList };
-                },
-              },
-              {
-                path: "blog",
-                lazy: async () => {
-                  const { AdminBlogList } = await import("../admin/blog/AdminBlogList");
-                  return { Component: AdminBlogList };
-                },
-              },
-              {
-                path: "contact",
-                lazy: async () => {
-                  const { AdminContactList } = await import("../admin/contact/AdminContactList");
-                  return { Component: AdminContactList };
-                },
-              },
-              {
-                // Same page as /admin/expense/admin-users, reachable from the
-                // portfolio module (super admins only — the Sidebar shows the
-                // link only to them and the server enforces it).
-                path: "admin-users",
-                lazy: async () => {
-                  const { AdminAccountsList } = await import("../admin/expense/admin-users/AdminAccountsList");
-                  return { Component: AdminAccountsList };
-                },
-              },
-            ],
-          },
+          { path: "/", element: <PeopleDirectoryPage /> },
+          { path: "*", element: <NotFoundPage /> },
         ],
       },
       {
-        element: <RequireModuleAccess module="expense" />,
+        // One person's portfolio. Static paths (/admin, /admin/login) rank above
+        // this dynamic segment, and the server refuses usernames that would
+        // collide with them.
+        path: "/:username",
+        element: <PortfolioLayout />,
+        children: [
+          { index: true, element: <HomePage /> },
+          { path: "about", element: <AboutPage /> },
+          { path: "experience", element: <ExperiencePage /> },
+          { path: "skills", element: <SkillsPage /> },
+          { path: "projects", element: <ProjectsListPage /> },
+          { path: "services", element: <ServicesPage /> },
+          { path: "contact", element: <ContactPage /> },
+          { path: "blog", element: <BlogListPage /> },
+          { path: "blog/:slug", element: <BlogDetailPage /> },
+          { path: "projects/:id", element: <ProjectDetailPage /> },
+          { path: "*", element: <NotFoundPage /> },
+        ],
+      },
+      {
+        path: "/admin/login",
+        lazy: async () => {
+          const { AdminLoginPage } = await import("../admin/AdminLoginPage");
+          return { Component: AdminLoginPage };
+        },
+      },
+      {
+        element: <ProtectedRoute />,
         children: [
           {
-            path: "/admin/expense",
-            lazy: async () => {
-              const { default: AdminLayoutWrapper } = await import("../admin/dms/layout/LayoutWrapper");
-              return { Component: AdminLayoutWrapper };
-            },
+            element: <RequireModuleAccess module="portfolio" />,
             children: [
               {
-                index: true,
+                path: "/admin",
                 lazy: async () => {
-                  const { ExpenseDashboardPage } = await import("../admin/expense/dashboard/ExpenseDashboardPage");
-                  return { Component: ExpenseDashboardPage };
+                  const { default: AdminLayoutWrapper } = await import("../admin/dms/layout/LayoutWrapper");
+                  return { Component: AdminLayoutWrapper };
                 },
-              },
-              {
-                // Categories + Expenses share the "expenses" sub-access flag.
-                element: <RequireSubModuleAccess subModule="expenses" />,
                 children: [
                   {
-                    path: "categories",
+                    index: true,
                     lazy: async () => {
-                      const { AdminExpenseCategoriesList } = await import(
-                        "../admin/expense/categories/AdminExpenseCategoriesList"
-                      );
-                      return { Component: AdminExpenseCategoriesList };
+                      const { DashboardHomePage } = await import("../admin/DashboardHomePage");
+                      return { Component: DashboardHomePage };
                     },
                   },
                   {
-                    path: "expenses",
+                    path: "profile",
                     lazy: async () => {
-                      const { AdminExpensesList } = await import("../admin/expense/expenses/AdminExpensesList");
-                      return { Component: AdminExpensesList };
+                      const { AdminProfileForm } = await import("../admin/profile/AdminProfileForm");
+                      return { Component: AdminProfileForm };
+                    },
+                  },
+                  {
+                    path: "experience",
+                    lazy: async () => {
+                      const { AdminExperienceList } = await import("../admin/experience/AdminExperienceList");
+                      return { Component: AdminExperienceList };
+                    },
+                  },
+                  {
+                    path: "education",
+                    lazy: async () => {
+                      const { AdminEducationList } = await import("../admin/education/AdminEducationList");
+                      return { Component: AdminEducationList };
+                    },
+                  },
+                  {
+                    // Skills, tools and certifications share one page, as tabs.
+                    path: "skills",
+                    lazy: async () => {
+                      const { AdminSkillsCredentialsPage } = await import("../admin/skills/AdminSkillsCredentialsPage");
+                      return { Component: AdminSkillsCredentialsPage };
+                    },
+                  },
+                  {
+                    path: "tools",
+                    element: <Navigate to="/admin/skills?tab=tools" replace />,
+                  },
+                  {
+                    path: "certifications",
+                    element: <Navigate to="/admin/skills?tab=certifications" replace />,
+                  },
+                  {
+                    path: "projects",
+                    lazy: async () => {
+                      const { AdminProjectsList } = await import("../admin/projects/AdminProjectsList");
+                      return { Component: AdminProjectsList };
+                    },
+                  },
+                  {
+                    path: "blog",
+                    lazy: async () => {
+                      const { AdminBlogList } = await import("../admin/blog/AdminBlogList");
+                      return { Component: AdminBlogList };
+                    },
+                  },
+                  {
+                    path: "contact",
+                    lazy: async () => {
+                      const { AdminContactList } = await import("../admin/contact/AdminContactList");
+                      return { Component: AdminContactList };
+                    },
+                  },
+                  {
+                    // Same page as /admin/expense/admin-users, reachable from the
+                    // portfolio module (super admins only — the Sidebar shows the
+                    // link only to them and the server enforces it).
+                    path: "admin-users",
+                    lazy: async () => {
+                      const { AdminAccountsList } = await import("../admin/expense/admin-users/AdminAccountsList");
+                      return { Component: AdminAccountsList };
                     },
                   },
                 ],
               },
+            ],
+          },
+          {
+            element: <RequireModuleAccess module="expense" />,
+            children: [
               {
-                element: <RequireSubModuleAccess subModule="savings" />,
+                path: "/admin/expense",
+                lazy: async () => {
+                  const { default: AdminLayoutWrapper } = await import("../admin/dms/layout/LayoutWrapper");
+                  return { Component: AdminLayoutWrapper };
+                },
                 children: [
                   {
-                    path: "savings",
+                    index: true,
                     lazy: async () => {
-                      const { AdminSavingsGoalsList } = await import(
-                        "../admin/expense/savings/AdminSavingsGoalsList"
-                      );
-                      return { Component: AdminSavingsGoalsList };
+                      const { ExpenseDashboardPage } = await import("../admin/expense/dashboard/ExpenseDashboardPage");
+                      return { Component: ExpenseDashboardPage };
+                    },
+                  },
+                  {
+                    // Categories + Expenses share the "expenses" sub-access flag.
+                    element: <RequireSubModuleAccess subModule="expenses" />,
+                    children: [
+                      {
+                        path: "categories",
+                        lazy: async () => {
+                          const { AdminExpenseCategoriesList } =
+                            await import("../admin/expense/categories/AdminExpenseCategoriesList");
+                          return { Component: AdminExpenseCategoriesList };
+                        },
+                      },
+                      {
+                        path: "expenses",
+                        lazy: async () => {
+                          const { AdminExpensesList } = await import("../admin/expense/expenses/AdminExpensesList");
+                          return { Component: AdminExpensesList };
+                        },
+                      },
+                    ],
+                  },
+                  {
+                    element: <RequireSubModuleAccess subModule="savings" />,
+                    children: [
+                      {
+                        path: "savings",
+                        lazy: async () => {
+                          const { AdminSavingsGoalsList } =
+                            await import("../admin/expense/savings/AdminSavingsGoalsList");
+                          return { Component: AdminSavingsGoalsList };
+                        },
+                      },
+                    ],
+                  },
+                  {
+                    // Just the Money Hub's people, without accounts it has no use for.
+                    // The server scopes what each person sees and may change.
+                    path: "admin-users",
+                    lazy: async () => {
+                      const { MoneyHubPeopleList } = await import("../admin/expense/admin-users/MoneyHubPeopleList");
+                      return { Component: MoneyHubPeopleList };
                     },
                   },
                 ],
-              },
-              {
-                // Just the Money Hub's people, without accounts it has no use for.
-                // The server scopes what each person sees and may change.
-                path: "admin-users",
-                lazy: async () => {
-                  const { MoneyHubPeopleList } = await import("../admin/expense/admin-users/MoneyHubPeopleList");
-                  return { Component: MoneyHubPeopleList };
-                },
               },
             ],
           },

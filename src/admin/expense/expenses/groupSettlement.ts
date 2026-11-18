@@ -38,7 +38,34 @@ export const owedFromMoney = (b: GroupMemberBalance) =>
 // nobody is moved on to paying someone else. Only changing an expense can change
 // the pairs. The server does the same (group-balances.ts), to limit repayments
 // and for the split-up email.
-export function suggestTransfers(balances: GroupMemberBalance[]): SettlementTransfer[] {
+// With a shared fund, everyone settles with whoever keeps the fund instead: they
+// hold the money, so they collect from each person who owes and pay back what
+// each person is owed; nobody pays anyone else. What comes in to them is listed
+// first (biggest first), then what they pay out (biggest first).
+export function suggestTransfers(
+  balances: GroupMemberBalance[],
+  fundHolderId: number | null = null,
+): SettlementTransfer[] {
+  const holder = fundHolderId === null ? undefined : balances.find((b) => b.adminUserId === fundHolderId);
+  if (holder) {
+    return balances
+      .filter((b) => b !== holder && b.pendingCents !== 0)
+      .sort(
+        (a, b) =>
+          Math.sign(a.pendingCents) - Math.sign(b.pendingCents) ||
+          Math.abs(b.pendingCents) - Math.abs(a.pendingCents),
+      )
+      .map((b) => {
+        const [from, to] = b.pendingCents < 0 ? [b, holder] : [holder, b];
+        return {
+          fromAdminUserId: from.adminUserId,
+          fromName: from.name,
+          toAdminUserId: to.adminUserId,
+          toName: to.name,
+          amountCents: Math.abs(b.pendingCents),
+        };
+      });
+  }
   const fromExpenses = owedFromMoney;
   const creditors = balances
     .filter((b) => b.pendingCents > 0)

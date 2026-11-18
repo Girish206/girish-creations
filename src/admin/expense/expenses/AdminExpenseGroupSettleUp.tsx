@@ -4,7 +4,7 @@ import {
   useSendGroupSplitEmail,
   useSetExpenseGroupClosed,
 } from "../../../api/hooks/expense/useExpenseGroups";
-import type { ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import type { ExpenseGroup } from "../../../api/types";
 import { useAdminAuth } from "../../../context/AdminAuthContext";
@@ -15,6 +15,7 @@ import { formatCurrency } from "../currency";
 import { formatDay, todayLocal } from "../dates";
 import { mayManageGroup, mayMarkPaid, mayRunGroup, suggestTransfers } from "./groupSettlement";
 import { SettleTransferRow } from "./SettleTransferRow";
+import { ShareSplitSheet } from "./ShareSplitSheet";
 // The repayment rows reuse the remove button styled there.
 import "../savings/savingsGoals.css";
 
@@ -43,7 +44,8 @@ export function AdminExpenseGroupSettleUp({ group, afterStats, beforeActions }: 
   const canManage = mayManageGroup(admin, group);
   const canRun = mayRunGroup(admin, group);
   const balances = group.balances;
-  const transfers = suggestTransfers(balances);
+  const transfers = useMemo(() => suggestTransfers(balances, group.fundHolderId ?? null), [balances, group.fundHolderId]);
+  const [sharing, setSharing] = useState(false);
   const totalCents = group.totalCents;
   const pendingCents = balances.reduce((sum, b) => sum + Math.max(0, b.pendingCents), 0);
   const fund = group.fund;
@@ -282,26 +284,40 @@ export function AdminExpenseGroupSettleUp({ group, afterStats, beforeActions }: 
 
       {beforeActions}
 
+      {sharing && <ShareSplitSheet group={group} transfers={transfers} onClose={() => setSharing(false)} />}
+
       <ModalActions>
+        {group.expenseCount > 0 && (
+          <CustomButton
+            variant="outline"
+            className="m-0 text-nowrap"
+            onClick={() => setSharing(true)}
+            title="Share the split-up as a picture"
+          >
+            <i className="fa-solid fa-image" aria-hidden="true"></i> Share
+          </CustomButton>
+        )}
         {canManage && group.expenseCount > 0 && (
           <CustomButton
             variant="outline"
-            className="m-0"
+            className="m-0 text-nowrap"
             loading={sendSplitEmail.isPending}
             onClick={handleSendSplitEmail}
+            title="Email the split-up to everyone"
           >
-            <i className="fa-solid fa-paper-plane" aria-hidden="true"></i> Email split-up
+            <i className="fa-solid fa-paper-plane" aria-hidden="true"></i> Email
           </CustomButton>
         )}
         {canRun && (
           <CustomButton
             variant={isClosed ? "normal" : "outline"}
-            className="m-0"
+            className="m-0 text-nowrap"
             loading={setGroupClosed.isPending}
             onClick={handleToggleClosed}
+            title={isClosed ? "Reopen the group" : "Close the group"}
           >
             <i className={`fa-solid ${isClosed ? "fa-lock-open" : "fa-lock"}`}></i>{" "}
-            {isClosed ? "Reopen group" : "Close group"}
+            {isClosed ? "Reopen" : "Close"}
           </CustomButton>
         )}
       </ModalActions>

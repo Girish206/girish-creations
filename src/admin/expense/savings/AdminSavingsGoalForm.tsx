@@ -12,6 +12,7 @@ import InputComp from "../../dms/components/InputComp";
 import SelectInput from "../../dms/components/SelectInput";
 import { INVALID_AMOUNT_MESSAGE, isValidAmount } from "../currency";
 import "../../admin.css";
+import { memberLabel } from "../memberLabel";
 
 const schema = z.object({
   name: z.string().trim().min(1, "Required"),
@@ -168,10 +169,10 @@ export function AdminSavingsGoalForm({ id, onSaved }: AdminSavingsGoalFormProps)
 
   if (isEdit && !existing) return <p>Loading...</p>;
 
-  const memberOptions = (members ?? []).map((m) => ({ value: m.id, label: m.name || m.email }));
+  const memberOptions = (members ?? []).map((m) => ({ value: m.id, label: memberLabel(m) }));
   const sharedOptions = (members ?? []).map((m) => ({
     value: m.id,
-    label: `${m.name || m.email}${m.id === ownerId ? " (owner)" : ""}`,
+    label: `${memberLabel(m)}${m.id === ownerId ? " (owner)" : ""}`,
   }));
   const setVisibility = (restricted: boolean) => {
     setValue("restrictMembers", restricted);

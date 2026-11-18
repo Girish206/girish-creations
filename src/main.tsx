@@ -8,6 +8,7 @@ import { AdminAuthProvider } from "./context/AdminAuthContext";
 import { showMutationError } from "./api/mutationErrors";
 import { AppToaster } from "./components/AppToaster";
 import { setupAppManifest } from "./pwa/appManifest";
+import { reloadForNewBuild } from "./utils/staleBuild";
 
 const queryClient = new QueryClient({
   mutationCache: new MutationCache({
@@ -26,6 +27,12 @@ const queryClient = new QueryClient({
 });
 
 setupAppManifest();
+
+// A chunk from an older build failed to load (it's gone after a deploy):
+// reload into the new build instead of showing an error.
+window.addEventListener("vite:preloadError", (event) => {
+  if (reloadForNewBuild()) event.preventDefault();
+});
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

@@ -1,5 +1,6 @@
 import { Toaster } from "sonner";
 import { useIsAdminDark } from "../admin/useAdminTheme";
+import "./appToaster.css";
 
 // The one place toasts appear, following the admin's light/dark choice rather
 // than the device's. Only admin screens show toasts.

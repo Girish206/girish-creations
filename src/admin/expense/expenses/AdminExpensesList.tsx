@@ -343,8 +343,8 @@ export function AdminExpensesList() {
           </div>
         </div>
       }
-      className="admin-card-scrollable exl"
-      bodyClassName="admin-card-body-compact admin-card-body-scroll"
+      className="exl"
+      bodyClassName="admin-card-body-compact"
     >
       {!!(items?.length || expenseGroups?.length) && (
         <div className="exl-strip" aria-label="Summary">

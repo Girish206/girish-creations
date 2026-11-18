@@ -277,26 +277,14 @@ button.exl-tile:hover {
 /* ---------- Sections ---------- */
 
 /* Each section is a card: header band on top, its rows inside. clip (not
-   hidden) so the sticky header still sticks to the scroll area. */
-/* The list runs to the card's bottom edge instead of stopping at the body
-   padding (which left a blank strip under the clipped rows); the same space
-   comes back inside it, after the last expense. The card clips to its
-   rounded corners so nothing pokes out at the bottom. */
-.exl.card {
-  overflow: hidden;
-}
+   hidden) so the sticky header still sticks while the page scrolls. */
+/* No inner scroller: the card grows with its list and the page scrolls, so
+   the card and the list area must stay overflow: visible for the sticky
+   section headers to stick under the top navbar. */
+.exl.card,
 .exl .admin-txn-scroll-area {
-  margin-bottom: -16px;
-  padding-bottom: 12px;
+  overflow: visible;
 }
-@media (max-width: 560px) {
-  .exl .admin-txn-scroll-area {
-    margin-bottom: -10px;
-    padding-bottom: 8px;
-  }
-}
-/* No top padding on the scroll area: a sticky header sticks inside the
-   scroller's padding, which would leave a strip for rows to show through. */
 .exl-section {
   border: 1px solid var(--exl-line);
   border-radius: 12px;
@@ -319,8 +307,9 @@ button.exl-tile:hover {
 }
 .exl-section-head {
   position: sticky;
-  /* -1px: covers the hairline a fractional scroll offset leaves above it. */
-  top: -1px;
+  /* Just under the fixed navbar; -1px covers the hairline a fractional
+     scroll offset leaves above it. */
+  top: calc(var(--admin-navbar-height, 64px) - 1px);
   z-index: 2;
   display: flex;
   align-items: center;

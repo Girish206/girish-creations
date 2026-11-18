@@ -15,6 +15,7 @@ import { AdminExpenseGroupSettleUp } from "./AdminExpenseGroupSettleUp";
 import { mayManageGroup, mayRunGroup } from "./groupSettlement";
 import { HistorySection } from "../activity/ActivityHistory";
 import "./groupDetails.css";
+import { memberLabel } from "../memberLabel";
 
 const personName = (person: AdminUserRef) => person.name || person.email || "Unknown member";
 
@@ -42,7 +43,7 @@ function GroupPeople({ group }: { group: ExpenseGroup }) {
 
   const options = (members ?? [])
     .filter((member) => !ids.includes(member.id))
-    .map((member) => ({ value: member.id, label: personName(member) }));
+    .map((member) => ({ value: member.id, label: memberLabel(member) }));
 
   async function handleAdd() {
     if (toAdd.length === 0) return;

@@ -84,6 +84,21 @@ export function useAccountActions() {
 
   // Resolves to whether it was deleted, so a details view can close itself.
   async function deletePermanently(item: AdminUserAccount): Promise<boolean> {
+    // The server refuses to delete anyone with records, since that would lose
+    // shared expense or savings history.
+    if (item.linkedRecords > 0) {
+      const result = await Swal.fire({
+        title: `Can't delete ${item.name || item.email || "this account"}`,
+        text: `They're on ${item.linkedRecords} expense or savings record${item.linkedRecords === 1 ? "" : "s"}, so deleting them would break that history. Deactivate them instead to hide them from new splits.`,
+        icon: "info",
+        theme: themedDialog(),
+        showCancelButton: item.isActive,
+        confirmButtonColor: primaryColor(),
+        confirmButtonText: item.isActive ? "Deactivate" : "OK",
+      });
+      if (result.isConfirmed && item.isActive) deactivateAccount.mutate(item.id);
+      return false;
+    }
     const result = await Swal.fire({
       title: `Delete ${item.name || item.email || "this account"} permanently?`,
       text: "They have no expenses or savings records, so the account can be removed completely. This can't be undone.",

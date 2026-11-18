@@ -8,6 +8,7 @@ import CustomButton from "../../dms/components/CustomButton";
 import DefaultModal from "../../dms/components/DefaultModal";
 import { avatarColorFor } from "../avatarColor";
 import { AdminAccountForm } from "./AdminAccountForm";
+import { MergePersonForm } from "./MergePersonForm";
 import { canManageAccount, canSendWelcome, useAccountActions, welcomeSentOn } from "./useAccountActions";
 import "../../dms/css/adminDisplays.css";
 import "../../admin.css";
@@ -41,9 +42,23 @@ function Avatar({ item, large = false }: { item: AdminUserAccount; large?: boole
 }
 
 // iconOnly: the list rows show just the icons (with a tooltip) to stay one line.
-function AccessChips({ item, iconOnly = false }: { item: AdminUserAccount; iconOnly?: boolean }) {
+function AccessChips({
+  item,
+  iconOnly = false,
+  sharesName = false,
+}: {
+  item: AdminUserAccount;
+  iconOnly?: boolean;
+  sharesName?: boolean;
+}) {
   return (
     <span className={`people-chips${iconOnly ? " is-icon-only" : ""}`}>
+      {sharesName && (
+        <span className="people-chip" title="Someone else has this name too. If they're the same person, merge them">
+          <i className="fa-solid fa-clone" aria-hidden="true"></i>
+          <span>Same name</span>
+        </span>
+      )}
       {item.hasExpensesAccess && (
         <span className="people-chip is-on" title="Expenses">
           <i className="fa-solid fa-receipt" aria-hidden="true"></i>
@@ -81,13 +96,26 @@ function AccessChips({ item, iconOnly = false }: { item: AdminUserAccount; iconO
 interface PersonDetailsProps {
   item: AdminUserAccount;
   canEdit: boolean;
+  // Owner only, for a guest: folds them into someone else.
+  canMerge: boolean;
+  sharesName: boolean;
+  onMerge: () => void;
   onEdit: () => void;
   onGrantLogin: () => void;
   onDeleted: () => void;
 }
 
 // One person's profile: who they are and what they can use.
-function PersonDetails({ item, canEdit, onEdit, onGrantLogin, onDeleted }: PersonDetailsProps) {
+function PersonDetails({
+  item,
+  canEdit,
+  canMerge,
+  sharesName,
+  onMerge,
+  onEdit,
+  onGrantLogin,
+  onDeleted,
+}: PersonDetailsProps) {
   const { sendWelcome, toggleActive, deletePermanently } = useAccountActions();
 
   return (
@@ -97,7 +125,7 @@ function PersonDetails({ item, canEdit, onEdit, onGrantLogin, onDeleted }: Perso
         <div className="people-details-identity">
           <h3>{nameOf(item)}</h3>
           {contactOf(item) && <p>{contactOf(item)}</p>}
-          <AccessChips item={item} />
+          <AccessChips item={item} sharesName={sharesName} />
         </div>
       </header>
 
@@ -133,7 +161,13 @@ function PersonDetails({ item, canEdit, onEdit, onGrantLogin, onDeleted }: Perso
               <span>{item.isActive ? "Deactivate" : "Reactivate"}</span>
             </CustomButton>
           )}
-          {!item.isOwner && item.linkedRecords === 0 && (
+          {canMerge && (
+            <CustomButton size="sm" className="m-0" variant="outline" onClick={onMerge} title="Merge into another person">
+              <i className="fa-solid fa-code-merge" aria-hidden="true"></i>
+              <span>Merge</span>
+            </CustomButton>
+          )}
+          {!item.isOwner && (
             <CustomButton
               size="sm"
               className="m-0"
@@ -152,7 +186,7 @@ function PersonDetails({ item, canEdit, onEdit, onGrantLogin, onDeleted }: Perso
   );
 }
 
-type ModalState = { mode: "new" } | { mode: "edit"; id: number; grantLogin?: boolean } | null;
+type ModalState = { mode: "new" } | { mode: "edit"; id: number; grantLogin?: boolean } | { mode: "merge"; id: number } | null;
 
 // The Money Hub's people, leaving out accounts that only use the portfolio or
 // have no access at all (the server filters them; Admin Accounts on the
@@ -166,6 +200,12 @@ export function MoneyHubPeopleList() {
   const [query, setQuery] = useState("");
 
   const canEdit = (item: AdminUserAccount) => canManageAccount(item, admin);
+  // Only a guest goes away in a merge (see the server's mergeBlocker).
+  const canMerge = (item: AdminUserAccount) =>
+    Boolean(admin?.isOwner) && !item.isOwner && !item.isSuperAdmin && !item.hasLogin && !item.hasPortfolioAccess;
+  const nameKey = (item: AdminUserAccount) => nameOf(item).trim().toLowerCase();
+  const sharesName = (item: AdminUserAccount) =>
+    (items ?? []).some((other) => other.id !== item.id && nameKey(other) === nameKey(item));
   const viewItem = viewId !== null ? items?.find((item) => item.id === viewId) : undefined;
 
   const needle = query.trim().toLowerCase();
@@ -234,7 +274,7 @@ export function MoneyHubPeopleList() {
                   <span className="people-item-identity">
                     <span className="people-item-name">
                       <span>{nameOf(item)}</span>
-                      <AccessChips item={item} iconOnly />
+                      <AccessChips item={item} iconOnly sharesName={sharesName(item)} />
                     </span>
                     {contactOf(item) && <span className="people-item-contact">{contactOf(item)}</span>}
                   </span>
@@ -256,6 +296,12 @@ export function MoneyHubPeopleList() {
             <PersonDetails
               item={viewItem}
               canEdit={canEdit(viewItem)}
+              canMerge={canMerge(viewItem)}
+              sharesName={sharesName(viewItem)}
+              onMerge={() => {
+                setViewId(null);
+                setModal({ mode: "merge", id: viewItem.id });
+              }}
               onEdit={() => openEdit(viewItem.id)}
               onGrantLogin={() => openEdit(viewItem.id, true)}
               onDeleted={() => setViewId(null)}
@@ -264,7 +310,24 @@ export function MoneyHubPeopleList() {
         />
       )}
 
-      {modal && (
+      {modal?.mode === "merge" && items?.some((item) => item.id === modal.id) && (
+        <DefaultModal
+          title="Merge Person"
+          onClose={() => setModal(null)}
+          showFooter={false}
+          size="md"
+          component={
+            <MergePersonForm
+              item={items.find((item) => item.id === modal.id)!}
+              people={items}
+              onCancel={() => setModal(null)}
+              onMerged={() => setModal(null)}
+            />
+          }
+        />
+      )}
+
+      {modal && modal.mode !== "merge" && (
         <DefaultModal
           title={modal.mode === "new" ? "Add Person" : modal.grantLogin ? "Give Login Access" : "Edit Person"}
           onClose={() => setModal(null)}

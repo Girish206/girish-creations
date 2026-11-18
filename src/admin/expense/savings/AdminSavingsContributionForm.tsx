@@ -11,6 +11,7 @@ import SelectInput from "../../dms/components/SelectInput";
 import { INVALID_AMOUNT_MESSAGE, isValidAmount } from "../currency";
 import { todayLocal } from "../dates";
 import "../../admin.css";
+import { memberLabel } from "../memberLabel";
 
 const schema = z.object({
   amount: z.string().min(1, "Required").refine(isValidAmount, INVALID_AMOUNT_MESSAGE),
@@ -69,7 +70,7 @@ export function AdminSavingsContributionForm({ goalId, canChooseContributor, onS
 
   const memberOptions = (members ?? []).map((member) => ({
     value: member.id,
-    label: `${member.name || member.email}${admin?.sub && member.id === Number(admin.sub) ? " (you)" : ""}`,
+    label: `${memberLabel(member)}${admin?.sub && member.id === Number(admin.sub) ? " (you)" : ""}`,
   }));
 
   return (

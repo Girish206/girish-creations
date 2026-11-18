@@ -22,6 +22,7 @@ import { formatCurrency, INVALID_AMOUNT_MESSAGE, isValidAmount } from "../curren
 import { todayLocal } from "../dates";
 import { toast } from "sonner";
 import "../../admin.css";
+import { memberLabel } from "../memberLabel";
 
 const schema = z.object({
   amount: z.string().min(1, "Required").refine(isValidAmount, INVALID_AMOUNT_MESSAGE),
@@ -65,18 +66,17 @@ function computeEqualShares(amount: string, count: number): number[] {
 const toCents = (value: string | number) => Math.round(Number(value || 0) * 100);
 
 // Whether saved shares are just what an even split would give. Only then can
-// an expense reopen as "Equally": the payer must be sharing it, since an even
-// split always includes them.
-function isEqualSplit(amount: string, shares: { adminUserId: number; shareAmount: string }[], payerId: number) {
-  if (!shares.some((share) => share.adminUserId === payerId)) return false;
+// an expense reopen as "Equally".
+function isEqualSplit(amount: string, shares: { adminUserId: number; shareAmount: string }[]) {
   const saved = shares.map((share) => toCents(share.shareAmount)).sort((a, b) => a - b);
   const even = computeEqualShares(amount, shares.length).map(toCents).sort((a, b) => a - b);
   return saved.every((cents, index) => cents === even[index]);
 }
 
-// The payer is always one of the people splitting, and listed first.
+// The payer leads the split when they're sharing it. They can be left out, for
+// an expense they covered for the others.
 function withPayerFirst(ids: number[], payerId: number | null): number[] {
-  if (payerId === null) return ids;
+  if (payerId === null || !ids.includes(payerId)) return ids;
   return [payerId, ...ids.filter((memberId) => memberId !== payerId)];
 }
 
@@ -204,7 +204,7 @@ export function AdminExpenseForm({ id, groupId, onSaved }: AdminExpenseFormProps
             : [],
         splitMode:
           existing.splitParticipants.length === 0 ||
-          isEqualSplit(existing.amount, existing.splitParticipants, existing.paidByAdminUserId)
+          isEqualSplit(existing.amount, existing.splitParticipants)
             ? "equal"
             : "custom",
         splitAmounts: Object.fromEntries(existing.splitParticipants.map((p) => [String(p.adminUserId), p.shareAmount])),
@@ -256,7 +256,7 @@ export function AdminExpenseForm({ id, groupId, onSaved }: AdminExpenseFormProps
 
   function setPayer(payer: number | null) {
     setValue("paidByAdminUserId", payer);
-    // The payer is always part of the split.
+    // Keeps whoever's ticked, with the payer first if they're among them.
     if (payer !== null && getValues("splitEnabled")) {
       setValue("splitAdminUserIds", withPayerFirst(getValues("splitAdminUserIds") ?? [], payer));
     }
@@ -371,6 +371,12 @@ export function AdminExpenseForm({ id, groupId, onSaved }: AdminExpenseFormProps
         });
         return;
       }
+    }
+
+    // A split needs someone sharing it other than whoever paid.
+    if (values.splitEnabled && !values.splitAdminUserIds.some((memberId) => memberId !== payerId)) {
+      setError("splitAdminUserIds", { message: "Tick who shares this expense" });
+      return;
     }
 
     const grouped = values.expenseGroupId !== "" && values.expenseGroupId !== undefined;
@@ -504,16 +510,16 @@ export function AdminExpenseForm({ id, groupId, onSaved }: AdminExpenseFormProps
   }
   const memberName = (memberId: number) => {
     const member = people.get(memberId);
-    return member?.name || member?.email || addedPeople.find((p) => p.id === memberId)?.name || "Unknown member";
+    return (member && memberLabel(member)) || addedPeople.find((p) => p.id === memberId)?.name || "Unknown member";
   };
   const memberOptions = peopleList.map((member) => ({
     value: member.id,
-    label: `${member.name || member.email}${member.id === payerId ? " (paid)" : ""}`,
+    label: `${memberLabel(member)}${member.id === payerId ? " (paid)" : ""}`,
   }));
   const groupPeopleOptions = [
     ...peopleList.map((member) => ({
       value: member.id,
-      label: `${member.name || member.email}${member.id === myId ? " (you)" : ""}`,
+      label: `${memberLabel(member)}${member.id === myId ? " (you)" : ""}`,
     })),
     ...addedPeople
       .filter((p) => !peopleList.some((member) => member.id === p.id))
@@ -753,11 +759,13 @@ export function AdminExpenseForm({ id, groupId, onSaved }: AdminExpenseFormProps
                     checked={field.value ?? false}
                     onChange={(e) => {
                       field.onChange(e.target.checked);
-                      // Turning the split on starts with the payer already in it —
-                      // and, in a group, everyone in the group.
+                      // Turning the split on starts with the payer in it — and,
+                      // in a group, everyone in the group. Untick the payer for
+                      // an expense they covered for the others.
                       if (e.target.checked) {
                         const start = hasGroup ? groupMemberIds : (getValues("splitAdminUserIds") ?? []);
-                        setValue("splitAdminUserIds", withPayerFirst(start, payerId));
+                        const withPayer = payerId !== null && !start.includes(payerId) ? [payerId, ...start] : start;
+                        setValue("splitAdminUserIds", withPayerFirst(withPayer, payerId));
                       }
                     }}
                   />
@@ -804,7 +812,6 @@ export function AdminExpenseForm({ id, groupId, onSaved }: AdminExpenseFormProps
                 };
                 return (
                 <div className="admin-exp-split-body">
-                  {/* Removing the payer's chip just puts it straight back. */}
                   {!hasGroup && (
                     <SelectInput
                       size="sm"
@@ -833,7 +840,6 @@ export function AdminExpenseForm({ id, groupId, onSaved }: AdminExpenseFormProps
                                 type="checkbox"
                                 className="form-check-input admin-split-tick"
                                 checked={included}
-                                disabled={memberId === payerId}
                                 onChange={(e) => toggle(memberId, e.target.checked)}
                                 aria-label={`Include ${memberName(memberId)}`}
                               />
