@@ -93,7 +93,7 @@
 
 .badge-bg-custom-primary {
   background-color: var(--primary);
-  color: var(--primary-dark-1);
+  color: var(--on-primary);
   white-space: normal;
   /* allow text to wrap */
   word-wrap: break-word;
@@ -117,7 +117,7 @@
 }
 
 .header1 {
-  color: var(--primary);
+  color: var(--primary-text);
   font-size: 35px !important;
   font-weight: 600 !important;
 }
@@ -140,7 +140,7 @@
 }
 
 .forgot-link {
-  color: var(--primary);
+  color: var(--primary-text);
 }
 
 .bg-secondary-light {
@@ -216,6 +216,45 @@
   width: min(340px, 90vw) !important;
   padding: 1.1rem 1.1rem 1.4rem !important;
   border-radius: 16px !important;
+}
+
+/* Confirm dialogs dock to the bottom like the admin bottom sheets: full
+   width on phones, sliding up from the edge. */
+.swal2-container.swal2-backdrop-show,
+.swal2-container {
+  align-items: flex-end !important;
+  justify-content: center !important;
+  padding: 0 !important;
+}
+.swal2-container > .swal2-popup {
+  grid-row: 3 !important;
+  align-self: end !important;
+  justify-self: center !important;
+  width: min(420px, 100vw) !important;
+  margin: 0 !important;
+  border-radius: 20px 20px 0 0 !important;
+  padding-bottom: calc(1.2rem + env(safe-area-inset-bottom)) !important;
+}
+.swal2-container > .swal2-popup.swal2-show {
+  animation: admin-swal-up 0.3s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+.swal2-container > .swal2-popup.swal2-hide {
+  animation: admin-swal-down 0.2s ease forwards !important;
+}
+@keyframes admin-swal-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes admin-swal-down {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+@media (min-width: 700px) {
+  .swal2-container > .swal2-popup {
+    margin-bottom: 12px !important;
+    border-radius: 20px !important;
+    padding-bottom: 1.4rem !important;
+  }
 }
 
 .swal2-icon {

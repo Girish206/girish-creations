@@ -10,20 +10,21 @@
 
 .gc {
   /* Colours come from the shared logo palette in src/styles/brand.css. */
-  --gc-bg: #f7f8fd;
+  --gc-bg: #f6f5f2;
   --gc-surface: #ffffff;
-  --gc-surface-2: #eef0f9;
+  --gc-surface-2: #efede8;
   --gc-glass: rgba(255, 255, 255, 0.74);
   --gc-ink: var(--brand-navy);
-  --gc-ink-2: #3d3f5c;
-  --gc-muted: #6c6d86;
-  --gc-line: #e3e6f2;
-  --gc-line-strong: #cfd4e6;
+  --gc-ink-2: #3d3e44;
+  --gc-muted: #66676d;
+  --gc-line: #e6e4df;
+  --gc-line-strong: #d1cfc8;
   --gc-accent: var(--brand-primary-deep);
-  --gc-accent-hover: #3730a3;
+  --gc-accent-hover: #7a4c05;
   --gc-accent-2: var(--brand-highlight-deep);
   --gc-accent-3: var(--brand-accent-deep);
-  --gc-accent-ink: #ffffff;
+  --gc-accent-ink: var(--brand-on-primary); /* text on amber fills */
+  --gc-fill: var(--brand-primary); /* amber as a background */
   --gc-accent-soft: rgba(var(--brand-primary-deep-rgb), 0.1);
   --gc-grad: var(--brand-gradient);
   --gc-grad-text: var(--brand-gradient-text);
@@ -63,17 +64,18 @@ body.dark-theme .gc {
   --gc-bg: var(--brand-navy-night);
   --gc-surface: var(--brand-navy-surface);
   --gc-surface-2: var(--brand-navy-raised);
-  --gc-glass: rgba(16, 18, 52, 0.6);
-  --gc-ink: #f5f3fb;
-  --gc-ink-2: #c0bfd8;
-  --gc-muted: #8a89aa;
+  --gc-glass: rgba(27, 28, 32, 0.6);
+  --gc-ink: #efeeea;
+  --gc-ink-2: #c4c3bd;
+  --gc-muted: #8f9096;
   --gc-line: rgba(255, 255, 255, 0.08);
   --gc-line-strong: rgba(255, 255, 255, 0.16);
   --gc-accent: var(--brand-primary-bright);
-  --gc-accent-hover: #a5b4fc;
+  --gc-accent-hover: #f5c66b;
   --gc-accent-2: var(--brand-highlight-bright);
   --gc-accent-3: var(--brand-accent-bright);
-  --gc-accent-ink: #ffffff;
+  --gc-accent-ink: var(--brand-on-primary);
+  --gc-fill: var(--brand-primary);
   --gc-accent-soft: rgba(var(--brand-primary-rgb), 0.14);
   --gc-grad: var(--brand-gradient-night);
   --gc-grad-text: var(--brand-gradient-text-night);
@@ -91,7 +93,7 @@ body.dark-theme .gc {
 /* The template gives <body> padding and its own background. */
 body.gc-body {
   padding: 0;
-  background: #f7f8fd;
+  background: #f6f5f2;
 }
 body.gc-body.dark-theme {
   background: var(--brand-navy-night);
@@ -152,7 +154,7 @@ body.gc-body.dark-theme {
   border-radius: 6px;
 }
 .gc ::selection {
-  background: var(--gc-accent);
+  background: var(--gc-fill);
   color: var(--gc-accent-ink);
 }
 
@@ -174,7 +176,7 @@ body.gc-body.dark-theme {
   z-index: 100;
   padding: 8px 14px;
   border-radius: 8px;
-  background: var(--gc-accent);
+  background: var(--gc-fill);
   color: var(--gc-accent-ink) !important;
   font-weight: 600;
 }
@@ -507,7 +509,7 @@ body.dark-theme .gc .gc-brand-logo-dark {
   position: fixed;
   inset: 0;
   z-index: 90;
-  background: rgba(7, 8, 32, 0.45);
+  background: rgba(15, 16, 18, 0.45);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   opacity: 0;
@@ -1119,7 +1121,7 @@ body.dark-theme .gc .gc-brand-logo-dark {
   background: var(--gc-line);
 }
 .gc-level i.on {
-  background: var(--gc-accent);
+  background: var(--gc-fill);
 }
 
 /* ---------- Two-column split ---------- */
@@ -1260,7 +1262,7 @@ body.dark-theme .gc .gc-brand-logo-dark {
 }
 .gc-faq-item.is-open .gc-faq-icon {
   transform: rotate(45deg);
-  background: var(--gc-accent);
+  background: var(--gc-fill);
   border-color: var(--gc-accent);
   color: var(--gc-accent-ink);
 }

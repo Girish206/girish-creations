@@ -18,7 +18,7 @@
       soft pastel logo-color wash used on the login screen (index.css's
       --logo-*-light), instead of the reference DMS app's own stock photo
       (education-bg-1.jpg), which had nothing to do with this site. */
-   background-image: var(--bg-overlay, linear-gradient(rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.88))),
+   background-image: var(--bg-overlay, linear-gradient(rgba(246, 245, 242, 0.9), rgba(246, 245, 242, 0.9))),
       linear-gradient(135deg, var(--logo-navy-light) 0%, var(--logo-accent-light) 35%, var(--logo-primary-light) 65%, var(--logo-highlight-light) 100%);
    background-size: cover;
    background-position: center;
@@ -82,7 +82,7 @@
 }
 
 .layout-wrapper.bg-light {
-   --bg-overlay: linear-gradient(rgba(248, 250, 252, 0.88), rgba(241, 245, 249, 0.88));
+   --bg-overlay: linear-gradient(rgba(246, 245, 242, 0.9), rgba(239, 237, 232, 0.9));
 }
 
 .layout-wrapper.bg-danger-light {
@@ -94,7 +94,7 @@
 }
 
 .layout-wrapper.bg-primary-light {
-   --bg-overlay: linear-gradient(rgba(224, 231, 255, 0.88), rgba(199, 210, 254, 0.88));
+   --bg-overlay: linear-gradient(rgba(251, 240, 218, 0.88), rgba(245, 222, 172, 0.88));
 }
 
 .layout-wrapper.bg-success-light {
@@ -162,8 +162,9 @@
 
    /* Main content adjustments */
    .scrollable-main {
-      padding: 15px !important;
-      padding-top: 75px !important;
+      padding: 8px !important;
+      padding-top: 72px !important;
+      /* 64px Navbar + 8px spacing */
       margin: 0 !important;
       width: 100% !important;
    }

@@ -209,6 +209,9 @@ export interface ExpenseGroup {
   // Non-null = settled and closed; its expenses are frozen until reopened.
   closedAt: string | null;
   createdAt: string;
+  // Who made it: they rename, re-date, close, reopen and delete it and take
+  // people out. Null on older groups.
+  createdByAdminUserId: number | null;
   settlements: ExpenseGroupSettlement[];
   // The people on the trip/event — any of them can be marked as having paid
   // one of its expenses. Empty on groups created before members existed.
@@ -218,6 +221,9 @@ export interface ExpenseGroup {
   balances: GroupMemberBalance[];
   totalCents: number;
   expenseCount: number;
+  // Set when the group was made for a shared fund: its expenses are paid from
+  // the fund or people's own money, and one settle-up covers both.
+  fund: ExpenseGroupFund | null;
 }
 
 // One person owing another, once everything between them has been netted off.
@@ -245,8 +251,25 @@ export interface GroupMemberBalance {
   shareCents: number;
   sentCents: number;
   receivedCents: number;
+  // Groups linked to a shared fund: what they put into it, their part of what
+  // was paid from it, and (for whoever keeps the fund) the money left in it
+  // that they hold — negative when it was overspent.
+  fundPutInCents: number;
+  fundShareCents: number;
+  fundHeldCents: number;
   // > 0: others still owe them this much. < 0: they still owe this much.
   pendingCents: number;
+}
+
+// The shared fund a trip group is paid from (see ExpenseGroup.fund).
+export interface ExpenseGroupFund {
+  id: number;
+  name: string;
+  closedAt: string | null;
+  // Who keeps the fund's money: its account holder, else whoever made it.
+  holderAdminUserId: number | null;
+  putInCents: number;
+  spentCents: number;
 }
 
 export interface ExpenseGroupMember {
@@ -263,6 +286,19 @@ export interface ExpenseGroupRef {
 export interface SavingsGoalRef {
   id: number;
   name: string;
+  // "fund" = a shared fund; see SavingsGoal.kind.
+  kind: string | null;
+}
+
+// One person's line in a shared fund's end-of-trip split.
+export interface FundSplitRow {
+  adminUserId: number;
+  name: string;
+  putInCents: number;
+  // Their part of everything paid from the fund.
+  shareCents: number;
+  // > 0: they get this back. < 0: they still owe the fund this.
+  balanceCents: number;
 }
 
 export interface ExpenseSplitParticipant {
@@ -270,6 +306,21 @@ export interface ExpenseSplitParticipant {
   shareAmount: string;
   adminUserId: number;
   adminUser: AdminUserRef;
+  // Set when this person says their share isn't right. Changing the split clears it.
+  disputedAt: string | null;
+  disputeNote: string | null;
+}
+
+// One line of the Money Hub's history: who did what, and when.
+export interface ActivityEntry {
+  id: number;
+  createdAt: string;
+  action: string;
+  summary: string;
+  expenseId: number | null;
+  expenseGroupId: number | null;
+  savingsGoalId: number | null;
+  actor: { id: number; name: string };
 }
 
 export interface Expense {
@@ -311,6 +362,11 @@ export interface SavingsGoalMember {
 export interface SavingsGoal {
   id: number;
   name: string;
+  // "fund" = a shared fund (e.g. a trip kitty): money collected up front,
+  // spent from, and what's left split at the end. Null = plain savings.
+  kind: string | null;
+  // A shared fund's trip group, where its spending and settle-up live.
+  expenseGroupId: number | null;
   targetAmount: string | null;
   targetDate: string | null;
   bankName: string | null;
@@ -327,6 +383,8 @@ export interface SavingsGoal {
   members: SavingsGoalMember[];
   // Total of the expenses marked as spent from this goal.
   spentAmount: string;
+  // Shared funds only: each person's put in, share and balance.
+  fundSplit: FundSplitRow[] | null;
 }
 
 export interface PaginatedResponse<T> {

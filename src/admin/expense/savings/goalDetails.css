@@ -1,0 +1,291 @@
+/* Savings goal / shared fund "View details" window. Compact: tight gaps,
+   small type, no inner scrolls (the modal body scrolls). */
+.gdv {
+  --gdv-line: var(--border-color, rgba(0, 0, 0, 0.08));
+  --gdv-soft: rgba(var(--primary-rgb), 0.07);
+  --gdv-pos: #067647;
+  --gdv-neg: #c4320a;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-variant-numeric: tabular-nums;
+}
+:root[data-bs-theme="dark"] .gdv {
+  --gdv-soft: rgba(var(--primary-rgb), 0.12);
+  --gdv-pos: #47cd89;
+  --gdv-neg: #ff8a73;
+}
+
+/* Header */
+.gdv-hero {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.gdv-hero-icon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--gdv-soft);
+  color: var(--primary);
+  font-size: 0.95rem;
+}
+.gdv-hero-text {
+  flex: 1;
+  min-width: 0;
+}
+.gdv-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--theme-text-dark);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gdv-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 3px;
+}
+.gdv-tag {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--gdv-soft);
+  color: var(--primary);
+  font-size: 0.62rem;
+  font-weight: 700;
+}
+.gdv-tag i {
+  font-size: 0.55rem;
+}
+.gdv-tag.is-pos {
+  background: color-mix(in srgb, var(--gdv-pos) 12%, transparent);
+  color: var(--gdv-pos);
+}
+.gdv-tag.is-neg {
+  background: color-mix(in srgb, var(--gdv-neg) 12%, transparent);
+  color: var(--gdv-neg);
+}
+.gdv-tag.is-muted {
+  background: var(--background-color, rgba(0, 0, 0, 0.04));
+  color: var(--muted-color);
+}
+.gdv-balance {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+.gdv-balance-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-color);
+}
+.gdv-balance-value {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--theme-text-dark);
+  line-height: 1.2;
+}
+.gdv-balance-value.is-neg {
+  color: var(--gdv-neg);
+}
+
+/* Progress */
+.gdv-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--gdv-line);
+  overflow: hidden;
+}
+.gdv-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--secondary) 0%, var(--primary) 100%);
+}
+.gdv-fill.is-done {
+  background: var(--gdv-pos);
+}
+.gdv-progress-line {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 3px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--muted-color);
+}
+
+/* Money tiles */
+.gdv-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.gdv-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 8px;
+  border: 1px solid var(--gdv-line);
+  border-radius: 8px;
+  min-width: 0;
+}
+.gdv-tile span {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-color);
+}
+.gdv-tile b {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--theme-text-dark);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Sections */
+.gdv-block {
+  border: 1px solid var(--gdv-line);
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+.gdv-block-title {
+  margin: 0 0 4px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-color);
+}
+.gdv-block-title span {
+  margin-left: 3px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--gdv-soft);
+  color: var(--primary);
+}
+
+/* People */
+.gdv-people {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.gdv-people li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+.gdv-people li + li {
+  border-top: 1px solid var(--gdv-line);
+}
+.gdv-avatar {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--gdv-soft);
+  color: var(--primary);
+  font-size: 0.58rem;
+  font-weight: 800;
+}
+.gdv-person {
+  flex: 1;
+  min-width: 0;
+}
+.gdv-person-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.76rem;
+}
+.gdv-person-name {
+  color: var(--theme-text-dark);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gdv-person-name i {
+  margin-left: 5px;
+  font-size: 0.6rem;
+  color: var(--primary);
+}
+.gdv-person-line b {
+  font-weight: 700;
+  color: var(--theme-text-dark);
+  flex-shrink: 0;
+}
+.gdv-person-bar {
+  height: 3px;
+  margin-top: 3px;
+  border-radius: 999px;
+  background: var(--gdv-line);
+  overflow: hidden;
+}
+.gdv-person-bar div {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--primary);
+  opacity: 0.7;
+}
+.gdv-person-share {
+  width: 32px;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: var(--muted-color);
+}
+
+/* Facts */
+.gdv-facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+  margin: 0;
+}
+.gdv-facts > div {
+  min-width: 0;
+}
+.gdv-facts > div.is-wide {
+  grid-column: 1 / -1;
+}
+.gdv-facts dt {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--muted-color);
+}
+.gdv-facts dt i {
+  width: 12px;
+  font-size: 0.58rem;
+}
+.gdv-facts dd {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--theme-text-dark);
+  overflow-wrap: anywhere;
+}
+
+.gdv .admin-fund-split {
+  margin: 0;
+}
+
+@media (max-width: 420px) {
+  .gdv-balance-value {
+    font-size: 0.98rem;
+  }
+}

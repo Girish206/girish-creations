@@ -17,7 +17,7 @@
 
 .custom-nav-pills .nav-link.active {
   background-color: var(--primary); /* Active state background color */
-  color: white; /* Active text color */
+  color: var(--on-primary); /* Active text color */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add shadow on active state */
 }
 
@@ -54,11 +54,11 @@
 }
 
 .custom-tabs .nav-link.active {
-  color: var(--primary);
+  color: var(--primary-text);
   border-color: var(--primary);
   background-color: transparent;
 }
 
 .custom-tabs .nav-link:hover {
-  color: var(--primary);
+  color: var(--primary-text);
 }

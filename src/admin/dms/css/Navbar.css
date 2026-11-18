@@ -62,7 +62,7 @@
 /* Active State - Floating Pill */
 .navbar .nav .nav-item.active .nav-link {
   background: #fff;
-  color: var(--primary);
+  color: var(--primary-text);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   font-weight: 600;
 }
@@ -121,7 +121,7 @@
 .navbar-brand-name {
   font-weight: 700;
   font-size: 1.15rem;
-  color: var(--primary);
+  color: var(--primary-text);
   letter-spacing: -0.2px;
 }
 
@@ -174,8 +174,8 @@
 
 /* ── Sidebar header ── */
 .profile-sidebar-header {
-  background: var(--primary-dark-2);
-  color: #fff;
+  background: var(--primary);
+  color: var(--on-primary);
   padding: 20px 16px 16px;
   display: flex;
   align-items: center;
@@ -262,7 +262,7 @@
 .bg-swatch.bg-light { background-color: #f1f5f9; }
 .bg-swatch.bg-danger-light { background-color: #fecaca; }
 .bg-swatch.bg-warning-light { background-color: #fde68a; }
-.bg-swatch.bg-primary-light { background-color: #c7d2fe; }
+.bg-swatch.bg-primary-light { background-color: var(--primary-light-4); }
 .bg-swatch.bg-success-light { background-color: #bbf7d0; }
 .bg-swatch.bg-info-light { background-color: #bae6fd; }
 .bg-swatch.bg-dark-light { background-color: #cbd5e1; }
@@ -535,7 +535,7 @@
   border: none;
   border-radius: 999px;
   background: var(--primary);
-  color: #ffffff;
+  color: var(--on-primary);
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
@@ -578,7 +578,7 @@
 
 .navbar-module-switcher-btn.active {
   background: var(--primary);
-  color: #ffffff;
+  color: var(--on-primary);
 }
 /* Keep the navbar on one row. Bootstrap's .navbar and its .container-fluid
    default to flex-wrap: wrap, which pushed the theme/avatar/sign-out group
@@ -639,4 +639,10 @@
   .navbar-signout-btn {
     padding: 6px 10px;
   }
+}
+
+/* Mobile menu (hamburger) button: brand amber, not red. */
+.navbar-menu-btn,
+.navbar-menu-btn:hover {
+  color: var(--primary-text);
 }

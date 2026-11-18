@@ -1,3 +1,4 @@
+import { HistorySection } from "../activity/ActivityHistory";
 import {
   useAddDirectSettlement,
   useDeleteDirectSettlement,
@@ -70,10 +71,15 @@ export function AdminDirectSettleUp() {
           <ul className="admin-settle-list admin-settle-repayments">
             {settlements.map((s) => (
               <li key={s.id}>
-                <span>
-                  {s.fromAdminUser.name || s.fromAdminUser.email} paid {s.toAdminUser.name || s.toAdminUser.email}{" "}
-                  <strong>{formatCurrency(s.amount)}</strong> · {formatDay(s.date)}
+                <span className="admin-settle-repayment-main">
+                  <span className="admin-settle-who">
+                    {s.fromAdminUser.name || s.fromAdminUser.email}
+                    <i className="fa-solid fa-arrow-right" aria-label="paid"></i>
+                    {s.toAdminUser.name || s.toAdminUser.email}
+                  </span>
+                  <small>{formatDay(s.date)}</small>
                 </span>
+                <strong className="admin-settle-amount">{formatCurrency(s.amount)}</strong>
                 {mayMarkPaid(admin, s.toAdminUser.id) && (
                   <button
                     type="button"
@@ -90,6 +96,7 @@ export function AdminDirectSettleUp() {
           </ul>
         </>
       )}
+      <HistorySection filter={{ area: "daily" }} />
     </div>
   );
 }

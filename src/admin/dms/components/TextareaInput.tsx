@@ -41,7 +41,7 @@ const TextareaInput: React.FC<TextInputProps> = ({
       {!floating && label && (
         <label className="pb-0 ps-1" htmlFor={id}>
           <span dangerouslySetInnerHTML={{ __html: label }} />{" "}
-          {required && <span className="text-danger">*</span>}
+          {required && <span className="text-danger-brand">*</span>}
         </label>
       )}
       <textarea
@@ -57,10 +57,10 @@ const TextareaInput: React.FC<TextInputProps> = ({
       {floating && label && (
         <label htmlFor={id}>
           <span dangerouslySetInnerHTML={{ __html: label }} />{" "}
-          {required && <span className="text-danger">*</span>}
+          {required && <span className="text-danger-brand">*</span>}
         </label>
       )}
-      {error && <small className="text-danger">{error}</small>}
+      {error && <small className="text-danger-brand">{error}</small>}
     </div>
   );
 };

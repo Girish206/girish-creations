@@ -40,7 +40,7 @@ export function SubmitButton({
   return (
     <ModalActions>
       {modal && (
-        <CustomButton bg="custom-secondary" onClick={modal.close} disabled={loading}>
+        <CustomButton variant="outline" onClick={modal.close} disabled={loading}>
           Cancel
         </CustomButton>
       )}

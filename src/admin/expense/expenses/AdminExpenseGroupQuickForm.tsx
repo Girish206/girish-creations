@@ -1,6 +1,7 @@
 import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useCreateAdminUser } from "../../../api/hooks/expense/useAdminUsers";
 import { useCreateExpenseGroup, useUpdateExpenseGroup } from "../../../api/hooks/expense/useExpenseGroups";
 import { useExpenseMembers } from "../../../api/hooks/expense/useExpenseMembers";
 import { useAdminAuth } from "../../../context/AdminAuthContext";
@@ -15,7 +16,8 @@ const schema = z
     name: z.string().trim().min(1, "Required"),
     startDate: z.string(),
     endDate: z.string(),
-    memberAdminUserIds: z.array(z.number()).min(1, "Add at least one person"),
+    // Numbers are existing people; strings are new names typed into the picker.
+    memberAdminUserIds: z.array(z.union([z.number(), z.string()])).min(1, "Add at least one person"),
   })
   .refine((v) => !v.startDate || !v.endDate || v.startDate <= v.endDate, {
     path: ["endDate"],
@@ -61,13 +63,32 @@ export function AdminExpenseGroupQuickForm({ group, onSaved }: AdminExpenseGroup
 
   const createGroup = useCreateExpenseGroup();
   const updateGroup = useUpdateExpenseGroup();
+  const createPerson = useCreateAdminUser();
 
   async function onSubmit(values: FormValues) {
+    const memberAdminUserIds: number[] = [];
+    for (const entry of values.memberAdminUserIds) {
+      if (typeof entry === "number") {
+        memberAdminUserIds.push(entry);
+        continue;
+      }
+      const name = entry.trim();
+      if (!name) continue;
+      // Someone new becomes a guest: listed for splits, and can be given a
+      // login later under People.
+      const created = await createPerson.mutateAsync({
+        name,
+        hasPortfolioAccess: false,
+        hasExpensesAccess: false,
+        hasSavingsAccess: false,
+      });
+      memberAdminUserIds.push(created.id);
+    }
     const input = {
       name: values.name,
       startDate: values.startDate || null,
       endDate: values.endDate || null,
-      memberAdminUserIds: values.memberAdminUserIds,
+      memberAdminUserIds,
     };
     if (group) {
       await updateGroup.mutateAsync({ id: group.id, input });
@@ -79,55 +100,58 @@ export function AdminExpenseGroupQuickForm({ group, onSaved }: AdminExpenseGroup
 
   return (
     <ModalForm onSubmit={handleSubmit(onSubmit)}>
-      <Controller
-        name="name"
-        control={control}
-        render={({ field }) => (
-          <InputComp
-            label="Expense Group Name"
-            placeholder="e.g. Goa Trip 2026"
-            required
-            {...field}
-            error={errors.name?.message}
-          />
-        )}
-      />
-      <Controller
-        name="memberAdminUserIds"
-        control={control}
-        render={({ field }) => (
-          <SelectInput
-            label="People in this group"
-            required
-            isMulti
-            placeholder="Choose people…"
-            options={(members ?? []).map((member) => ({
-              value: member.id,
-              label: `${member.name || member.email}${member.id === myId ? " (you)" : ""}`,
-            }))}
-            value={field.value}
-            onChange={field.onChange}
-            error={errors.memberAdminUserIds?.message}
-          />
-        )}
-      />
-      <div className="row g-2">
-        <div className="col-sm-6">
+      <div className="admin-exp-form">
+        <Controller
+          name="name"
+          control={control}
+          render={({ field }) => (
+            <InputComp
+              label="Group name"
+              inputSize="sm"
+              placeholder="e.g. Goa Trip 2026"
+              required
+              autoFocus={!group}
+              {...field}
+              error={errors.name?.message}
+            />
+          )}
+        />
+        <Controller
+          name="memberAdminUserIds"
+          control={control}
+          render={({ field }) => (
+            <SelectInput
+              label="People"
+              size="sm"
+              required
+              isMulti
+              creatable
+              placeholder="Choose, or type a new name…"
+              options={(members ?? []).map((member) => ({
+                value: member.id,
+                label: `${member.name || member.email}${member.id === myId ? " (you)" : ""}`,
+              }))}
+              value={field.value}
+              onChange={field.onChange}
+              error={errors.memberAdminUserIds?.message}
+            />
+          )}
+        />
+        <div className="admin-exp-row">
           <Controller
             name="startDate"
             control={control}
             render={({ field }) => (
-              <InputComp label="Start Date" type="date" max={endDate || undefined} {...field} />
+              <InputComp label="Starts" inputSize="sm" type="date" max={endDate || undefined} {...field} />
             )}
           />
-        </div>
-        <div className="col-sm-6">
           <Controller
             name="endDate"
             control={control}
             render={({ field }) => (
               <InputComp
-                label="End Date"
+                label="Ends"
+                inputSize="sm"
                 type="date"
                 min={startDate || undefined}
                 {...field}
@@ -136,11 +160,12 @@ export function AdminExpenseGroupQuickForm({ group, onSaved }: AdminExpenseGroup
             )}
           />
         </div>
+        <p className="admin-form-hint m-0">
+          <i className="fa-solid fa-calendar-days"></i> Dates are optional. If set, only expenses dated within them can
+          go in this group.
+        </p>
       </div>
-      <p className="admin-form-hint">
-        Optional. If set, only expenses dated within these days can be added to this group.
-      </p>
-      <SubmitButton loading={isSubmitting}>{group ? "Save" : "Create Group"}</SubmitButton>
+      <SubmitButton loading={isSubmitting}>{group ? "Save" : "Create group"}</SubmitButton>
     </ModalForm>
   );
 }

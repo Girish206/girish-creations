@@ -13,6 +13,7 @@ import { avatarColorFor } from "../avatarColor";
 import "../../dms/css/adminDisplays.css";
 import "../../admin.css";
 import { useAdminAuth } from "../../../context/AdminAuthContext";
+import { SearchBox } from "../../components/SearchBox";
 
 type ModalState = { mode: "new" } | { mode: "edit"; id: number; grantLogin?: boolean } | null;
 
@@ -98,17 +99,13 @@ export function AdminAccountsList() {
               }))}
               onChange={setFilter}
             />
-            <label className="admin-accounts-search">
-              <i className="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-              <span className="visually-hidden">Search accounts</span>
-              <input
-                type="search"
-                className="form-control"
-                placeholder="Search name or email…"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
-            </label>
+            <SearchBox
+              className="admin-accounts-search"
+              placeholder="Search name or email…"
+              label="Search accounts"
+              value={query}
+              onChange={setQuery}
+            />
           </div>
 
           {shown.length === 0 ? (

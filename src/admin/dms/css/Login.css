@@ -134,12 +134,6 @@
 
 /* CustomButton always adds a 4px margin (m-1) on top of w-100, which would
    push it past the right edge of the inputs. */
-/* InputComp's error text is in the brand colour; on a login it has to read as
-   an error. */
-.admin-login-form small {
-  color: var(--brand-danger) !important;
-}
-
 .admin-login-form .btn {
   width: calc(100% - 8px) !important;
 }
@@ -202,7 +196,7 @@
   border: none;
   background: none;
   padding: 2px 0;
-  color: var(--primary);
+  color: var(--primary-text);
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;

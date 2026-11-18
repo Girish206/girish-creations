@@ -104,16 +104,35 @@ export function AdminExpenseCategoryForm({ id, onSaved }: AdminExpenseCategoryFo
 
   return (
     <ModalForm onSubmit={handleSubmit(onSubmit)}>
-      <Controller
-        name="name"
-        control={control}
-        defaultValue=""
-        render={({ field }) => <InputComp label="Category Name" required {...field} error={errors.name?.message} />}
-      />
+      <div className="admin-cat-form">
+        <div className="admin-cat-form-top">
+          {previewValue ? (
+            <CategoryIcon name={name || "?"} type={iconType} value={previewValue} className="admin-cat-form-preview" />
+          ) : (
+            <span className="admin-category-icon admin-category-icon-empty admin-cat-form-preview">
+              <i className="fa-regular fa-image" aria-hidden="true"></i>
+            </span>
+          )}
+          <div className="admin-cat-form-name">
+            <Controller
+              name="name"
+              control={control}
+              defaultValue=""
+              render={({ field }) => (
+                <InputComp
+                  inputSize="sm"
+                  placeholder="Category name *"
+                  aria-label="Category name"
+                  autoFocus={!isEdit}
+                  {...field}
+                  error={errors.name?.message}
+                />
+              )}
+            />
+          </div>
+        </div>
 
-      <div className="admin-category-icon-field">
-        <div className="admin-category-icon-field-head">
-          <label className="form-label mb-0">Icon</label>
+        <div className="admin-cat-form-bar">
           <div className="admin-segmented" role="radiogroup" aria-label="Icon type">
             {ICON_TYPES.map((t) => (
               <button
@@ -128,112 +147,94 @@ export function AdminExpenseCategoryForm({ id, onSaved }: AdminExpenseCategoryFo
               </button>
             ))}
           </div>
+          {iconType === "icon" && (
+            <div className="admin-cat-form-tools">
+              {iconPicked && (
+                <button type="button" className="admin-link-btn" onClick={() => setIconPicked(false)} title="Pick from the name again">
+                  <i className="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Auto
+                </button>
+              )}
+              <button
+                type="button"
+                className="admin-link-btn"
+                onClick={() => {
+                  setPickedIcon(randomIcon(faIcon));
+                  setIconPicked(true);
+                }}
+              >
+                <i className="fa-solid fa-shuffle" aria-hidden="true"></i> Shuffle
+              </button>
+            </div>
+          )}
+          {iconType === "text" && textPicked && (
+            <div className="admin-cat-form-tools">
+              <button type="button" className="admin-link-btn" onClick={() => setTextPicked(false)}>
+                <i className="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Initials
+              </button>
+            </div>
+          )}
         </div>
 
-        <div className="admin-category-icon-editor">
-          <div className="admin-category-icon-preview">
-            {previewValue ? (
-              <CategoryIcon name={name || "?"} type={iconType} value={previewValue} className="is-large" />
+        {iconType === "icon" && (
+          <div className="admin-icon-grid admin-cat-form-grid" role="radiogroup" aria-label="Choose icon">
+            {ICON_CHOICES.map((icon) => (
+              <button
+                key={icon}
+                type="button"
+                role="radio"
+                aria-checked={faIcon === icon}
+                aria-label={icon.replace("fa-", "").replace(/-/g, " ")}
+                title={icon.replace("fa-", "").replace(/-/g, " ")}
+                className={faIcon === icon ? "active" : ""}
+                onClick={() => {
+                  setPickedIcon(icon);
+                  setIconPicked(true);
+                }}
+              >
+                <i className={`fa-solid ${icon}`} aria-hidden="true"></i>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {iconType === "text" && (
+          <InputComp
+            inputSize="sm"
+            value={text}
+            maxLength={4}
+            placeholder="Text or emoji, e.g. FD or 🍔"
+            aria-label="Text or emoji (up to 4 characters)"
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              setPickedText(e.target.value);
+              setTextPicked(true);
+            }}
+          />
+        )}
+
+        {iconType === "image" && (
+          <div className="admin-cat-form-image">
+            <input
+              type="file"
+              accept="image/*"
+              className="form-control form-control-sm shadow-none"
+              onChange={(e) => {
+                const file = e.target.files?.[0] ?? null;
+                setImageError(null);
+                if (file && file.size > 4 * 1024 * 1024) {
+                  setImageError("Image must be 4MB or smaller.");
+                  e.target.value = "";
+                  return;
+                }
+                setImageFile(file);
+              }}
+            />
+            {imageError ? (
+              <small className="text-danger-brand">{imageError}</small>
             ) : (
-              <span className="admin-category-icon is-large admin-category-icon-empty">
-                <i className="fa-regular fa-image" aria-hidden="true"></i>
-              </span>
-            )}
-            <small>Preview</small>
-          </div>
-
-          <div className="admin-category-icon-options">
-            {iconType === "icon" && (
-              <>
-                <div className="admin-category-icon-hint">
-                  <span>{iconPicked ? "Picked by you" : "Auto-selected from the name"}</span>
-                  <button
-                    type="button"
-                    className="admin-link-btn"
-                    onClick={() => {
-                      setPickedIcon(randomIcon(faIcon));
-                      setIconPicked(true);
-                    }}
-                  >
-                    <i className="fa-solid fa-shuffle" aria-hidden="true"></i> Shuffle
-                  </button>
-                  {iconPicked && (
-                    <button type="button" className="admin-link-btn" onClick={() => setIconPicked(false)}>
-                      <i className="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Auto
-                    </button>
-                  )}
-                </div>
-                <div className="admin-icon-grid" role="radiogroup" aria-label="Choose icon">
-                  {ICON_CHOICES.map((icon) => (
-                    <button
-                      key={icon}
-                      type="button"
-                      role="radio"
-                      aria-checked={faIcon === icon}
-                      aria-label={icon.replace("fa-", "").replace(/-/g, " ")}
-                      title={icon.replace("fa-", "").replace(/-/g, " ")}
-                      className={faIcon === icon ? "active" : ""}
-                      onClick={() => {
-                        setPickedIcon(icon);
-                        setIconPicked(true);
-                      }}
-                    >
-                      <i className={`fa-solid ${icon}`} aria-hidden="true"></i>
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-
-            {iconType === "text" && (
-              <>
-                <InputComp
-                  label="Text or emoji"
-                  value={text}
-                  maxLength={4}
-                  placeholder="e.g. FD or 🍔"
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                    setPickedText(e.target.value);
-                    setTextPicked(true);
-                  }}
-                />
-                <div className="admin-category-icon-hint">
-                  <span>{textPicked ? "Up to 4 characters" : "Auto-filled with the name's initials"}</span>
-                  {textPicked && (
-                    <button type="button" className="admin-link-btn" onClick={() => setTextPicked(false)}>
-                      <i className="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Use initials
-                    </button>
-                  )}
-                </div>
-              </>
-            )}
-
-            {iconType === "image" && (
-              <>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="form-control shadow-none"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0] ?? null;
-                    setImageError(null);
-                    if (file && file.size > 4 * 1024 * 1024) {
-                      setImageError("Image must be 4MB or smaller.");
-                      e.target.value = "";
-                      return;
-                    }
-                    setImageFile(file);
-                  }}
-                />
-                {imageError ? (
-                  <small className="text-danger">{imageError}</small>
-                ) : (
-                  <small className="admin-category-icon-hint">Square images look best — PNG, JPG, SVG or WebP up to 4MB.</small>
-                )}
-              </>
+              <small className="admin-category-icon-hint">Square PNG, JPG, SVG or WebP, up to 4MB.</small>
             )}
           </div>
-        </div>
+        )}
       </div>
 
       <SubmitButton loading={isSubmitting}>Save</SubmitButton>

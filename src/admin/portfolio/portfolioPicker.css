@@ -11,7 +11,7 @@
   font-size: 14px;
 }
 .admin-portfolio-picker > i {
-  color: var(--primary);
+  color: var(--primary-text);
 }
 .admin-portfolio-picker-label {
   font-weight: 600;
@@ -31,7 +31,7 @@
   font-size: 13px;
 }
 .admin-portfolio-picker-note a {
-  color: var(--primary);
+  color: var(--primary-text);
   font-weight: 600;
 }
 

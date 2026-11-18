@@ -22,3 +22,16 @@ export function formatCurrency(value: number | string): string {
     maximumFractionDigits: hasPaise ? 2 : 0,
   });
 }
+
+// Short form for tight spots (section headers, summary tiles): full below a
+// lakh ("₹84,500"), then lakhs / crores with up to 2 decimals ("₹12.45L",
+// "₹1.2Cr"). Pair it with the full formatCurrency value as a tooltip.
+export function formatCompactCurrency(value: number | string): string {
+  const amount = Number(value);
+  const abs = Math.abs(amount);
+  if (abs < 100000) return formatCurrency(amount);
+  // 99.995L and up would round to "100L", so those already read as crores.
+  const [divisor, unit] = abs >= 9999500 ? [10000000, "Cr"] : [100000, "L"];
+  const short = (abs / divisor).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+  return `${amount < 0 ? "-" : ""}₹${short}${unit}`;
+}

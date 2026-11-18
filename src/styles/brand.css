@@ -1,55 +1,65 @@
 /* ==========================================================================
    Brand colours — the single source of truth for both the public portfolio
    (src/site/*.css) and the admin (src/admin/dms/index.css). The palette is
-   the logo's gradient (public/logo/logo.svg): violet → indigo → cyan, on
-   navy. Names describe the role, not the hue, so a re-theme only touches
-   this file (plus the logo's stops in scripts/generate-logo.mjs).
+   Graphite & Amber, matching the GC monogram (public/logo/logo.svg): gold
+   and amber on graphite. Names describe the role, not the hue, so a re-theme
+   only touches this file (plus the logo colours in scripts/generate-logo.mjs).
 
    Which variant to use:
-   - plain (--brand-primary …): the vivid colours — gradients, decoration,
-     icons on dark backgrounds.
-   - -deep: darker shades that keep white text on them, and small text on a
-     white background, readable (≥ 4.5:1). Use for buttons and links on
-     light backgrounds.
-   - -bright: lighter shades for text and accents on the navy background.
+   - plain (--brand-primary …): the vivid colours. Fills: buttons, active
+     tabs, selected options, checkboxes, badges. Text on them is
+     --brand-on-primary (graphite), never white.
+   - -deep: darker shades for TEXT on a light background (links, icons,
+     headings), readable (≥ 4.5:1). Not for fills.
+   - -bright: lighter shades for text and accents on the graphite background.
+
+   (--brand-navy keeps its old name so existing styles don't need renaming;
+   it is now graphite.)
    ========================================================================== */
 
 :root {
-  --brand-navy: #0d0f2e;
-  --brand-accent: #8b5cf6; /* violet: gradient start */
-  --brand-primary: #6366f1; /* indigo: main colour */
-  --brand-highlight: #22d3ee; /* cyan: gradient end */
+  --brand-navy: #17181c; /* graphite */
+  --brand-accent: #f5c66b; /* gold: gradient start, the logo on graphite */
+  --brand-primary: #d9901a; /* amber: main colour */
+  --brand-highlight: #e0701b; /* burnt orange: gradient end */
 
-  /* Readable on white / under white text */
-  --brand-accent-deep: #6d28d9;
-  --brand-primary-deep: #4338ca;
-  --brand-highlight-deep: #0e7490;
+  /* Text that sits on an amber fill */
+  --brand-on-primary: #17181c;
 
-  /* Readable on navy */
-  --brand-accent-bright: #a78bfa;
-  --brand-primary-bright: #818cf8;
-  --brand-highlight-bright: #67e8f9;
+  /* Text on a light background */
+  --brand-accent-deep: #8a5606;
+  --brand-primary-deep: #9e6207;
+  --brand-highlight-deep: #a34e0b;
+
+  /* Readable on graphite */
+  --brand-accent-bright: #f5c66b;
+  --brand-primary-bright: #e9a12c;
+  --brand-highlight-bright: #f7b267;
 
   /* Not part of the gradient: destructive actions stay red in any theme. */
   --brand-danger: #c8103e;
 
-  /* Navy surfaces (dark theme) */
-  --brand-navy-night: #070820;
-  --brand-navy-surface: #0e1030;
-  --brand-navy-raised: #171a42;
+  /* Graphite surfaces (dark theme) */
+  --brand-navy-night: #0f1012;
+  --brand-navy-surface: #1b1c20;
+  --brand-navy-raised: #25262b;
 
   /* "r, g, b" triplets, for rgba(var(--brand-…-rgb), alpha) */
-  --brand-navy-rgb: 13, 15, 46;
-  --brand-accent-rgb: 139, 92, 246;
-  --brand-primary-rgb: 99, 102, 241;
-  --brand-primary-deep-rgb: 67, 56, 202;
-  --brand-highlight-rgb: 34, 211, 238;
-  --brand-highlight-deep-rgb: 14, 116, 144;
+  --brand-navy-rgb: 23, 24, 28;
+  --brand-accent-rgb: 245, 198, 107;
+  --brand-primary-rgb: 217, 144, 26;
+  --brand-primary-deep-rgb: 158, 98, 7;
+  --brand-highlight-rgb: 224, 112, 27;
+  --brand-highlight-deep-rgb: 163, 78, 11;
 
-  /* Gradients. The button gradients end on a dark blue so white text stays
-     readable; the bright cyan only appears in text and decorative gradients. */
-  --brand-gradient: linear-gradient(120deg, var(--brand-accent-deep) 0%, var(--brand-primary-deep) 55%, #0369a1 100%);
-  --brand-gradient-night: linear-gradient(120deg, #7c3aed 0%, #4f46e5 55%, #0277b6 100%);
+  /* Gradients. Button gradients are bright amber in both themes, with
+     graphite (--brand-on-primary) text on them. */
+  --brand-gradient: linear-gradient(120deg, #e6a32f 0%, var(--brand-primary) 55%, #cc8314 100%);
+  --brand-gradient-night: var(--brand-gradient);
+  /* Feature cards (dashboard heroes): graphite with an amber glow, white
+     text on top, in both themes. */
+  --brand-hero: radial-gradient(120% 150% at 100% 0%, rgba(var(--brand-primary-rgb), 0.3) 0%, transparent 55%),
+    linear-gradient(135deg, #2a2b31 0%, var(--brand-navy) 65%);
   --brand-gradient-vivid: linear-gradient(120deg, var(--brand-accent) 0%, var(--brand-primary) 55%, var(--brand-highlight) 100%);
   --brand-gradient-text: linear-gradient(100deg, var(--brand-accent-deep) 0%, var(--brand-primary-deep) 50%, var(--brand-highlight-deep) 100%);
   --brand-gradient-text-night: linear-gradient(
@@ -58,4 +68,46 @@
     var(--brand-primary-bright) 45%,
     var(--brand-highlight-bright) 100%
   );
+}
+
+/* ---------- Theme switch animation ----------
+   useDarkTheme() switches the theme inside a view transition and grows the
+   new theme as a circle from the toggle button. Turn off the browser's
+   default cross-fade so only that circle moves. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* The sun / moon icon spins in when it changes (it is re-mounted by key). */
+.theme-toggle-icon {
+  display: inline-flex;
+  animation: theme-icon-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes theme-icon-in {
+  from {
+    transform: rotate(-120deg) scale(0.4);
+    opacity: 0;
+  }
+  to {
+    transform: rotate(0) scale(1);
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .theme-toggle-icon {
+    animation: none;
+  }
+}
+
+/* Form errors and the required "*" mark: one red everywhere, lighter on dark. */
+:root {
+  --danger-text: var(--brand-danger);
+}
+:root[data-bs-theme="dark"] {
+  --danger-text: #ff7b72;
+}
+.text-danger-brand {
+  color: var(--danger-text) !important;
 }

@@ -463,7 +463,7 @@
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-  color: #ffffff;
+  color: var(--on-primary);
   font-size: 1.05rem;
 }
 
@@ -569,7 +569,7 @@
 }
 
 .admin-item-card-link {
-  color: var(--primary);
+  color: var(--primary-text);
   font-size: 0.8rem;
   font-weight: 600;
   text-decoration: none;
@@ -795,26 +795,32 @@
 
 .admin-settle-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
 }
 
 .admin-settle-stats > div {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 8px 12px;
-  border-radius: 10px;
+  gap: 1px;
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 8px;
   background: rgba(var(--primary-rgb), 0.08);
 }
 
 .admin-settle-stat-label {
-  font-size: 0.72rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 0.66rem;
   color: var(--muted-color);
 }
 
 .admin-settle-stats strong {
-  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+  font-size: 0.84rem;
+  line-height: 1.2;
   color: var(--theme-text-dark);
   font-variant-numeric: tabular-nums;
 }
@@ -877,52 +883,128 @@
   color: var(--muted-color);
 }
 
+/* To settle up / Recorded repayments: one rounded box, a thin divider
+   between rows, each row a single line. */
 .admin-settle-list {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  border-radius: 10px;
+  background: var(--background-color);
+  overflow: hidden;
 }
 
 .admin-settle-list li {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: var(--background-color);
-  font-size: 0.84rem;
+  gap: 4px 8px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
   color: var(--theme-text-dark);
 }
 
-/* The remove button stays beside its repayment, however long the text runs. */
-.admin-settle-repayments li {
-  flex-wrap: nowrap;
+.admin-settle-list li + li {
+  border-top: 1px solid var(--border-color);
 }
 
-.admin-settle-repayments li > span {
+/* "Mahesh → Deeksha", cut off with … rather than wrapping. */
+.admin-settle-who {
+  flex: 1;
   min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* In a To-settle-up row the names take whatever room is left (basis 0), so
+   the amount box and button always fit and are never pushed off the edge. */
+.admin-settle-transfer .admin-settle-who {
+  flex: 1 1 0;
+}
+
+.admin-settle-who strong {
+  font-weight: 600;
+}
+
+.admin-settle-who .fa-arrow-right {
+  margin: 0 5px;
+  font-size: 0.62rem;
+  color: var(--muted-color);
+  vertical-align: 1px;
+}
+
+.admin-settle-amount {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .admin-settle-record {
+  flex-shrink: 0;
   display: inline-flex;
-  flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
+  gap: 4px;
+}
+
+/* InputComp.css forces every .form-control to ~42px with !important, so the
+   amount box needs !important too to match the button's height. */
+.admin-settle-record input.form-control {
+  width: 72px;
+  height: 28px !important;
+  min-height: 28px !important;
+  padding: 2px 6px !important;
+  border-radius: 7px !important;
+  font-size: 0.78rem;
+  text-align: right;
 }
 
 .admin-settle-record .btn {
   flex-shrink: 0;
+  height: 28px;
+  margin: 0 !important;
+  padding: 0 10px !important;
+  border-radius: 7px !important;
+  font-size: 0.74rem !important;
+  line-height: 1;
   white-space: nowrap;
+  box-shadow: none !important;
 }
 
-.admin-settle-record input {
-  width: 110px;
+.admin-settle-error {
+  width: 100%;
+  font-size: 0.7rem;
+  color: var(--danger-text);
+}
+
+/* Repayments: who → whom with the date under it, amount, remove. */
+.admin-settle-repayments li {
+  flex-wrap: nowrap;
+  padding: 4px 6px 4px 10px;
+  line-height: 1.2;
+}
+
+.admin-settle-repayment-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-settle-repayment-main .admin-settle-who {
+  flex: none;
+}
+
+.admin-settle-repayment-main small {
+  font-size: 0.66rem;
+  line-height: 1.2;
+  color: var(--muted-color);
+}
+
+.admin-settle-repayments .admin-savings-contribution-remove {
+  padding: 2px 4px;
+  font-size: 0.7rem;
+  line-height: 1;
 }
 
 .admin-expense-group-empty {

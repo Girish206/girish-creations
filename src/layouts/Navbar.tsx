@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { FaArrowRight, FaBars, FaMoon, FaSun, FaXmark } from "react-icons/fa6";
+import { FaArrowRight, FaBars, FaMoon, FaXmark } from "react-icons/fa6";
+import { LuSun } from "react-icons/lu";
 import { useProfile } from "../api/hooks/useProfile";
 import { useDarkTheme } from "../hooks/useDarkTheme";
 import { usePortfolioStyle } from "../portfolio/portfolioStyle";
@@ -75,7 +76,7 @@ export function Navbar() {
           {brand()}
           <div className="gc-header-actions">
             <button type="button" className="gc-icon-btn" onClick={toggle} aria-label={themeLabel}>
-              {isDark ? <FaSun /> : <FaMoon />}
+              <span key={isDark ? "sun" : "moon"} className="theme-toggle-icon">{isDark ? <LuSun /> : <FaMoon />}</span>
             </button>
           </div>
         </div>
@@ -107,7 +108,7 @@ export function Navbar() {
 
           <div className="gc-header-actions">
             <button type="button" className="gc-icon-btn" onClick={toggle} aria-label={themeLabel}>
-              {isDark ? <FaSun /> : <FaMoon />}
+              <span key={isDark ? "sun" : "moon"} className="theme-toggle-icon">{isDark ? <LuSun /> : <FaMoon />}</span>
             </button>
             <Link to={path("/contact")} className="gc-btn gc-btn-dark gc-btn-sm gc-header-cta">
               Let's talk <ArrowUpRight />
@@ -171,7 +172,7 @@ export function Navbar() {
           <div className="gc-drawer-row">
             <SocialLinks profile={profile} />
             <button type="button" className="gc-icon-btn" onClick={toggle} aria-label={themeLabel}>
-              {isDark ? <FaSun /> : <FaMoon />}
+              <span key={isDark ? "sun" : "moon"} className="theme-toggle-icon">{isDark ? <LuSun /> : <FaMoon />}</span>
             </button>
           </div>
         </div>

@@ -78,7 +78,7 @@
   border-radius: 50%;
   border: 2px solid #ffffff;
   background: var(--primary);
-  color: #ffffff;
+  color: var(--on-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -157,7 +157,7 @@
 }
 
 .admin-profile-meta i {
-  color: var(--primary);
+  color: var(--primary-text);
   font-size: 0.82rem;
 }
 
@@ -198,7 +198,7 @@
 
 .admin-profile-status-invalid,
 .admin-profile-status-error {
-  color: #b42318;
+  color: var(--danger-text);
   font-weight: 600;
 }
 
@@ -271,7 +271,7 @@
 }
 
 .admin-profile-section-header i {
-  color: var(--primary);
+  color: var(--primary-text);
   font-size: 0.95rem;
 }
 
@@ -314,7 +314,7 @@
   padding: 8px 18px;
   border: 1.5px solid var(--primary);
   border-radius: 999px;
-  color: var(--primary);
+  color: var(--primary-text);
   font-weight: 600;
   font-size: 0.85rem;
   cursor: pointer;
@@ -323,7 +323,7 @@
 
 .admin-upload-btn:hover {
   background: var(--primary);
-  color: var(--theme-text-light);
+  color: var(--on-primary);
 }
 
 .admin-signature-actions {
@@ -410,7 +410,7 @@
 }
 
 .admin-style-name i {
-  color: var(--primary);
+  color: var(--primary-text);
 }
 
 .admin-style-desc {
@@ -448,7 +448,7 @@
 }
 
 .admin-style-preview-tech {
-  background: #0d0f2e;
+  background: var(--brand-navy);
 }
 
 .admin-style-preview-tech i {

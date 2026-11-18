@@ -67,22 +67,82 @@
 
 /* -------- 3. DROPDOWN & OPTION STYLES -------- */
 
-/* Hovered/Focused option in dropdown */
+/* Menu copies the PillSelect filter dropdown (src/components/PillSelect.css):
+   a rounded card, tight rows, a soft hover tint, and the picked option in the
+   accent colour with a tick rather than a solid fill. The menu is portaled
+   to <body>, so this applies to every select. */
+.select__menu {
+  margin-top: 6px !important;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: 14px !important;
+  background: var(--bs-body-bg) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14) !important;
+  animation: select-menu-in 0.14s ease-out;
+}
+
+.select__menu-list {
+  padding: 6px !important;
+  max-height: 280px !important;
+}
+
+.select__option {
+  padding: 8px 10px !important;
+  border-radius: 9px;
+  background-color: transparent !important;
+  color: var(--theme-text-dark);
+  font-size: 0.875rem !important;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer !important;
+}
+
+.select__menu-notice {
+  padding: 8px 10px !important;
+  font-size: 0.82rem !important;
+}
+
+/* Hovered / keyboard-focused option */
 .select__option--is-focused {
-  background-color: var(--primary-light-6) !important;
-  color: #000 !important;
+  background-color: color-mix(in srgb, var(--primary) 8%, transparent) !important;
 }
 
-/* Selected option in dropdown */
+/* Selected option: accent text with a tick */
 .select__option--is-selected {
-  background-color: var(--primary) !important;
-  color: #fff !important;
+  position: relative;
+  padding-right: 28px !important;
+  color: var(--primary) !important;
+  font-weight: 700;
+}
+.select__option--is-selected::after {
+  content: "\f00c";
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: "Font Awesome 7 Free", "Font Awesome 6 Free", "Font Awesome 5 Free";
+  font-weight: 900;
+  font-size: 0.75rem;
 }
 
-/* Combined focused and selected state */
-.select__option--is-selected.select__option--is-focused {
-  background-color: var(--primary) !important;
-  color: #fff !important;
+:root[data-bs-theme="dark"] .select__menu {
+  border-color: var(--adm-line-strong);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45) !important;
+}
+
+@keyframes select-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .select__menu {
+    animation: none;
+  }
 }
 
 

@@ -1,0 +1,126 @@
+/* Pull-to-refresh indicator (PullToRefresh.tsx): a round badge that slides
+   down from under the navbar as the page is pulled. */
+
+.admin-ptr {
+  position: fixed;
+  top: 24px; /* hidden behind the 64px navbar until pulled */
+  left: 50%;
+  z-index: 1055; /* above page content, below the navbar (1060) */
+  pointer-events: none;
+  transition: transform 0.25s ease;
+}
+.admin-ptr.is-dragging {
+  transition: none;
+}
+
+.admin-ptr-circle {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--bs-body-bg, #fff);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 6px 18px -6px rgba(15, 18, 60, 0.35);
+  color: var(--muted-color);
+  font-size: 0.9rem;
+  transition: opacity 0.2s ease, color 0.15s ease, background 0.15s ease;
+}
+:root[data-bs-theme="dark"] .admin-ptr-circle {
+  background: var(--adm-raised);
+  border-color: var(--adm-line-strong);
+  box-shadow: 0 6px 18px -6px rgba(0, 0, 0, 0.6);
+}
+
+/* Far enough: letting go now will refresh. */
+.admin-ptr.is-ready .admin-ptr-circle,
+.admin-ptr.is-refreshing .admin-ptr-circle {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.admin-ptr.is-refreshing .admin-ptr-circle i {
+  animation: admin-refresh-spin 0.8s linear infinite;
+}
+
+/* ---------- Message pill ---------- */
+
+/* Slack-style line under the navbar while a refresh runs. `transform` is set
+   inline: it follows the pull, or rests just under the navbar. */
+.admin-refresh-pill {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  z-index: 1055;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: var(--theme-text-dark);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 10px 24px -10px rgba(15, 18, 60, 0.5);
+  pointer-events: none;
+  opacity: 0;
+  /* Hiding is instant (its text is already gone); showing fades in. */
+  transition: transform 0.25s ease, background 0.2s ease;
+}
+.admin-refresh-pill.is-shown {
+  opacity: 1;
+  transition: opacity 0.2s ease, transform 0.25s ease, background 0.2s ease;
+}
+.admin-refresh-pill.is-dragging {
+  transition: opacity 0.2s ease;
+}
+.admin-refresh-pill > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.admin-refresh-pill.is-done {
+  background: #15803d;
+}
+:root[data-bs-theme="dark"] .admin-refresh-pill {
+  background: var(--adm-raised);
+  color: var(--adm-text);
+  border: 1px solid var(--adm-line-strong);
+  box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.7);
+}
+:root[data-bs-theme="dark"] .admin-refresh-pill.is-done {
+  background: #166534;
+  color: #fff;
+}
+
+/* Three bouncing dots, like a typing indicator. */
+.admin-refresh-pill-dots {
+  display: inline-flex;
+  gap: 3px;
+}
+.admin-refresh-pill-dots span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: admin-refresh-dot 1s ease-in-out infinite;
+}
+.admin-refresh-pill-dots span:nth-child(2) { animation-delay: 0.15s; }
+.admin-refresh-pill-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes admin-refresh-dot {
+  0%, 80%, 100% { opacity: 0.3; transform: translateY(0); }
+  40% { opacity: 1; transform: translateY(-3px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-refresh-pill-dots span {
+    animation: none;
+    opacity: 0.8;
+  }
+}
+
+@keyframes admin-refresh-spin {
+  to { transform: rotate(360deg); }
+}

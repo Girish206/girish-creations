@@ -130,6 +130,7 @@ body .gc.gc-classic {
   --gc-accent-2: var(--c-accent);
   --gc-accent-3: var(--c-accent);
   --gc-accent-ink: #ffffff;
+  --gc-fill: var(--c-accent);
   --gc-accent-soft: rgba(var(--c-rgb), 0.1);
   --gc-grad: linear-gradient(var(--gc-accent), var(--gc-accent));
   --gc-grad-text: linear-gradient(var(--gc-accent), var(--gc-accent));
@@ -159,6 +160,8 @@ body.dark-theme .gc.gc-classic {
   --gc-accent-2: var(--c-d-accent);
   --gc-accent-3: var(--c-d-accent);
   --gc-accent-ink: var(--c-d-accent-ink);
+  --gc-fill: var(--c-d-accent);
+  --gc-grad: linear-gradient(var(--c-d-accent), var(--c-d-accent));
   --gc-accent-soft: rgba(var(--c-d-rgb), 0.14);
   --gc-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 22px rgba(0, 0, 0, 0.22);
   --gc-shadow-lg: 0 2px 4px rgba(0, 0, 0, 0.3), 0 20px 44px rgba(0, 0, 0, 0.4);

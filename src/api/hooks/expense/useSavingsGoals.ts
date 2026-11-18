@@ -11,6 +11,8 @@ export interface SavingsGoalFormInput {
   accountHolderAdminUserId?: number | null;
   // Who else can see/use this goal — omitted/empty keeps it private.
   memberAdminUserIds?: number[];
+  // "fund" = a shared fund, split at the end.
+  kind?: "savings" | "fund";
 }
 
 export interface SavingsContributionFormInput {
@@ -34,6 +36,10 @@ function invalidate(queryClient: ReturnType<typeof useQueryClient>) {
   queryClient.invalidateQueries({ queryKey: ["savings-goals"] });
   // Expenses embed their goal's name, so renames and deletes show there too.
   queryClient.invalidateQueries({ queryKey: ["expenses"] });
+  // A shared fund has a trip group, kept in step with it (name, people, and
+  // the fund money in its settle-up).
+  queryClient.invalidateQueries({ queryKey: ["expense-groups"] });
+  queryClient.invalidateQueries({ queryKey: ["expense-activity"] });
 }
 
 export function useCreateSavingsGoal() {

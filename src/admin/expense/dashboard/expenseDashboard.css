@@ -1,86 +1,954 @@
-/* The panels under the Money Hub dashboard's stat cards. */
-.admin-money-panels {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
-  gap: 16px;
-  margin-top: 16px;
-}
+/* ==========================================================================
+   Money Hub dashboard — compact. Mobile first: one column, cards in the
+   order a phone user wants them; from 992px the cards split into a main and
+   a side column. Colours come from the admin theme tokens
+   (../../dms/index.css, dark.css).
+   ========================================================================== */
 
-.admin-money-panel {
-  padding: 16px;
-  min-width: 0;
-}
+.exd {
+  --exd-good: #15803d;
+  --exd-good-bg: rgba(21, 128, 61, 0.1);
+  --exd-bad: #c2410c;
+  --exd-bad-bg: rgba(194, 65, 12, 0.1);
+  --exd-surface: var(--bs-body-bg, #fff);
+  --exd-gap: 10px;
 
-.admin-money-panel-title {
-  margin: 0 0 12px;
-  font-size: 0.95rem;
-  font-weight: 700;
-}
-
-.admin-money-panel-empty {
-  margin: 0;
-  font-size: 0.85rem;
-  color: var(--muted-color);
-}
-
-.admin-money-bars,
-.admin-money-rows {
-  list-style: none;
-  margin: 0;
-  padding: 0;
   display: flex;
   flex-direction: column;
+  gap: var(--exd-gap);
+  max-width: 1200px;
+  margin: 0 auto;
+  font-size: 0.85rem;
+}
+
+:root[data-bs-theme="dark"] .exd {
+  --exd-good: #4ade80;
+  --exd-good-bg: rgba(74, 222, 128, 0.12);
+  --exd-bad: #fb923c;
+  --exd-bad-bg: rgba(251, 146, 60, 0.12);
+  --exd-surface: var(--adm-surface);
+}
+
+/* ---------- Hero ---------- */
+
+.exd-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 14px 16px;
+  border-radius: 18px;
+  color: #fff;
+  background: var(--brand-hero);
+  box-shadow: 0 12px 28px -14px rgba(var(--brand-navy-rgb), 0.55);
+}
+/* Dark theme: the graphite hero would melt into the graphite page, so it
+   turns into a warm amber card instead. Light theme is untouched. */
+:root[data-bs-theme="dark"] .exd-hero {
+  color: var(--adm-text);
+  background:
+    radial-gradient(90% 120% at 100% 0%, rgba(var(--brand-accent-rgb), 0.12) 0%, transparent 60%),
+    radial-gradient(80% 100% at 0% 100%, rgba(var(--brand-highlight-rgb), 0.07) 0%, transparent 60%),
+    linear-gradient(135deg, #33250f 0%, #261d10 50%, #1f1a14 100%);
+  border: 1px solid rgba(var(--brand-primary-rgb), 0.25);
+  box-shadow:
+    0 12px 26px -18px rgba(var(--brand-primary-rgb), 0.2),
+    inset 0 1px 0 rgba(var(--brand-accent-rgb), 0.1);
+}
+:root[data-bs-theme="dark"] .exd-hello {
+  color: var(--adm-text);
+}
+:root[data-bs-theme="dark"] .exd-date,
+:root[data-bs-theme="dark"] .exd-hero-label {
+  color: var(--brand-accent-bright);
+  opacity: 0.85;
+}
+:root[data-bs-theme="dark"] .exd-hero-amount {
+  color: #fff;
+}
+:root[data-bs-theme="dark"] .exd-badge {
+  background: rgba(var(--brand-accent-rgb), 0.16);
+  color: var(--brand-accent-bright);
+}
+:root[data-bs-theme="dark"] .exd-chip {
+  background: rgba(var(--brand-accent-rgb), 0.14);
+  color: var(--brand-accent-bright);
+}
+:root[data-bs-theme="dark"] .exd-actions {
+  border-top-color: rgba(var(--brand-accent-rgb), 0.16);
+}
+:root[data-bs-theme="dark"] .exd-action {
+  color: var(--adm-text);
+}
+:root[data-bs-theme="dark"] .exd-action:not(.is-primary) .exd-action-icon {
+  background: rgba(var(--brand-accent-rgb), 0.12);
+  color: var(--brand-accent-bright);
+}
+:root[data-bs-theme="dark"] .exd-action:not(.is-primary):hover .exd-action-icon,
+:root[data-bs-theme="dark"] .exd-action:not(.is-primary):focus-visible .exd-action-icon {
+  background: rgba(var(--brand-accent-rgb), 0.22);
+}
+
+/* A soft ring for depth, like a bank card. */
+.exd-hero::before {
+  content: "";
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  right: -70px;
+  top: -90px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  pointer-events: none;
+}
+:root[data-bs-theme="dark"] .exd-hero::before {
+  border-color: rgba(var(--brand-accent-rgb), 0.12);
+  background: rgba(var(--brand-accent-rgb), 0.03);
+}
+.exd-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.exd-hero-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 10px;
 }
-
-.admin-money-bar-label {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
+.exd-hello {
+  margin: 0;
+  min-width: 0;
   font-size: 0.82rem;
-  margin-bottom: 4px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.exd-date {
+  margin-left: 6px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.75);
+}
+.exd-date::before {
+  content: "· ";
+}
+.exd-hero-tools {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.exd-hero-tools .admin-refresh-btn {
+  width: 28px;
+  height: 28px;
+  font-size: 0.72rem;
+}
+.exd-badge {
+  flex-shrink: 0;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
-.admin-money-bar-name {
+.exd-hero-main {
+  margin: 10px 0 12px;
+}
+.exd-hero-label {
+  font-size: 0.74rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+.exd-hero-amount {
+  margin: 0 0 8px;
+  font-size: clamp(1.6rem, 7vw, 2rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.exd-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.exd-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 0.7rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.exd-chip i {
+  font-size: 0.64rem;
+  opacity: 0.9;
+}
+/* Spending more than last month is the "watch out" direction. */
+.exd-chip.is-up {
+  background: rgba(255, 255, 255, 0.92);
+  color: #b4231a;
+}
+.exd-chip.is-down {
+  background: rgba(255, 255, 255, 0.92);
+  color: #15803d;
+}
+
+/* Quick actions: small round icons with a label underneath, app-style. */
+.exd-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+.exd-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
   min-width: 0;
+  color: #fff;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.exd-action-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 0.9rem;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.exd-action.is-primary .exd-action-icon {
+  background: var(--brand-primary);
+  color: var(--brand-on-primary);
+}
+.exd-action:hover .exd-action-icon,
+.exd-action:focus-visible .exd-action-icon {
+  background: rgba(255, 255, 255, 0.26);
+}
+.exd-action.is-primary:hover .exd-action-icon {
+  background: var(--brand-accent);
+}
+.exd-action:active .exd-action-icon {
+  transform: scale(0.94);
+}
+.exd-action-label {
+  max-width: 100%;
+  font-size: 0.66rem;
+  font-weight: 600;
+  text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.admin-money-bar-track {
-  display: block;
-  height: 8px;
-  border-radius: 4px;
-  background: var(--background-color);
+/* ---------- Tiles ---------- */
+
+.exd-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.exd-tile {
+  --tone: var(--primary);
+  --tone-bg: rgba(var(--primary-rgb), 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  background: var(--exd-surface);
+  color: var(--theme-text-dark);
+  text-decoration: none;
+  transition: border-color 0.15s ease;
+}
+.exd-tile:hover {
+  border-color: color-mix(in srgb, var(--tone) 45%, transparent);
+}
+.exd-tile.is-good {
+  --tone: var(--exd-good);
+  --tone-bg: var(--exd-good-bg);
+}
+.exd-tile.is-bad {
+  --tone: var(--exd-bad);
+  --tone-bg: var(--exd-bad-bg);
+}
+.exd-tile.is-neutral {
+  --tone: var(--muted-color);
+  --tone-bg: var(--background-color);
+}
+.exd-tile-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.exd-tile-icon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: var(--tone-bg);
+  color: var(--tone);
+  font-size: 0.62rem;
+}
+.exd-tile-label {
+  min-width: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.exd-tile-value {
+  font-size: 1.02rem;
+  font-weight: 800;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.exd-tile-sub {
+  font-size: 0.66rem;
+  color: var(--muted-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.admin-money-bar-fill {
+/* ---------- Layout ---------- */
+
+/* On phones the two columns dissolve, so every card sorts by `order`. */
+.exd-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--exd-gap);
+}
+.exd-col {
+  display: contents;
+}
+.exd-order-trend { order: 1; }
+.exd-order-settle { order: 2; }
+.exd-order-cats { order: 3; }
+.exd-order-recent { order: 4; }
+.exd-order-savings { order: 5; }
+
+/* ---------- Cards ---------- */
+
+.exd-card {
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  background: var(--exd-surface);
+}
+:root[data-bs-theme="dark"] .exd-card,
+:root[data-bs-theme="dark"] .exd-tile {
+  border-color: var(--adm-line);
+}
+
+.exd-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.exd-card-head h2 {
+  margin: 0;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--theme-text-dark);
+}
+.exd-card-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  color: var(--primary-dark-1);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.exd-card-link i {
+  font-size: 0.56rem;
+}
+.exd-card-link:hover {
+  text-decoration: underline;
+}
+
+.exd-empty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--background-color);
+  color: var(--muted-color);
+  font-size: 0.78rem;
+  text-align: center;
+}
+.exd-empty a {
+  color: var(--primary-dark-1);
+  font-weight: 600;
+}
+.exd-empty.is-good {
+  background: var(--exd-good-bg);
+  color: var(--exd-good);
+  font-weight: 600;
+}
+
+/* ---------- Monthly spending ---------- */
+
+.exd-card-head h2 small {
+  margin-left: 4px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--muted-color);
+}
+.exd-trend-avg-note {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  color: var(--muted-color);
+}
+
+/* One column per month: amount on top, bar, month name underneath. */
+.exd-trend {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px;
+  height: 120px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.exd-trend-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+.exd-trend-track {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}
+.exd-trend-value {
+  max-width: 100%;
+  height: 18px;
+  line-height: 18px;
+  font-size: 0.62rem;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+  color: var(--muted-color);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.exd-trend-bar {
+  display: block;
+  width: min(100%, 28px);
+  min-height: 3px;
+  border-radius: 4px 4px 0 0;
+  background: rgba(var(--primary-rgb), 0.3);
+  transition: height 0.35s ease;
+}
+/* The baseline runs under every column; the month name sits below it. */
+.exd-trend-track {
+  border-bottom: 1px solid var(--border-color);
+}
+.exd-trend-month {
+  margin-top: 4px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.66rem;
+  line-height: 1.4;
+  color: var(--muted-color);
+  white-space: nowrap;
+}
+.exd-trend-col.is-current .exd-trend-bar {
+  background: var(--primary);
+}
+.exd-trend-col.is-current .exd-trend-value {
+  color: var(--theme-text-dark);
+  font-weight: 700;
+}
+/* This month: the name in a filled pill. */
+.exd-trend-col.is-current .exd-trend-month {
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+}
+
+/* ---------- Category breakdown ---------- */
+
+.exd-cats,
+.exd-list,
+.exd-goals {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.exd-cats {
+  display: flex;
+  flex-direction: column;
+}
+.exd-cat-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 6px;
+  margin: 0 -6px;
+  border-radius: 8px;
+  color: var(--theme-text-dark);
+  text-decoration: none;
+}
+a.exd-cat-row:hover {
+  background: var(--background-color);
+}
+.exd-cat-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.exd-cat-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+.exd-cat-top strong {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.exd-cat-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.exd-cat-bottom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.exd-cat-track {
+  flex: 1;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--background-color);
+  overflow: hidden;
+}
+.exd-cat-fill {
   display: block;
   height: 100%;
   min-width: 4px;
   border-radius: 4px;
   background: var(--primary);
 }
+.exd-cat-pct {
+  width: 30px;
+  text-align: right;
+  font-size: 0.66rem;
+  color: var(--muted-color);
+  font-variant-numeric: tabular-nums;
+}
 
-.admin-money-rows li {
+/* Smaller icons/avatars inside the dashboard's dense rows. */
+.exd .admin-category-icon,
+.exd-avatar {
+  width: 28px;
+  height: 28px;
+  font-size: 0.72rem;
+}
+
+/* ---------- Row lists (recent, to settle) ---------- */
+
+.exd-list {
+  display: flex;
+  flex-direction: column;
+}
+.exd-list > li + li {
+  border-top: 1px solid var(--border-color);
+}
+:root[data-bs-theme="dark"] .exd-list > li + li {
+  border-color: var(--adm-line);
+}
+.exd-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  font-size: 0.85rem;
+  gap: 10px;
+  padding: 7px 0;
+  color: var(--theme-text-dark);
+  text-decoration: none;
 }
-
-.admin-money-row-name {
+.exd-row.is-link {
+  margin: 0 -6px;
+  padding: 7px 6px;
+  border-radius: 8px;
+}
+.exd-row.is-link:hover {
+  background: var(--background-color);
+}
+.exd-row-body {
+  flex: 1;
   min-width: 0;
-  overflow-wrap: anywhere;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
 }
-
-.admin-money-row-name small {
-  display: block;
+.exd-row-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.exd-row-sub {
+  font-size: 0.68rem;
+  color: var(--muted-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.exd-row-amount {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.3;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.exd-row-amount small {
+  font-size: 0.66rem;
+  font-weight: 500;
   color: var(--muted-color);
 }
 
-.admin-money-rows li > :last-child {
+.exd-avatar {
   flex-shrink: 0;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 700;
+}
+.exd-avatar.is-muted {
+  background: var(--background-color);
+  color: var(--muted-color);
+}
+
+.exd-pill {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.exd-pill.is-good {
+  background: var(--exd-good-bg);
+  color: var(--exd-good);
+}
+.exd-pill.is-bad {
+  background: var(--exd-bad-bg);
+  color: var(--exd-bad);
+}
+
+/* The people behind a group's pending total, indented under the group row. */
+.exd-people {
+  list-style: none;
+  margin: -2px 0 8px 38px;
+  padding: 2px 0 0 10px;
+  border-left: 2px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.exd-people li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 0.74rem;
+}
+.exd-people .exd-avatar {
+  width: 20px;
+  height: 20px;
+  font-size: 0.56rem;
+}
+.exd-people-name {
+  flex: 1;
+  min-width: 0;
+  color: var(--theme-text-dark);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.exd-people strong {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.exd-people strong.is-good {
+  color: var(--exd-good);
+}
+.exd-people strong.is-bad {
+  color: var(--exd-bad);
+}
+
+.exd-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 4px;
+  padding: 6px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--background-color);
+  color: var(--primary-dark-1);
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.exd-more i {
+  font-size: 0.6rem;
+}
+.exd-more:hover {
+  background: rgba(var(--primary-rgb), 0.08);
+}
+
+/* ---------- Savings goals ---------- */
+
+.exd-goals {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.exd-goal {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--background-color);
+  color: var(--theme-text-dark);
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+.exd-goal:hover {
+  background: rgba(var(--primary-rgb), 0.08);
+}
+.exd-goal-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.exd-goal-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.exd-goal-pct {
+  flex-shrink: 0;
+  color: var(--primary-dark-1);
+  font-variant-numeric: tabular-nums;
+}
+.exd-goal-track {
+  height: 4px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--muted-color) 18%, transparent);
+  overflow: hidden;
+}
+.exd-goal-fill {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+}
+.exd-goal-sub {
+  font-size: 0.68rem;
+  color: var(--muted-color);
+}
+.exd-goal-sub strong {
+  color: var(--theme-text-dark);
+}
+
+/* ---------- Loading placeholders ---------- */
+
+.exd-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.exd-skeleton span,
+.exd-skeleton-inline {
+  display: block;
+  height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    var(--background-color) 0%,
+    color-mix(in srgb, var(--muted-color) 14%, transparent) 50%,
+    var(--background-color) 100%
+  );
+  background-size: 200% 100%;
+  animation: exd-shimmer 1.2s ease-in-out infinite;
+}
+.exd-skeleton-inline {
+  display: inline-block;
+  width: 70px;
+  height: 1em;
+  vertical-align: middle;
+}
+@keyframes exd-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .exd-skeleton span,
+  .exd-skeleton-inline {
+    animation: none;
+  }
+  .exd-tile,
+  .exd-action-icon,
+  .exd-trend-bar {
+    transition: none;
+  }
+}
+
+/* ---------- Tablet ---------- */
+
+@media (min-width: 640px) {
+  .exd {
+    --exd-gap: 12px;
+  }
+  .exd-hero {
+    padding: 16px 20px;
+  }
+  .exd-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  /* Wider screens: the actions become small labelled pills. */
+  .exd-action {
+    flex-direction: row;
+    gap: 6px;
+    padding: 4px 12px 4px 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    transition: background 0.15s ease;
+  }
+  .exd-action:hover {
+    background: rgba(255, 255, 255, 0.22);
+  }
+  .exd-action-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 0.7rem;
+  }
+  .exd-action.is-primary {
+    background: var(--brand-primary);
+    color: var(--brand-on-primary);
+  }
+  .exd-action.is-primary:hover {
+    background: var(--brand-accent);
+  }
+  .exd-action.is-primary .exd-action-icon {
+    background: rgba(var(--brand-navy-rgb), 0.12);
+  }
+  .exd-action-label {
+    font-size: 0.76rem;
+  }
+  :root[data-bs-theme="dark"] .exd-action:not(.is-primary) {
+    background: rgba(var(--brand-accent-rgb), 0.1);
+  }
+  :root[data-bs-theme="dark"] .exd-action:not(.is-primary):hover {
+    background: rgba(var(--brand-accent-rgb), 0.18);
+  }
+  :root[data-bs-theme="dark"] .exd-action:not(.is-primary) .exd-action-icon {
+    background: transparent;
+  }
+}
+
+/* ---------- Desktop ---------- */
+
+@media (min-width: 992px) {
+  .exd-hero {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "top top"
+      "main actions";
+    align-items: end;
+    column-gap: 20px;
+    padding: 16px 22px;
+  }
+  .exd-hero-top { grid-area: top; }
+  .exd-hero-main {
+    grid-area: main;
+    margin: 8px 0 0;
+  }
+  .exd-actions {
+    grid-area: actions;
+    justify-content: flex-end;
+    max-width: 440px;
+    padding-top: 0;
+    border-top: 0;
+  }
+  .exd-tiles {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .exd-tile-value {
+    font-size: 1.15rem;
+  }
+  .exd-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+    gap: var(--exd-gap);
+    align-items: start;
+  }
+  .exd-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--exd-gap);
+    min-width: 0;
+  }
+  .exd-trend {
+    height: 140px;
+  }
 }

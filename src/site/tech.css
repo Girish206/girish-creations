@@ -165,13 +165,13 @@
 .gc-page-btn[aria-current="page"] {
   background: var(--gc-grad);
   border-color: transparent;
-  color: #fff;
+  color: var(--gc-accent-ink);
 }
 .gc-service-icon,
 .gc-contact-item-icon,
 .gc-empty-icon {
   background: var(--gc-grad);
-  color: #fff;
+  color: var(--gc-accent-ink);
   box-shadow: 0 8px 24px -8px var(--gc-glow);
 }
 .gc-input {
@@ -182,7 +182,7 @@
 }
 .gc-work-arrow {
   background: var(--gc-grad);
-  color: #fff;
+  color: var(--gc-accent-ink);
 }
 .gc-marquee {
   background: color-mix(in srgb, var(--gc-surface) 40%, transparent);
@@ -477,8 +477,8 @@
   flex-shrink: 0;
 }
 a.gc-tile:hover .gc-tile-arrow {
-  background: var(--gc-accent);
-  color: #fff;
+  background: var(--gc-fill);
+  color: var(--gc-accent-ink);
   border-color: transparent;
   transform: rotate(-45deg);
 }
@@ -718,7 +718,7 @@ a.gc-tile:hover .gc-tile-arrow {
 .gc-tab[aria-pressed="true"] {
   background: var(--gc-grad);
   border-color: transparent;
-  color: #fff;
+  color: var(--gc-accent-ink);
   box-shadow: 0 6px 20px -6px var(--gc-glow);
 }
 .gc-tab-count {

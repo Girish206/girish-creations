@@ -1,0 +1,50 @@
+/* Shared admin search box (components/SearchBox.tsx). */
+.search-box {
+  position: relative;
+  display: block;
+  min-width: 0;
+  /* No margin here: pages space it with their own class (e.g. .people-search),
+     and this file loads after theirs. */
+}
+
+.search-box > i {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.72rem;
+  color: var(--muted-color);
+  pointer-events: none;
+  transition: color 0.15s ease;
+}
+
+.search-box:focus-within > i {
+  color: var(--primary-text, var(--primary));
+}
+
+/* InputComp.css forces every .form-control to ~42px with !important. */
+.search-box .form-control {
+  height: 34px !important;
+  min-height: 34px !important;
+  padding: 4px 12px 4px 29px !important;
+  border-radius: 999px !important;
+  font-size: 0.8rem !important;
+}
+
+.search-box.has-trailing .form-control {
+  padding-right: 52px !important;
+}
+
+.search-box-trailing {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(var(--primary-rgb), 0.1);
+  color: var(--primary-text, var(--primary));
+  font-size: 0.68rem;
+  font-weight: 700;
+  pointer-events: none;
+}

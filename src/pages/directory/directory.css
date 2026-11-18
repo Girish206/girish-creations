@@ -177,7 +177,7 @@
 }
 .gc-person:hover .gc-person-arrow,
 .gc-person:focus-visible .gc-person-arrow {
-  background: var(--gc-accent);
+  background: var(--gc-fill);
   border-color: var(--gc-accent);
   color: var(--gc-accent-ink);
   transform: translateX(3px);

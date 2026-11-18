@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -9,17 +9,18 @@ import {
   useCreateExpenseGroup,
   useUpdateExpenseGroup,
 } from "../../../api/hooks/expense/useExpenseGroups";
+import { useCreateAdminUser } from "../../../api/hooks/expense/useAdminUsers";
 import type { AdminUserRef, ExpenseGroup } from "../../../api/types";
 import { useSavingsGoals } from "../../../api/hooks/expense/useSavingsGoals";
 import { useExpenseMembers } from "../../../api/hooks/expense/useExpenseMembers";
 import { useAdminAuth } from "../../../context/AdminAuthContext";
 import { ModalForm } from "../../components/ModalForm";
 import { SubmitButton } from "../../components/SubmitButton";
-import InputComp from "../../dms/components/InputComp";
 import TextareaInput from "../../dms/components/TextareaInput";
 import SelectInput from "../../dms/components/SelectInput";
 import { formatCurrency, INVALID_AMOUNT_MESSAGE, isValidAmount } from "../currency";
 import { todayLocal } from "../dates";
+import { toast } from "sonner";
 import "../../admin.css";
 
 const schema = z.object({
@@ -94,6 +95,8 @@ function describeWindow(start: string | null, end: string | null): string | null
 
 export interface AdminExpenseFormProps {
   id?: number;
+  // A new expense started from a group opens with that group picked.
+  groupId?: number;
   onSaved: () => void;
 }
 
@@ -107,12 +110,17 @@ function groupMemberIdsOf(group: ExpenseGroup | undefined, fallback: number | nu
 const sameIds = (a: number[], b: number[]) =>
   a.length === b.length && [...a].sort().join() === [...b].sort().join();
 
+// A new expense's date: its group's start date when it has one, else today.
+function defaultDateFor(group: { startDate?: string | null } | undefined) {
+  return group?.startDate?.slice(0, 10) ?? todayLocal();
+}
+
 // Rendered inside a DefaultModal by AdminExpensesList. Ungrouped expenses
 // are paid by whoever logs them (the backend defaults paidByAdminUserId to
 // the signed-in admin). Once a group is picked, the form shows the people in
 // it — editable here, saved onto the group — and a "Paid by" picker among
 // them, starting on the signed-in account.
-export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
+export function AdminExpenseForm({ id, groupId, onSaved }: AdminExpenseFormProps) {
   const isEdit = id !== undefined;
   const { data: items } = useExpenses();
   const { data: categories } = useExpenseCategories();
@@ -131,6 +139,7 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
     reset,
     setValue,
     getValues,
+    setFocus,
     setError,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
@@ -141,6 +150,8 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
   const splitMode = useWatch({ control, name: "splitMode" }) ?? "equal";
   const splitAmounts = useWatch({ control, name: "splitAmounts" }) ?? {};
   const selectedGroupId = useWatch({ control, name: "expenseGroupId" });
+  const selectedGoalId = useWatch({ control, name: "savingsGoalId" });
+  const paidFromFund = (savingsGoals ?? []).some((g) => g.id === selectedGoalId && g.kind === "fund");
   const groupMemberIds = useWatch({ control, name: "groupMemberIds" }) ?? [];
   const paidBy = useWatch({ control, name: "paidByAdminUserId" });
   const hasGroup = selectedGroupId !== "" && selectedGroupId !== undefined;
@@ -153,6 +164,12 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
   const windowStart = selectedGroup?.startDate?.slice(0, 10) ?? null;
   const windowEnd = selectedGroup?.endDate?.slice(0, 10) ?? null;
   const windowText = describeWindow(windowStart, windowEnd);
+  // A trip made for a shared fund: each expense is paid from the fund or from
+  // the payer's own money (a closed fund only for what was already on it).
+  const tripFund =
+    selectedGroup?.fund && (!selectedGroup.fund.closedAt || existing?.savingsGoalId === selectedGroup.fund.id)
+      ? selectedGroup.fund
+      : null;
 
   // Fill the form once its data is in (an edit also needs the groups, for
   // the group's people). Later refetches mustn't wipe what's been typed.
@@ -160,6 +177,7 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
   useEffect(() => {
     if (initialized.current) return;
     if (isEdit && (!existing || !groups)) return;
+    if (groupId !== undefined && !groups) return;
     initialized.current = true;
     if (existing) {
       const group = groups?.find((g) => g.id === existing.expenseGroupId);
@@ -192,43 +210,142 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
         splitAmounts: Object.fromEntries(existing.splitParticipants.map((p) => [String(p.adminUserId), p.shareAmount])),
       });
     } else {
+      const startGroup = groupId !== undefined ? groups?.find((g) => g.id === groupId && !g.closedAt) : undefined;
+      const startMemberIds = startGroup ? groupMemberIdsOf(startGroup, myId) : [];
+      const startDate = defaultDateFor(startGroup);
+      // Paid from the fund means paid by whoever keeps its money.
+      const startFund = startGroup?.fund && !startGroup.fund.closedAt ? startGroup.fund : null;
+      const startHolder =
+        startFund?.holderAdminUserId != null && startMemberIds.includes(startFund.holderAdminUserId)
+          ? startFund.holderAdminUserId
+          : null;
       reset({
         amount: "",
-        date: todayLocal(),
+        date: startDate,
         description: "",
-        savingsGoalId: "",
-        expenseGroupId: "",
-        groupMemberIds: [],
-        paidByAdminUserId: myId,
+        // A fund's trip starts on "paid from the fund".
+        savingsGoalId: startGroup?.fund && !startGroup.fund.closedAt ? startGroup.fund.id : "",
+        expenseGroupId: startGroup?.id ?? "",
+        groupMemberIds: startMemberIds,
+        paidByAdminUserId:
+          startHolder ??
+          (startGroup && !(myId !== null && startMemberIds.includes(myId)) ? (startMemberIds[0] ?? null) : myId),
         splitEnabled: false,
         splitAdminUserIds: [],
         splitMode: "equal",
         splitAmounts: {},
       });
     }
-  }, [isEdit, existing, groups, myId, reset]);
+  }, [isEdit, existing, groups, groupId, myId, reset]);
 
   const createExpense = useCreateExpense();
   const updateExpense = useUpdateExpense();
   const createExpenseGroup = useCreateExpenseGroup();
   const updateExpenseGroup = useUpdateExpenseGroup();
+  const createPerson = useCreateAdminUser();
+  const [addingPeople, setAddingPeople] = useState(false);
+  // People added from this form, named until the members list refetches.
+  const [addedPeople, setAddedPeople] = useState<{ id: number; name: string }[]>([]);
+
+  // Who keeps a shared fund's money (its account holder, else whoever made it).
+  function fundHolderId(goalId: number | string | undefined): number | null {
+    const goal = (savingsGoals ?? []).find((g) => g.id === goalId);
+    if (goal?.kind === "fund") return goal.accountHolderAdminUserId ?? goal.createdBy?.id ?? null;
+    return groups?.find((g) => g.fund?.id === goalId)?.fund?.holderAdminUserId ?? null;
+  }
+
+  function setPayer(payer: number | null) {
+    setValue("paidByAdminUserId", payer);
+    // The payer is always part of the split.
+    if (payer !== null && getValues("splitEnabled")) {
+      setValue("splitAdminUserIds", withPayerFirst(getValues("splitAdminUserIds") ?? [], payer));
+    }
+  }
+
+  // Paid from a fund: "Paid by" moves to whoever keeps the fund, if they're
+  // among the group's people.
+  function payFromFundHolder(goalId: number | string | undefined) {
+    const holder = fundHolderId(goalId);
+    if (holder !== null && (getValues("groupMemberIds") ?? []).includes(holder)) setPayer(holder);
+  }
 
   // Picking a group brings in its people and starts "Paid by" on you (or
   // the first of them, if you're not in it).
   function onGroupChange(value: number | string) {
-    if (value === "") return;
     const group = typeof value === "number" ? groups?.find((g) => g.id === value) : undefined;
+    // A fund's trip starts on its fund; leaving one drops that fund (its money
+    // only pays for its own trip).
+    const currentGoal = getValues("savingsGoalId");
+    const goalTrip = (savingsGoals ?? []).find((g) => g.id === currentGoal)?.expenseGroupId ?? null;
+    if (group?.fund && !group.fund.closedAt) {
+      setValue("savingsGoalId", group.fund.id);
+    } else if (goalTrip !== null && goalTrip !== group?.id) {
+      setValue("savingsGoalId", "");
+    }
+    // A new expense starts on the group's start date (today without one).
+    if (!isEdit) setValue("date", defaultDateFor(group));
+    if (value === "") return;
     const ids = groupMemberIdsOf(group, myId);
     setValue("groupMemberIds", ids);
-    setValue("paidByAdminUserId", myId !== null && ids.includes(myId) ? myId : (ids[0] ?? null));
+    const fundHolder = group?.fund && !group.fund.closedAt ? group.fund.holderAdminUserId : null;
+    const payer =
+      fundHolder !== null && ids.includes(fundHolder)
+        ? fundHolder
+        : myId !== null && ids.includes(myId)
+          ? myId
+          : (ids[0] ?? null);
+    setValue("paidByAdminUserId", payer);
+    // An open split follows the group: everyone in it, ticked.
+    if (getValues("splitEnabled")) setValue("splitAdminUserIds", withPayerFirst(ids, payer));
   }
 
   // Taking the payer out of the group moves "Paid by" back to you (or the
   // first person left).
+  // A typed-in name is someone new: they're added as a guest straight away
+  // (listed for splits, can be given a login later under People), so "Paid
+  // by" and the split can use them like anyone else.
+  async function onGroupPeoplePicked(picked: (number | string)[]) {
+    const typed = picked.filter((v): v is string => typeof v === "string" && v.trim() !== "");
+    if (typed.length === 0) {
+      onGroupMembersChange(picked.filter((v): v is number => typeof v === "number"));
+      return;
+    }
+    setAddingPeople(true);
+    try {
+      const ids: number[] = [];
+      for (const entry of picked) {
+        if (typeof entry === "number") {
+          ids.push(entry);
+        } else if (entry.trim() !== "") {
+          const created = await createPerson.mutateAsync({
+            name: entry.trim(),
+            hasPortfolioAccess: false,
+            hasExpensesAccess: false,
+            hasSavingsAccess: false,
+          });
+          if (!ids.includes(created.id)) ids.push(created.id);
+          setAddedPeople((list) => [...list, { id: created.id, name: entry.trim() }]);
+        }
+      }
+      onGroupMembersChange(ids);
+    } finally {
+      setAddingPeople(false);
+    }
+  }
+
   function onGroupMembersChange(ids: number[]) {
+    const before = getValues("groupMemberIds") ?? [];
     setValue("groupMemberIds", ids);
-    if (paidBy === null || !ids.includes(paidBy)) {
-      setValue("paidByAdminUserId", myId !== null && ids.includes(myId) ? myId : (ids[0] ?? null));
+    let payer = paidBy ?? null;
+    if (payer === null || !ids.includes(payer)) {
+      payer = myId !== null && ids.includes(myId) ? myId : (ids[0] ?? null);
+      setValue("paidByAdminUserId", payer);
+    }
+    // People added to the group join the split; people taken out leave it.
+    if (getValues("splitEnabled")) {
+      const added = ids.filter((v) => !before.includes(v));
+      const kept = (getValues("splitAdminUserIds") ?? []).filter((v) => ids.includes(v));
+      setValue("splitAdminUserIds", withPayerFirst([...kept, ...added], payer));
     }
   }
 
@@ -311,20 +428,37 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
     };
     if (isEdit && existing) {
       await updateExpense.mutateAsync({ id: existing.id, input });
-    } else {
-      await createExpense.mutateAsync(input);
+      onSaved();
+      return;
     }
-    onSaved();
+    await createExpense.mutateAsync(input);
+    // Stay open for the next one: clear what's per-expense, keep the date,
+    // group, people, paid from and paid by.
+    toast.success("Expense added");
+    reset({
+      ...values,
+      expenseGroupId: expenseGroupId ?? "",
+      amount: "",
+      categoryId: undefined as unknown as number,
+      description: "",
+      splitEnabled: false,
+      splitAdminUserIds: [],
+      splitMode: "equal",
+      splitAmounts: {},
+    });
+    setFocus("amount");
   }
 
   if (isEdit && !existing) return <p>Loading...</p>;
 
-  const categoryOptions = (categories ?? []).map((c) => ({ value: c.id, label: c.name }));
   // Closed goals/groups can't take new expenses — only keep one listed if
   // this expense already points at it, so the picker still shows its name.
   const savingsGoalOptions = (savingsGoals ?? [])
     .filter((g) => !g.closedAt || g.id === existing?.savingsGoalId)
-    .map((g) => ({ value: g.id, label: g.closedAt ? `${g.name} (closed)` : g.name }));
+    .map((g) => ({
+      value: g.id,
+      label: `${g.name}${g.kind === "fund" ? " (shared fund)" : ""}${g.closedAt ? " (closed)" : ""}`,
+    }));
   // A goal this account can't see still has to show by name on its expense.
   if (existing?.savingsGoal && !savingsGoalOptions.some((g) => g.value === existing.savingsGoalId)) {
     savingsGoalOptions.push({ value: existing.savingsGoal.id, label: existing.savingsGoal.name });
@@ -370,16 +504,21 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
   }
   const memberName = (memberId: number) => {
     const member = people.get(memberId);
-    return member?.name || member?.email || "Unknown member";
+    return member?.name || member?.email || addedPeople.find((p) => p.id === memberId)?.name || "Unknown member";
   };
   const memberOptions = peopleList.map((member) => ({
     value: member.id,
     label: `${member.name || member.email}${member.id === payerId ? " (paid)" : ""}`,
   }));
-  const groupPeopleOptions = peopleList.map((member) => ({
-    value: member.id,
-    label: `${member.name || member.email}${member.id === myId ? " (you)" : ""}`,
-  }));
+  const groupPeopleOptions = [
+    ...peopleList.map((member) => ({
+      value: member.id,
+      label: `${member.name || member.email}${member.id === myId ? " (you)" : ""}`,
+    })),
+    ...addedPeople
+      .filter((p) => !peopleList.some((member) => member.id === p.id))
+      .map((p) => ({ value: p.id, label: p.name })),
+  ];
   const payerOptions = groupMemberIds.map((memberId) => ({
     value: memberId,
     label: `${memberName(memberId)}${memberId === myId ? " (you)" : ""}`,
@@ -387,184 +526,248 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
 
   return (
     <ModalForm onSubmit={handleSubmit(onSubmit)}>
-      <Controller
-        name="amount"
-        control={control}
-        defaultValue=""
-        render={({ field }) => (
-          <InputComp
-            label="Amount"
-            type="number"
-            min="0.01"
-            step="0.01"
-            inputMode="decimal"
-            required
-            {...field}
-            error={errors.amount?.message}
-          />
-        )}
-      />
-      <Controller
-        name="date"
-        control={control}
-        defaultValue=""
-        render={({ field }) => (
-          <InputComp
-            label="Date"
-            type="date"
-            required
-            min={windowStart ?? undefined}
-            max={windowEnd ?? undefined}
-            {...field}
-            error={errors.date?.message}
-          />
-        )}
-      />
-      <Controller
-        name="categoryId"
-        control={control}
-        render={({ field }) => (
-          <SelectInput
-            label="Category"
-            required
-            options={categoryOptions}
-            value={field.value}
-            onChange={field.onChange}
-            error={errors.categoryId?.message}
-          />
-        )}
-      />
-      <Controller
-        name="expenseGroupId"
-        control={control}
-        render={({ field }) => (
-          <SelectInput
-            label="Expense Group"
-            placeholder="Ungrouped — shown under Daily Expenses"
-            creatable
-            options={groupOptions}
-            value={field.value}
-            onChange={(value) => {
-              field.onChange(value === "" ? "" : value);
-              onGroupChange(value);
-            }}
-          />
-        )}
-      />
-      {hasGroup && (
-        <>
+      <div className="admin-exp-form">
+        {/* Amount + date: the two things every expense needs, up top. */}
+        <div className="admin-exp-hero">
           <Controller
-            name="groupMemberIds"
+            name="amount"
             control={control}
+            defaultValue=""
             render={({ field }) => (
-              <SelectInput
-                label="People in this group"
-                required
-                isMulti
-                placeholder="Add people…"
-                options={groupPeopleOptions}
-                value={field.value}
-                onChange={onGroupMembersChange}
-                error={errors.groupMemberIds?.message}
-              />
+              <label className={`admin-exp-amount${errors.amount ? " has-error" : ""}`}>
+                <span aria-hidden="true">₹</span>
+                <input
+                  {...field}
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  inputMode="decimal"
+                  placeholder="0"
+                  aria-label="Amount"
+                  autoFocus={!isEdit}
+                  autoComplete="off"
+                />
+              </label>
             )}
           />
           <Controller
-            name="paidByAdminUserId"
+            name="date"
             control={control}
+            defaultValue=""
             render={({ field }) => (
-              <SelectInput
-                label="Paid by"
-                required
-                clearable={false}
-                options={payerOptions}
-                value={field.value ?? ""}
-                onChange={(value: number) => {
-                  field.onChange(value);
-                  // The payer is always part of the split.
-                  if (getValues("splitEnabled")) {
-                    setValue("splitAdminUserIds", withPayerFirst(getValues("splitAdminUserIds") ?? [], value));
-                  }
-                }}
-                error={errors.paidByAdminUserId?.message}
+              <input
+                {...field}
+                type="date"
+                aria-label="Date"
+                className={`admin-exp-date${errors.date ? " has-error" : ""}`}
+                min={windowStart ?? undefined}
+                max={windowEnd ?? undefined}
               />
             )}
           />
-        </>
-      )}
-      {windowText && (
-        <p className="admin-form-hint">
-          <i className="fa-solid fa-calendar-days"></i> Expenses in {selectedGroup?.name} must be dated {windowText}.
-        </p>
-      )}
-      {hasSavingsAccess && (
+        </div>
+        {(errors.amount || errors.date) && (
+          <small className="admin-exp-error">{errors.amount?.message ?? errors.date?.message}</small>
+        )}
+
         <Controller
-          name="savingsGoalId"
+          name="categoryId"
           control={control}
           render={({ field }) => (
             <SelectInput
-              label="Spent From (Savings)"
-              placeholder="Not linked to a savings goal"
-              options={savingsGoalOptions}
+              label="Category"
+              size="sm"
+              required
+              placeholder="Pick a category"
+              options={(categories ?? []).map((c) => ({ value: c.id, label: c.name }))}
               value={field.value}
-              onChange={(value) => field.onChange(value === "" ? "" : value)}
+              onChange={field.onChange}
+              error={errors.categoryId?.message}
             />
           )}
         />
-      )}
-      <Controller
-        name="description"
-        control={control}
-        defaultValue=""
-        render={({ field }) => <TextareaInput label="Description" rows={3} {...field} />}
-      />
 
-      <Controller
-        name="splitEnabled"
-        control={control}
-        render={({ field }) => (
-          <div className="form-check mb-2">
-            <input
-              type="checkbox"
-              className="form-check-input"
-              id="splitEnabled"
-              checked={field.value ?? false}
-              onChange={(e) => {
-                field.onChange(e.target.checked);
-                // Turning the split on starts with the payer already in it —
-                // and, in a group, everyone in the group.
-                if (e.target.checked) {
-                  const start = hasGroup ? groupMemberIds : (getValues("splitAdminUserIds") ?? []);
-                  setValue("splitAdminUserIds", withPayerFirst(start, payerId));
-                }
-              }}
-            />
-            <label className="form-check-label" htmlFor="splitEnabled">
-              Split this expense among people
-            </label>
-          </div>
-        )}
-      />
-
-      {splitEnabled && (
         <Controller
-          name="splitAdminUserIds"
+          name="description"
+          control={control}
+          defaultValue=""
+          render={({ field }) => (
+            <TextareaInput
+              name={field.name}
+              value={field.value}
+              onChange={field.onChange}
+              placeholder="Note: what was it for? (optional)"
+              rows={1}
+              className="admin-exp-note"
+            />
+          )}
+        />
+
+        <Controller
+          name="expenseGroupId"
           control={control}
           render={({ field }) => (
-            <div className="mb-3">
-              {/* Removing the payer's chip just puts it straight back. */}
-              <SelectInput
-                label="Split with"
-                required
-                isMulti
-                clearable={false}
-                placeholder="Choose people…"
-                options={memberOptions}
-                value={field.value}
-                onChange={(ids: number[]) => field.onChange(withPayerFirst(ids, payerId))}
-                error={errors.splitAdminUserIds?.message}
-              />
-              <div className="admin-segmented mt-2" role="radiogroup" aria-label="How to split">
+            <SelectInput
+              label="Group"
+              size="sm"
+              placeholder="None (daily)"
+              creatable
+              options={groupOptions}
+              value={field.value}
+              onChange={(value) => {
+                field.onChange(value === "" ? "" : value);
+                onGroupChange(value);
+              }}
+            />
+          )}
+        />
+        {tripFund ? (
+          <Controller
+            name="savingsGoalId"
+            control={control}
+            render={({ field }) => (
+              <div className="admin-exp-paidfrom">
+                <span className="admin-exp-paidfrom-label">Paid from</span>
+                <div className="admin-segmented" role="radiogroup" aria-label="Paid from">
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={field.value === tripFund.id}
+                    className={field.value === tripFund.id ? "active" : ""}
+                    onClick={() => {
+                      field.onChange(tripFund.id);
+                      payFromFundHolder(tripFund.id);
+                    }}
+                    title={tripFund.name}
+                  >
+                    <i className="fa-solid fa-people-group" aria-hidden="true"></i> Fund
+                  </button>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={field.value !== tripFund.id}
+                    className={field.value !== tripFund.id ? "active" : ""}
+                    onClick={() => field.onChange("")}
+                  >
+                    <i className="fa-solid fa-wallet" aria-hidden="true"></i> Own money
+                  </button>
+                </div>
+              </div>
+            )}
+          />
+        ) : (
+          hasSavingsAccess && (
+            <Controller
+              name="savingsGoalId"
+              control={control}
+              render={({ field }) => (
+                <SelectInput
+                  label="Paid from"
+                  size="sm"
+                  placeholder="None"
+                  options={savingsGoalOptions}
+                  value={field.value}
+                  onChange={(value) => {
+                    field.onChange(value === "" ? "" : value);
+                    // A fund's money is for its trip: put the expense there.
+                    const trip = (savingsGoals ?? []).find((g) => g.id === value)?.expenseGroupId ?? null;
+                    if (trip !== null && getValues("expenseGroupId") !== trip) {
+                      setValue("expenseGroupId", trip);
+                      onGroupChange(trip);
+                    }
+                    if (value !== "") payFromFundHolder(value);
+                  }}
+                />
+              )}
+            />
+          )
+        )}
+        {(paidFromFund || (tripFund && selectedGoalId === tripFund.id)) && (
+          <p className="admin-form-hint m-0">
+            <i className="fa-solid fa-people-group"></i> From the fund. Split only for some people or custom amounts.
+          </p>
+        )}
+        {tripFund && selectedGoalId !== tripFund.id && (
+          <p className="admin-form-hint m-0">
+            <i className="fa-solid fa-wallet"></i> Paid from their own money: whoever shares it pays them back in the trip's
+            settle-up.
+          </p>
+        )}
+
+        {hasGroup && (
+          <>
+            <Controller
+              name="groupMemberIds"
+              control={control}
+              render={({ field }) => (
+                <SelectInput
+                  label="People"
+                  size="sm"
+                  required
+                  isMulti
+                  creatable
+                  isLoading={addingPeople}
+                  readOnly={addingPeople}
+                  placeholder="Pick or type a new name…"
+                  options={groupPeopleOptions}
+                  value={field.value}
+                  onChange={onGroupPeoplePicked}
+                  error={errors.groupMemberIds?.message}
+                />
+              )}
+            />
+            <Controller
+              name="paidByAdminUserId"
+              control={control}
+              render={({ field }) => (
+                <SelectInput
+                  label="Paid by"
+                  size="sm"
+                  required
+                  clearable={false}
+                  options={payerOptions}
+                  value={field.value ?? ""}
+                  onChange={(value: number) => setPayer(value)}
+                  error={errors.paidByAdminUserId?.message}
+                />
+              )}
+            />
+          </>
+        )}
+        {windowText && (
+          <p className="admin-form-hint m-0">
+            <i className="fa-solid fa-calendar-days"></i> {selectedGroup?.name} expenses must be dated {windowText}.
+          </p>
+        )}
+
+        <div className={`admin-exp-split${splitEnabled ? " open" : ""}`}>
+          <div className="admin-exp-split-head">
+            <Controller
+              name="splitEnabled"
+              control={control}
+              render={({ field }) => (
+                <label className="admin-exp-switch">
+                  <input
+                    type="checkbox"
+                    role="switch"
+                    checked={field.value ?? false}
+                    onChange={(e) => {
+                      field.onChange(e.target.checked);
+                      // Turning the split on starts with the payer already in it —
+                      // and, in a group, everyone in the group.
+                      if (e.target.checked) {
+                        const start = hasGroup ? groupMemberIds : (getValues("splitAdminUserIds") ?? []);
+                        setValue("splitAdminUserIds", withPayerFirst(start, payerId));
+                      }
+                    }}
+                  />
+                  <span className="admin-exp-switch-track" aria-hidden="true"></span>
+                  <span>Split with others</span>
+                </label>
+              )}
+            />
+            {splitEnabled && (
+              <div className="admin-segmented" role="radiogroup" aria-label="How to split">
                 <button
                   type="button"
                   role="radio"
@@ -572,7 +775,7 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
                   className={splitMode === "equal" ? "active" : ""}
                   onClick={() => setValue("splitMode", "equal")}
                 >
-                  <i className="fa-solid fa-equals" aria-hidden="true"></i> Equally
+                  <i className="fa-solid fa-equals" aria-hidden="true"></i> Equal
                 </button>
                 <button
                   type="button"
@@ -581,61 +784,113 @@ export function AdminExpenseForm({ id, onSaved }: AdminExpenseFormProps) {
                   className={splitMode === "custom" ? "active" : ""}
                   onClick={chooseCustomSplit}
                 >
-                  <i className="fa-solid fa-sliders" aria-hidden="true"></i> By amount
+                  <i className="fa-solid fa-sliders" aria-hidden="true"></i> Amount
                 </button>
               </div>
-              {!hasGroup && (
-                <p className="admin-form-hint">
-                  <i className="fa-solid fa-circle-info"></i> Not in a group, so repayments are settled one-to-one from
-                  Daily splits on the Expenses page.
-                </p>
-              )}
-              {field.value.length > 0 && (
-                <ul className="admin-split-shares">
-                  {field.value.map((memberId: number, i: number) => (
-                    <li key={memberId}>
-                      <span>
-                        {memberName(memberId)}
-                        {memberId === payerId && <span className="admin-split-payer">Paid</span>}
-                      </span>
-                      {splitMode === "custom" ? (
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          inputMode="decimal"
-                          className="form-control form-control-sm admin-split-share-input"
-                          aria-label={`${memberName(memberId)}'s share`}
-                          value={splitAmounts[String(memberId)] ?? ""}
-                          onChange={(e) =>
-                            setValue("splitAmounts", { ...getValues("splitAmounts"), [String(memberId)]: e.target.value })
-                          }
-                        />
-                      ) : (
-                        <strong>{shares[i] !== undefined ? formatCurrency(shares[i]) : "—"}</strong>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {splitMode === "custom" && (
-                <p
-                  className={`admin-form-hint ${unassignedCents === 0 ? "admin-settle-gets" : "admin-settle-owes"}`}
-                  role="status"
-                >
-                  {unassignedCents === 0
-                    ? "Shares add up to the full amount."
-                    : unassignedCents > 0
-                      ? `${formatCurrency(unassignedCents / 100)} still to assign`
-                      : `${formatCurrency(-unassignedCents / 100)} too much`}
-                </p>
-              )}
-            </div>
-          )}
-        />
-      )}
+            )}
+          </div>
 
-      <SubmitButton loading={isSubmitting}>Save</SubmitButton>
+          {splitEnabled && (
+            <Controller
+              name="splitAdminUserIds"
+              control={control}
+              render={({ field }) => {
+                // In a group the people are already picked above, so the
+                // split is just ticks against them — no second picker.
+                const rows: number[] = hasGroup ? withPayerFirst(groupMemberIds, payerId) : field.value;
+                const toggle = (memberId: number, on: boolean) => {
+                  const next = on ? [...field.value, memberId] : field.value.filter((v: number) => v !== memberId);
+                  field.onChange(withPayerFirst(rows.filter((v) => next.includes(v)), payerId));
+                };
+                return (
+                <div className="admin-exp-split-body">
+                  {/* Removing the payer's chip just puts it straight back. */}
+                  {!hasGroup && (
+                    <SelectInput
+                      size="sm"
+                      isMulti
+                      clearable={false}
+                      placeholder="Choose people…"
+                      options={memberOptions}
+                      value={field.value}
+                      onChange={(ids: number[]) => field.onChange(withPayerFirst(ids, payerId))}
+                      error={errors.splitAdminUserIds?.message}
+                    />
+                  )}
+                  {hasGroup && errors.splitAdminUserIds?.message && (
+                    <p className="admin-form-hint m-0 admin-settle-owes">{errors.splitAdminUserIds.message}</p>
+                  )}
+                  {rows.length > 0 && (
+                    <ul className="admin-split-shares">
+                      {rows.map((memberId: number) => {
+                        const i = field.value.indexOf(memberId);
+                        const included = i !== -1;
+                        return (
+                        <li key={memberId} className={included ? "" : "is-out"}>
+                          <span>
+                            {hasGroup && (
+                              <input
+                                type="checkbox"
+                                className="form-check-input admin-split-tick"
+                                checked={included}
+                                disabled={memberId === payerId}
+                                onChange={(e) => toggle(memberId, e.target.checked)}
+                                aria-label={`Include ${memberName(memberId)}`}
+                              />
+                            )}
+                            {memberName(memberId)}
+                            {memberId === payerId && <span className="admin-split-payer">Paid</span>}
+                          </span>
+                          {!included ? (
+                            <span className="admin-split-out">Not in</span>
+                          ) : splitMode === "custom" ? (
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              inputMode="decimal"
+                              className="form-control form-control-sm admin-split-share-input"
+                              aria-label={`${memberName(memberId)}'s share`}
+                              value={splitAmounts[String(memberId)] ?? ""}
+                              onChange={(e) =>
+                                setValue("splitAmounts", { ...getValues("splitAmounts"), [String(memberId)]: e.target.value })
+                              }
+                            />
+                          ) : (
+                            <strong>{shares[i] !== undefined ? formatCurrency(shares[i]) : "—"}</strong>
+                          )}
+                        </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                  {splitMode === "custom" && (
+                    <p
+                      className={`admin-form-hint m-0 ${unassignedCents === 0 ? "admin-settle-gets" : "admin-settle-owes"}`}
+                      role="status"
+                    >
+                      {unassignedCents === 0
+                        ? "Shares add up to the full amount."
+                        : unassignedCents > 0
+                          ? `${formatCurrency(unassignedCents / 100)} still to assign`
+                          : `${formatCurrency(-unassignedCents / 100)} too much`}
+                    </p>
+                  )}
+                  {!hasGroup && (
+                    <p className="admin-form-hint m-0">
+                      <i className="fa-solid fa-circle-info"></i> No group, so repayments settle one-to-one under Daily
+                      splits.
+                    </p>
+                  )}
+                </div>
+                );
+              }}
+            />
+          )}
+        </div>
+      </div>
+
+      <SubmitButton loading={isSubmitting}>{isEdit ? "Save" : "Add expense"}</SubmitButton>
     </ModalForm>
   );
 }

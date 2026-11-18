@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { LuSun } from "react-icons/lu";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAdminAuth, type AdminModule } from "../../../context/AdminAuthContext";
 import { useAdminTheme } from "../../useAdminTheme";
@@ -62,7 +63,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
                     <div className="d-flex align-items-center">
                         {/* Sidebar toggle for mobile */}
                         <Link
-                            className="text-danger d-md-none me-3"
+                            className="navbar-menu-btn d-md-none me-3"
                             to="#"
                             onClick={toggleSidebar}
                         >
@@ -123,7 +124,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
                         title={isDark ? "Switch to light mode" : "Switch to dark mode"}
                         aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
                     >
-                        <i className={`fa-solid ${isDark ? "fa-sun" : "fa-moon"}`} aria-hidden="true"></i>
+                        <span key={isDark ? "sun" : "moon"} className="theme-toggle-icon" aria-hidden="true">{isDark ? <LuSun /> : <i className="fa-solid fa-moon"></i>}</span>
                     </button>
                     <div className="navbar-user-chip">
                         <div

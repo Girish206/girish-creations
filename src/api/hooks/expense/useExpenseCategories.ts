@@ -75,3 +75,21 @@ export function useDeleteExpenseCategory() {
     onSuccess: () => invalidate(queryClient),
   });
 }
+
+// Super admins fold a duplicate category into another: its expenses move across.
+export function useMergeExpenseCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, intoCategoryId }: { id: number; intoCategoryId: number }) => {
+      const { data } = await apiClient.post<ApiEnvelope<{ moved: number }>>(
+        `/admin/expense-categories/${id}/merge`,
+        { intoCategoryId },
+      );
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["expense-categories"] });
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+    },
+  });
+}

@@ -4,11 +4,15 @@
    src/styles/brand.css, so the admin matches the public portfolio: change a
    brand colour there and both follow. */
 :root {
-  /* Primary: the logo's indigo (deep shade, readable under white text) */
-  --primary: var(--brand-primary-deep);
+  /* Primary: the brand amber, for fills (buttons, active tabs, checkboxes) */
+  --primary: var(--brand-primary);
   /* Same as --primary, as an "r, g, b" triplet for rgba(var(--primary-rgb), alpha) */
-  --primary-rgb: var(--brand-primary-deep-rgb);
-  /* Violet → blue, for primary buttons and highlights */
+  --primary-rgb: var(--brand-primary-rgb);
+  /* Text and icons on an amber fill: graphite, not white */
+  --on-primary: var(--brand-on-primary);
+  /* Amber as TEXT on a light surface: the deep shade, so it stays readable */
+  --primary-text: var(--brand-primary-deep);
+  /* Amber, for primary buttons and highlights (graphite text on it) */
   --primary-gradient: var(--brand-gradient);
 
   /* Lighter shades (tints) */
@@ -26,7 +30,7 @@
   --primary-dark-3: color-mix(in srgb, var(--primary) 42%, #000);
   --primary-dark-4: color-mix(in srgb, var(--primary) 20%, #000);
 
-  /* Secondary: the cyan end of the logo's gradient */
+  /* Secondary: the burnt-orange end of the brand gradient */
   --secondary: var(--brand-highlight-deep);
   /* Same as --secondary, as an "r, g, b" triplet for rgba(var(--secondary-rgb), alpha) */
   --secondary-rgb: var(--brand-highlight-deep-rgb);
@@ -49,8 +53,20 @@
   --theme-text-dark: var(--brand-navy);
   --muted-color: #5b5d78;
   --border-color: #e1e3ef;
-  --background-color: #f3f4fa;
+  --background-color: #f6f5f2;
   --theme-text-light: #ffffff;
+
+  /* Legacy template names still read by admin.css */
+  --orange: var(--primary-text);
+  --white: #ffffff;
+
+  /* Bootstrap's primary → the brand amber */
+  --bs-primary: var(--brand-primary);
+  --bs-primary-rgb: var(--brand-primary-rgb);
+  --bs-link-color: var(--brand-primary-deep);
+  --bs-link-color-rgb: var(--brand-primary-deep-rgb);
+  --bs-link-hover-color: #7a4c05;
+  --bs-focus-ring-color: rgba(var(--brand-primary-rgb), 0.3);
 
   /* The four logo colours, for the login screen's gradient and other
      places that echo the logo itself rather than primary/secondary. */

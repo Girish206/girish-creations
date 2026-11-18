@@ -119,7 +119,7 @@ const InputComp: React.FC<TextInputProps> = ({
                         <label htmlFor={id || name}>
                             {label}
                             {required && (
-                                <span className="text-theme-primary">
+                                <span className="text-danger-brand">
                                     &nbsp;*
                                 </span>
                             )}
@@ -128,7 +128,7 @@ const InputComp: React.FC<TextInputProps> = ({
                     {iconEl}
                 </div>
                 {error && (
-                    <small className="text-theme-primary ms-1">{error}</small>
+                    <small className="text-danger-brand ms-1">{error}</small>
                 )}
             </div>
         );
@@ -144,7 +144,7 @@ const InputComp: React.FC<TextInputProps> = ({
                 >
                     {label}
                     {required && (
-                        <span className="text-theme-primary">&nbsp;*</span>
+                        <span className="text-danger-brand">&nbsp;*</span>
                     )}
                 </label>
             )}
@@ -173,7 +173,7 @@ const InputComp: React.FC<TextInputProps> = ({
                 />
                 {iconEl}
             </div>
-            {error && <small className="text-theme-primary">{error}</small>}
+            {error && <small className="text-danger-brand">{error}</small>}
         </div>
     );
 };

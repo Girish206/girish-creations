@@ -1,0 +1,546 @@
+/* =====================================================================
+   Filter fields (components/ui/filters.tsx): FilterSelect, FilterDate, FilterSearch
+   One 38px box: label inside on the left, value on the right.
+   ===================================================================== */
+
+.ui-filter {
+  --filter-h: 38px;
+  --filter-border: #e2dbd2;
+  --filter-text: #1f2937;
+  --filter-muted: #8b8f97;
+  position: relative;
+  /* auto (not 100%): fills the column minus the m-1 margin instead of overflowing it */
+  width: auto;
+  min-width: 0;
+  font-size: 13px;
+}
+
+/* ---------- the box (react-select control, or the date / search wrapper) ---------- */
+.ui-filter__control,
+.ui-filter-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: var(--filter-h);
+  min-height: var(--filter-h);
+  padding: 0 8px 0 4px;
+  background: #fff;
+  border: 1px solid var(--filter-border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+.ui-filter-field {
+  cursor: text;
+}
+.ui-filter__control:hover,
+.ui-filter-field:hover {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--filter-border));
+}
+.ui-filter__control--is-focused,
+.ui-filter__control--menu-is-open,
+.ui-filter-field:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+/* something picked: tinted box so active filters stand out */
+.ui-filter--active .ui-filter__control,
+.ui-filter--active.ui-filter-field {
+  background: color-mix(in srgb, var(--primary) 4%, #fff);
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--filter-border));
+}
+
+.ui-filter--disabled .ui-filter__control,
+.ui-filter--disabled.ui-filter-field {
+  cursor: not-allowed;
+  opacity: 0.6;
+  background: #f6f5f3;
+}
+
+/* validation message (required filter) */
+.ui-filter--error .ui-filter__control {
+  border-color: var(--danger-text);
+}
+.ui-filter__error {
+  display: block;
+  margin: 3px 0 0 4px;
+  font-size: 11.5px;
+  color: var(--danger-text);
+}
+
+/* ---------- label inside the box ---------- */
+.ui-filter__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin: 0;
+  height: calc(var(--filter-h) - 10px);
+  padding: 0 8px 1px; /* lifts the text to the optical centre of the chip */
+  border-radius: 7px;
+  background: #f5f1ec;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--filter-muted);
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.ui-filter__label i {
+  font-size: 11px;
+  color: var(--primary);
+}
+.ui-filter--active .ui-filter__label {
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, #fff);
+}
+
+/* ---------- value ---------- */
+.ui-filter__value-container {
+  flex: 1 1 auto;
+  min-width: 0;
+  justify-content: flex-end;
+}
+.ui-filter__single-value,
+.ui-filter__summary {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+  color: var(--filter-text);
+}
+.ui-filter__summary {
+  max-width: 100%;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  min-width: 0;
+}
+.ui-filter__summary-first {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ui-filter__summary-more {
+  flex-shrink: 0;
+  padding: 0 6px;
+  border-radius: 50rem;
+  font-size: 11.5px;
+  line-height: 18px;
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, #fff);
+}
+[data-bs-theme="dark"] .ui-filter__summary-more {
+  color: #f0848c;
+  background: #3a2326;
+}
+/* only "All" picked = no filter: muted like a placeholder */
+.ui-filter__summary--all {
+  font-weight: 500;
+  color: var(--filter-muted);
+}
+.ui-filter__single-value {
+  grid-area: 1 / 1 / 2 / 3;
+  text-align: right;
+}
+.ui-filter__placeholder {
+  grid-area: 1 / 1 / 2 / 3;
+  text-align: right;
+  color: var(--filter-muted) !important;
+  font-weight: 500;
+}
+.ui-filter__input-container {
+  color: var(--filter-text);
+}
+/* single select: the value is right-aligned, so the search input (and its
+   caret) sits at the right edge, after the value, not over its first letter */
+.ui-filter__value-container:not(.ui-filter__value-container--is-multi) .ui-filter__input-container {
+  justify-self: end;
+  text-align: right;
+}
+
+/* the summary and the search input share the line */
+.ui-filter__value-container--is-multi {
+  display: flex !important;
+}
+.ui-filter__value-container--is-multi .ui-filter__input-container {
+  flex: 0 1 auto;
+  min-width: 2px;
+}
+
+/* ---------- indicators (clear ✕, chevron) ---------- */
+.ui-filter__indicators {
+  flex-shrink: 0;
+}
+.ui-filter__indicator {
+  color: #a8a29e !important;
+}
+.ui-filter__indicator svg {
+  width: 16px;
+  height: 16px;
+}
+.ui-filter__indicator:hover,
+.ui-filter__control--menu-is-open .ui-filter__dropdown-indicator {
+  color: var(--primary) !important;
+}
+.ui-filter__control--menu-is-open .ui-filter__dropdown-indicator svg {
+  transform: rotate(180deg);
+}
+
+/* ---------- native inputs (FilterDate / FilterSearch / FilterText) ---------- */
+/* 2px at the bottom: the font sits low in its line box, this lifts the text to the optical centre */
+.ui-filter-field .ui-filter__input {
+  padding-bottom: 2px !important;
+  /* no built-in ~150px width: the input fills what the box has left, so a box in an equal-width
+     column (col / col-xl) never forces the row to wrap when the clear button appears */
+  width: 0;
+}
+.ui-filter__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--filter-text);
+  text-align: right;
+}
+.ui-filter-field .ui-filter__input[type="search"],
+.ui-filter-field .ui-filter__input--text {
+  text-align: left;
+  font-weight: 600;
+}
+.ui-filter__input::placeholder {
+  color: var(--filter-muted);
+  font-weight: 500;
+}
+/* FilterDate: input + its own placeholder ("Select date") laid over it while empty */
+.ui-filter__date {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+}
+/* empty: "dd-mm-yyyy" muted while typing, hidden (placeholder shown instead) otherwise */
+.ui-filter__input--empty {
+  font-weight: 500;
+  color: var(--filter-muted);
+}
+.ui-filter__input--empty:not(:focus) {
+  color: transparent;
+}
+.ui-filter__date-placeholder {
+  position: absolute;
+  top: 0;
+  right: 26px; /* clear of the calendar icon */
+  bottom: 2px; /* same optical lift as the input text */
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--filter-muted);
+}
+.ui-filter__input--empty:focus + .ui-filter__date-placeholder {
+  display: none;
+}
+.ui-filter__input::-webkit-search-cancel-button {
+  display: none;
+}
+.ui-filter__input::-webkit-calendar-picker-indicator {
+  margin-left: 8px;
+  cursor: pointer;
+  opacity: 0.55;
+}
+.ui-filter__clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--primary) 10%, #fff);
+  color: var(--primary);
+  font-size: 11px;
+  cursor: pointer;
+}
+.ui-filter__clear:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* ---------- dropdown menu (portalled to <body>, so not nested under .ui-filter) ---------- */
+.ui-filter__menu {
+  border: 1px solid #ece7e0;
+  border-radius: 12px !important;
+  overflow: hidden;
+  box-shadow: 0 12px 32px rgba(16, 24, 40, 0.14) !important;
+  font-size: 13px;
+}
+.ui-filter__option {
+  display: flex;
+  /* the checkbox stays beside the first line of a wrapped label */
+  align-items: flex-start;
+  gap: 9px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  color: #374151;
+  font-weight: 500;
+  cursor: pointer;
+}
+.ui-filter__option--is-focused {
+  background: color-mix(in srgb, var(--primary) 7%, #fff);
+}
+/* single select: picked option in brand red */
+.ui-filter__option--is-selected {
+  color: var(--primary);
+  font-weight: 700;
+}
+/* a long option wraps onto more lines instead of being cut with "…" */
+.ui-filter__option-label {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.3;
+}
+.ui-filter__check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  /* centred on the label's first line */
+  margin-top: 1px;
+  border: 1.5px solid #cfc8bf;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 10px;
+  color: #fff;
+}
+.ui-filter__check.is-checked {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+.ui-filter__menu-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px 6px;
+  border-bottom: 1px solid #f1ede8;
+  font-size: 12px;
+  color: #c4bdb4;
+}
+.ui-filter__menu-actions button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-weight: 700;
+  color: var(--primary);
+  cursor: pointer;
+}
+.ui-filter__menu-actions button:hover {
+  text-decoration: underline;
+}
+.ui-filter__menu-notice {
+  color: var(--filter-muted, #8b8f97);
+  font-size: 12px;
+}
+
+/* ---------- hover card: every picked option of a multi-select ---------- */
+.ui-filter__tooltip {
+  position: fixed;
+  z-index: 10000;
+  width: 300px;
+  padding: 8px 6px 6px;
+  background: #fff;
+  border: 1px solid #ece7e0;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(16, 24, 40, 0.16);
+  font-size: 12.5px;
+  pointer-events: none;
+  animation: ui-filter-tooltip-in 0.12s ease-out;
+}
+@keyframes ui-filter-tooltip-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+}
+.ui-filter__tooltip-head {
+  padding: 0 8px 6px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #f1ede8;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+.ui-filter__tooltip ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ui-filter__tooltip li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 8px;
+  color: #374151;
+  font-weight: 500;
+  line-height: 1.35;
+}
+.ui-filter__tooltip li i {
+  margin-top: 3px;
+  font-size: 10px;
+  color: var(--primary);
+}
+.ui-filter__tooltip-more {
+  padding: 4px 8px 2px 26px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #8b8f97;
+}
+
+/* ---------- dark mode ---------- */
+[data-bs-theme="dark"] .ui-filter__tooltip {
+  background: #252526;
+  border-color: #333;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+[data-bs-theme="dark"] .ui-filter__tooltip-head {
+  color: #f0848c;
+  border-bottom-color: #333;
+}
+[data-bs-theme="dark"] .ui-filter__tooltip li {
+  color: #d4d4d4;
+}
+[data-bs-theme="dark"] .ui-filter__tooltip li i {
+  color: #f0848c;
+}
+[data-bs-theme="dark"] .ui-filter {
+  --filter-border: #3a3a3a;
+  --filter-text: #e5e5e5;
+  --filter-muted: #9d9d9d;
+}
+[data-bs-theme="dark"] .ui-filter__control,
+[data-bs-theme="dark"] .ui-filter-field {
+  background: #252526;
+}
+[data-bs-theme="dark"] .ui-filter--active .ui-filter__control,
+[data-bs-theme="dark"] .ui-filter--active.ui-filter-field {
+  background: #2d2223;
+  border-color: #6b2b31;
+}
+[data-bs-theme="dark"] .ui-filter__label {
+  background: #2f2f30;
+}
+[data-bs-theme="dark"] .ui-filter--active .ui-filter__label {
+  background: #3a2326;
+}
+[data-bs-theme="dark"] .ui-filter__label i,
+[data-bs-theme="dark"] .ui-filter--active .ui-filter__label {
+  color: #f0848c;
+}
+[data-bs-theme="dark"] .ui-filter__input {
+  color-scheme: dark;
+}
+[data-bs-theme="dark"] .ui-filter__menu {
+  background: #252526 !important;
+  border-color: #333;
+}
+[data-bs-theme="dark"] .ui-filter__option {
+  color: #d4d4d4;
+}
+[data-bs-theme="dark"] .ui-filter__option--is-focused {
+  background: #3a2326;
+}
+[data-bs-theme="dark"] .ui-filter__option--is-selected {
+  color: #f0848c;
+}
+[data-bs-theme="dark"] .ui-filter__check {
+  background: #1e1e1e;
+  border-color: #555;
+}
+[data-bs-theme="dark"] .ui-filter__menu-actions {
+  border-bottom-color: #333;
+}
+[data-bs-theme="dark"] .ui-filter__menu-actions button,
+[data-bs-theme="dark"] .ui-filter__clear {
+  color: #f0848c;
+}
+[data-bs-theme="dark"] .ui-filter__clear {
+  background: #3a2326;
+}
+
+/* ---------- local: this admin's dark theme ----------
+   Everything above is drm-react's file as-is. Its dark mode hard-codes drm's
+   red brand and grey surfaces; here they follow this admin's primary (amber)
+   and navy surfaces instead. Same rules, same specificity, later in the file. */
+[data-bs-theme="dark"] .ui-filter {
+  --filter-border: var(--adm-line-strong);
+  --filter-text: var(--adm-text);
+  --filter-muted: #a3a4a9;
+}
+[data-bs-theme="dark"] .ui-filter__control,
+[data-bs-theme="dark"] .ui-filter-field,
+[data-bs-theme="dark"] .ui-filter__menu,
+[data-bs-theme="dark"] .ui-filter__tooltip {
+  background: var(--adm-raised) !important;
+  border-color: var(--adm-line-strong);
+}
+[data-bs-theme="dark"] .ui-filter--active .ui-filter__control,
+[data-bs-theme="dark"] .ui-filter--active.ui-filter-field {
+  background: color-mix(in srgb, var(--primary) 8%, var(--adm-raised)) !important;
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--adm-line-strong));
+}
+[data-bs-theme="dark"] .ui-filter__label {
+  background: rgba(255, 255, 255, 0.06);
+}
+[data-bs-theme="dark"] .ui-filter--active .ui-filter__label,
+[data-bs-theme="dark"] .ui-filter__summary-more,
+[data-bs-theme="dark"] .ui-filter__option--is-focused,
+[data-bs-theme="dark"] .ui-filter__clear {
+  background: color-mix(in srgb, var(--primary) 18%, transparent);
+}
+[data-bs-theme="dark"] .ui-filter__label i,
+[data-bs-theme="dark"] .ui-filter--active .ui-filter__label,
+[data-bs-theme="dark"] .ui-filter__summary-more,
+[data-bs-theme="dark"] .ui-filter__option--is-selected,
+[data-bs-theme="dark"] .ui-filter__tooltip-head,
+[data-bs-theme="dark"] .ui-filter__tooltip li i,
+[data-bs-theme="dark"] .ui-filter__menu-actions button,
+[data-bs-theme="dark"] .ui-filter__clear {
+  color: var(--primary);
+}
+[data-bs-theme="dark"] .ui-filter__option,
+[data-bs-theme="dark"] .ui-filter__tooltip li {
+  color: var(--adm-text-2);
+}
+[data-bs-theme="dark"] .ui-filter__check {
+  background: var(--adm-surface);
+  border-color: var(--adm-line-strong);
+}
+[data-bs-theme="dark"] .ui-filter__menu-actions,
+[data-bs-theme="dark"] .ui-filter__tooltip-head {
+  border-bottom-color: var(--adm-line-strong);
+}
+
+/* local: drm's placeholders are one word ("All"); longer ones here
+   ("None (daily)") stay on one line and shorten with "…" like the values. */
+.ui-filter__placeholder {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

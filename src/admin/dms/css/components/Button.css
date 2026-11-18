@@ -4,7 +4,7 @@
   background-color: var(--primary) !important;
   /* Same violet → blue gradient as the public site's buttons. */
   background-image: var(--primary-gradient) !important;
-  color: var(--theme-text-light) !important;
+  color: var(--on-primary) !important;
   border: none !important;
   box-shadow: 0 6px 18px -8px rgba(var(--primary-rgb), 0.7);
   transition: filter 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
@@ -21,21 +21,21 @@
 
 /* Outline */
 .btn-outline-custom-primary {
-  color: var(--primary) !important;
+  color: var(--primary-text) !important;
   border: 1px solid var(--primary) !important;
   background-color: transparent !important;
 }
 
 .btn-outline-custom-primary:hover {
   background-color: var(--primary) !important;
-  color: var(--theme-text-light) !important;
+  color: var(--on-primary) !important;
   border-color: var(--primary-dark-1) !important;
 }
 
 .btn-outline-custom-primary:active {
   background-color: var(--primary-dark-1) !important;
   border-color: var(--primary-dark-1) !important;
-  color: var(--theme-text-light) !important;
+  color: var(--on-primary) !important;
 }
 
 /* Base */
@@ -94,7 +94,7 @@
 /* Modern Search Button */
 .btn-search-primary {
   background-color: var(--primary) !important;
-  color: white !important;
+  color: var(--on-primary) !important;
   border: none !important;
   border-radius: 10px !important;
   padding: 0.5rem 1.5rem !important;
@@ -129,7 +129,7 @@
 /* Modern Badges */
 .badge-modern-primary {
   background-color: var(--primary) !important;
-  color: white !important;
+  color: var(--on-primary) !important;
   border-radius: 20px !important;
   padding: 0.5rem 1rem !important;
   font-weight: 500 !important;

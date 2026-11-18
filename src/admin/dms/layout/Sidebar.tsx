@@ -1,7 +1,8 @@
 import { useState, useRef } from "react";
 import { MenuItem } from "./MenuItem";
 import { useAdminAuth } from "../../../context/AdminAuthContext";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAdminMenu } from "./useAdminMenu";
 
 const Sidebar = ({
     activeSubItem,
@@ -16,171 +17,12 @@ const Sidebar = ({
     toggleSidebar: () => void;
     setSidebarOpen: (open: boolean) => void;
 }) => {
-    const { logout, admin } = useAdminAuth();
+    const { logout } = useAdminAuth();
     const navigate = useNavigate();
-    const location = useLocation();
-    const isExpenseModule = location.pathname.startsWith("/admin/expense");
 
     const sidebarRef = useRef<HTMLDivElement | null>(null);
 
-    const portfolioMenuGroups = [
-        {
-            label: "Main",
-            items: [
-                {
-                    id: "dashboard",
-                    label: "Dashboard",
-                    icon: "fa-solid fa-chart-pie",
-                    link: "/admin",
-                    submenu: [],
-                },
-            ],
-        },
-        {
-            label: "Portfolio Content",
-            items: [
-                {
-                    id: "profile",
-                    label: "Profile",
-                    icon: "fa-solid fa-user",
-                    link: "/admin/profile",
-                    submenu: [],
-                },
-                {
-                    id: "experience",
-                    label: "Experience",
-                    icon: "fa-solid fa-briefcase",
-                    link: "/admin/experience",
-                    submenu: [],
-                },
-                {
-                    id: "education",
-                    label: "Education",
-                    icon: "fa-solid fa-graduation-cap",
-                    link: "/admin/education",
-                    submenu: [],
-                },
-                {
-                    id: "skills",
-                    label: "Expertise",
-                    icon: "fa-solid fa-star",
-                    link: "/admin/skills",
-                    submenu: [],
-                },
-                {
-                    id: "projects",
-                    label: "Projects",
-                    icon: "fa-solid fa-diagram-project",
-                    link: "/admin/projects",
-                    submenu: [],
-                },
-                {
-                    id: "blog",
-                    label: "Blog",
-                    icon: "fa-solid fa-blog",
-                    link: "/admin/blog",
-                    submenu: [],
-                },
-            ],
-        },
-        {
-            label: "Inbox",
-            items: [
-                {
-                    id: "contact",
-                    label: "Contact Messages",
-                    icon: "fa-solid fa-envelope",
-                    link: "/admin/contact",
-                    submenu: [],
-                },
-            ],
-        },
-        ...(admin?.isSuperAdmin
-            ? [
-                  {
-                      label: "Administration",
-                      items: [
-                          {
-                              id: "admin-users",
-                              label: "Admin Accounts",
-                              icon: "fa-solid fa-user-shield",
-                              link: "/admin/admin-users",
-                              submenu: [],
-                          },
-                      ],
-                  },
-              ]
-            : []),
-    ];
-
-    const expenseMenuGroups = [
-        {
-            label: "Main",
-            items: [
-                {
-                    id: "expense-dashboard",
-                    label: "Dashboard",
-                    icon: "fa-solid fa-chart-pie",
-                    link: "/admin/expense",
-                    submenu: [],
-                },
-            ],
-        },
-        {
-            // Each item gated by its own independent access flag — one
-            // member might have Savings only, another Expenses only, etc.
-            label: "Tracking",
-            items: [
-                ...(admin?.hasExpensesAccess
-                    ? [
-                          {
-                              id: "expense-categories",
-                              label: "Categories",
-                              icon: "fa-solid fa-tags",
-                              link: "/admin/expense/categories",
-                              submenu: [],
-                          },
-                          {
-                              id: "expense-expenses",
-                              label: "Expenses",
-                              icon: "fa-solid fa-receipt",
-                              link: "/admin/expense/expenses",
-                              submenu: [],
-                          },
-                      ]
-                    : []),
-                ...(admin?.hasSavingsAccess
-                    ? [
-                          {
-                              id: "expense-savings",
-                              label: "Savings",
-                              icon: "fa-solid fa-piggy-bank",
-                              link: "/admin/expense/savings",
-                              submenu: [],
-                          },
-                      ]
-                    : []),
-            ],
-        },
-        // Super admins manage every account; other members get "Members" —
-        // the same page, limited to people they add for expenses/savings.
-        {
-            label: "People",
-            items: [
-                {
-                    id: "expense-admin-users",
-                    label: "People",
-                    icon: admin?.isSuperAdmin ? "fa-solid fa-user-shield" : "fa-solid fa-users",
-                    link: "/admin/expense/admin-users",
-                    submenu: [],
-                },
-            ],
-        },
-    ];
-
-    const menuGroups = (isExpenseModule ? expenseMenuGroups : portfolioMenuGroups).filter(
-        (group) => group.items.length > 0,
-    );
+    const { menuGroups } = useAdminMenu();
 
     const [isSubMenuOpenItems, setIsSubMenuOpenItems] = useState<{
         [key: string]: boolean;

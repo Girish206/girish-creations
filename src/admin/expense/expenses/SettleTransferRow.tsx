@@ -41,12 +41,15 @@ export function SettleTransferRow({ transfer, readOnly = false, onRecord }: Sett
   }
 
   return (
-    <li>
-      <span>
-        <strong>{transfer.fromName}</strong> pays <strong>{transfer.toName}</strong>{" "}
-        {formatCurrency(transfer.amountCents / 100)}
+    <li className="admin-settle-transfer">
+      <span className="admin-settle-who" title={`${transfer.fromName} pays ${transfer.toName}`}>
+        <strong>{transfer.fromName}</strong>
+        <i className="fa-solid fa-arrow-right" aria-label="pays"></i>
+        <strong>{transfer.toName}</strong>
       </span>
-      {!readOnly && (
+      {readOnly ? (
+        <strong className="admin-settle-amount">{formatCurrency(transfer.amountCents / 100)}</strong>
+      ) : (
         <span className="admin-settle-record">
           <input
             type="number"
@@ -54,6 +57,7 @@ export function SettleTransferRow({ transfer, readOnly = false, onRecord }: Sett
             min="0.01"
             step="0.01"
             aria-label="Amount paid"
+            title={`Owed ${formatCurrency(transfer.amountCents / 100)}; change it for a partial repayment`}
             value={value}
             onChange={(e) => {
               setError(null);
@@ -65,16 +69,17 @@ export function SettleTransferRow({ transfer, readOnly = false, onRecord }: Sett
             className="m-0"
             loading={recording}
             onClick={handleRecord}
-            title="Record this repayment"
+            title="Mark this repayment as paid"
+            aria-label="Mark paid"
           >
-            Mark paid
+            <i className="fa-solid fa-check" aria-hidden="true"></i> Paid
           </CustomButton>
-          {error && (
-            <small className="text-theme-primary w-100" role="alert">
-              {error}
-            </small>
-          )}
         </span>
+      )}
+      {error && (
+        <small className="admin-settle-error" role="alert">
+          {error}
+        </small>
       )}
     </li>
   );

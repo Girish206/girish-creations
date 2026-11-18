@@ -10,6 +10,7 @@ import { useProjectsList } from "../api/hooks/useProjects";
 import { useBlogList } from "../api/hooks/useBlogPosts";
 import { apiClient } from "../api/client";
 import { usePortfolioScope } from "../portfolio/PortfolioScope";
+import { RefreshButton } from "./components/RefreshButton";
 import type { ApiEnvelope, ContactMessage, PaginatedResponse } from "../api/types";
 import type { AdminOutletContext } from "./dms/layout/LayoutWrapper";
 import "./dms/css/adminDisplays.css";
@@ -73,8 +74,11 @@ export function DashboardHomePage() {
       <div className="admin-dashboard-hero is-stacked">
         <div className="admin-dashboard-hero-top">
           <span className="admin-dashboard-hero-badge">Dashboard</span>
-          <span className="admin-dashboard-hero-date">
-            <i className="fa-solid fa-calendar-days"></i> {today}
+          <span className="admin-dashboard-hero-tools">
+            <span className="admin-dashboard-hero-date">
+              <i className="fa-solid fa-calendar-days"></i> {today}
+            </span>
+            <RefreshButton tone="on-dark" />
           </span>
         </div>
         <h1>Welcome back{profile ? `, ${profile.fullName}` : ""}</h1>

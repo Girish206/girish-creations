@@ -1,42 +1,89 @@
-.admin-savings-progress-label {
-  margin: 0;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--primary-dark-1);
+/* ==========================================================================
+   Savings Goals — the same compact ledger as the Expenses page (reuses its
+   .exl-* strip / toolbar / section / row styles). Each goal is a section:
+   header with the money held, a thin progress line, then contribution rows.
+   ========================================================================== */
+
+.sgl {
+  --sgl-pos: #067647;
+}
+:root[data-bs-theme="dark"] .sgl {
+  --sgl-pos: #47cd89;
+}
+.sgl .sgl-pos {
+  color: var(--sgl-pos);
+}
+.sgl .sgl-neg {
+  color: var(--exl-neg);
 }
 
-.admin-savings-contribution-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  max-height: 140px;
-  overflow-y: auto;
+.sgl-progress {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  /* Grid-item children of a flex-column card (.admin-item-card) also need
-     min-width: 0 to actually shrink to the card's width instead of
-     stretching the card to fit an unbroken content line. */
-  min-width: 0;
+  padding: 7px 12px 4px;
 }
-
-.admin-savings-contribution-list li {
+.sgl-track {
+  height: 5px;
+  border-radius: 999px;
+  background: var(--exl-line);
+  overflow: hidden;
+}
+.sgl-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--secondary) 0%, var(--primary) 100%);
+  transition: width 0.3s ease;
+}
+.sgl-fill.is-done {
+  background: var(--sgl-pos);
+}
+.sgl-progress-line {
   display: flex;
-  align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 6px 8px;
-  border-radius: 8px;
-  background: var(--background-color);
-  font-size: 0.78rem;
+  font-size: 0.7rem;
+  font-weight: 600;
   color: var(--muted-color);
+  font-variant-numeric: tabular-nums;
+}
+.sgl-progress-line > span:last-child {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.sgl-progress-line b {
+  font-weight: 800;
+  color: var(--theme-text-dark);
+}
+.sgl-members {
+  font-size: 0.68rem;
+  color: var(--muted-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.admin-savings-contribution-list li span {
-  min-width: 0;
-  overflow-wrap: break-word;
+/* Contribution rows aren't clickable — the only action is remove. */
+.sgl-row {
+  cursor: default;
+}
+.sgl-row .admin-txn-icon {
+  width: 26px;
+  height: 26px;
+  font-size: 0.7rem;
+}
+.sgl .exl-section-head .admin-fund-badge {
+  margin-left: 0;
+  flex-shrink: 0;
 }
 
+@media (max-width: 560px) {
+  .sgl-progress {
+    padding: 6px 8px 4px;
+  }
+}
+
+/* Remove buttons in the settle-up repayment lists. */
 .admin-savings-contribution-remove {
   border: none;
   background: none;
@@ -51,21 +98,77 @@
   color: #c0392b;
 }
 
-/* Every card action lives here — Add Contribution plus the round icon
-   actions (close/reopen, view, edit, delete), centred as one group.
-   margin-top: auto pins the footer to the bottom so footers line up
-   across cards of different heights in the same grid row. */
-.admin-savings-card-footer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: auto;
-  padding-top: 10px;
-  border-top: 1px solid var(--border-color);
+/* Shared funds: a small tag by the name, and the end-of-trip split. */
+.admin-fund-badge {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(var(--primary-rgb), 0.12);
+  color: var(--primary);
+  font-size: 0.62rem;
+  font-weight: 700;
+  vertical-align: 2px;
 }
 
-.admin-savings-card-actions > div {
+.admin-fund-split {
+  margin: 8px 0;
+}
+
+.admin-fund-split-title {
+  margin: 0 0 4px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.admin-fund-split-table {
+  width: 100%;
+  font-size: 0.78rem !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-fund-split-table th,
+.admin-fund-split-table td {
+  padding: 4px 6px !important;
+  font-size: 0.76rem !important;
+  white-space: nowrap;
+}
+
+.admin-fund-split-table th {
+  font-size: 0.62rem !important;
+}
+
+.admin-fund-split-table th:not(:first-child),
+.admin-fund-split-table td:not(:first-child) {
+  text-align: right;
+}
+
+.admin-fund-split-note {
+  margin: 4px 0 0;
+  font-size: 0.7rem;
+  color: var(--muted-color);
+}
+
+/* Goal header: just + and ⋯; everything else lives in the ⋯ menu. */
+.sgl-more {
+  width: 26px;
+  padding: 0;
   justify-content: center;
+}
+.sgl-more.is-open {
+  background: var(--exl-soft);
+}
+.sgl-menu.exl-add-menu {
+  position: fixed;
+  z-index: 1050;
+  min-width: 150px;
+}
+.sgl-menu .sgl-menu-danger,
+.sgl-menu .sgl-menu-danger i {
+  color: var(--exl-neg);
+}
+/* Single remove button on contribution rows: small and quiet on phones. */
+.sgl-row .exl-row-actions .admin-row-action-btn.btn {
+  width: 22px;
+  height: 22px;
+  font-size: 0.58rem;
 }

@@ -3,18 +3,21 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAddSavingsContribution } from "../../../api/hooks/expense/useSavingsGoals";
 import { useExpenseMembers } from "../../../api/hooks/expense/useExpenseMembers";
+import { useCreateAdminUser } from "../../../api/hooks/expense/useAdminUsers";
 import { useAdminAuth } from "../../../context/AdminAuthContext";
 import { ModalForm } from "../../components/ModalForm";
 import { SubmitButton } from "../../components/SubmitButton";
-import InputComp from "../../dms/components/InputComp";
 import SelectInput from "../../dms/components/SelectInput";
 import { INVALID_AMOUNT_MESSAGE, isValidAmount } from "../currency";
 import { todayLocal } from "../dates";
+import "../../admin.css";
 
 const schema = z.object({
   amount: z.string().min(1, "Required").refine(isValidAmount, INVALID_AMOUNT_MESSAGE),
   date: z.string().min(1, "Required"),
-  contributedByAdminUserId: z.number({ message: "Required" }),
+  // A number = an existing person; a string = a new name typed into the
+  // picker, added as a guest on save.
+  contributedByAdminUserId: z.union([z.number(), z.string().trim().min(1, "Required")], { message: "Required" }),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -46,9 +49,21 @@ export function AdminSavingsContributionForm({ goalId, canChooseContributor, onS
   });
 
   const addContribution = useAddSavingsContribution();
+  const createPerson = useCreateAdminUser();
 
   async function onSubmit(values: FormValues) {
-    await addContribution.mutateAsync({ goalId, input: values });
+    let contributedByAdminUserId = values.contributedByAdminUserId;
+    if (typeof contributedByAdminUserId === "string") {
+      // A guest: listed for contributions, can be given a login later under People.
+      const created = await createPerson.mutateAsync({
+        name: contributedByAdminUserId.trim(),
+        hasPortfolioAccess: false,
+        hasExpensesAccess: false,
+        hasSavingsAccess: false,
+      });
+      contributedByAdminUserId = created.id;
+    }
+    await addContribution.mutateAsync({ goalId, input: { ...values, contributedByAdminUserId } });
     onSaved();
   }
 
@@ -59,45 +74,69 @@ export function AdminSavingsContributionForm({ goalId, canChooseContributor, onS
 
   return (
     <ModalForm onSubmit={handleSubmit(onSubmit)}>
-      {canChooseContributor && (
-        <Controller
-          name="contributedByAdminUserId"
-          control={control}
-          render={({ field }) => (
-            <SelectInput
-              label="Contributed By"
-              required
-              clearable={false}
-              options={memberOptions}
-              value={field.value}
-              onChange={field.onChange}
-              error={errors.contributedByAdminUserId?.message}
-            />
-          )}
-        />
-      )}
-      <Controller
-        name="amount"
-        control={control}
-        render={({ field }) => (
-          <InputComp
-            label="Contribution Amount"
-            type="number"
-            min="0.01"
-            step="0.01"
-            inputMode="decimal"
-            required
-            {...field}
-            error={errors.amount?.message}
+      <div className="admin-exp-form">
+        {/* Amount (big) + date pill, same as a new expense. */}
+        <div className="admin-exp-hero">
+          <Controller
+            name="amount"
+            control={control}
+            render={({ field }) => (
+              <label className={`admin-exp-amount${errors.amount ? " has-error" : ""}`}>
+                <span aria-hidden="true">₹</span>
+                <input
+                  {...field}
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  inputMode="decimal"
+                  placeholder="0"
+                  aria-label="Contribution amount"
+                  autoFocus
+                  autoComplete="off"
+                />
+              </label>
+            )}
+          />
+          <Controller
+            name="date"
+            control={control}
+            render={({ field }) => (
+              <input
+                {...field}
+                type="date"
+                aria-label="Date"
+                className={`admin-exp-date${errors.date ? " has-error" : ""}`}
+              />
+            )}
+          />
+        </div>
+        {(errors.amount || errors.date) && (
+          <small className="admin-exp-error">{errors.amount?.message ?? errors.date?.message}</small>
+        )}
+
+        {canChooseContributor && (
+          <Controller
+            name="contributedByAdminUserId"
+            control={control}
+            render={({ field }) => (
+              <SelectInput
+                label="Contributed by"
+                size="sm"
+                required
+                clearable={false}
+                creatable
+                placeholder="Pick or type a new name…"
+                options={memberOptions}
+                value={field.value}
+                onChange={field.onChange}
+                error={errors.contributedByAdminUserId?.message}
+              />
+            )}
           />
         )}
-      />
-      <Controller
-        name="date"
-        control={control}
-        render={({ field }) => <InputComp label="Date" type="date" required {...field} error={errors.date?.message} />}
-      />
-      <SubmitButton loading={isSubmitting}>Add Contribution</SubmitButton>
+      </div>
+
+      <SubmitButton loading={isSubmitting}>Add contribution</SubmitButton>
     </ModalForm>
   );
 }

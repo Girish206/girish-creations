@@ -42,6 +42,7 @@ function invalidate(queryClient: ReturnType<typeof useQueryClient>) {
   queryClient.invalidateQueries({ queryKey: ["expense-groups"] });
   queryClient.invalidateQueries({ queryKey: ["savings-goals"] });
   queryClient.invalidateQueries({ queryKey: ["expense-direct-balances"] });
+  queryClient.invalidateQueries({ queryKey: ["expense-activity"] });
 }
 
 export function useDirectBalances(enabled = true) {
@@ -103,6 +104,18 @@ export function useDeleteExpense() {
   return useMutation({
     mutationFn: async (id: number) => {
       await apiClient.delete(`/admin/expenses/${id}`);
+    },
+    onSuccess: () => invalidate(queryClient),
+  });
+}
+
+// Someone sharing an expense says their share isn't right, or takes that back.
+export function useSetExpenseDispute() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, disputed, note }: { id: number; disputed: boolean; note?: string | null }) => {
+      const { data } = await apiClient.put<ApiEnvelope<Expense>>(`/admin/expenses/${id}/dispute`, { disputed, note });
+      return data.data;
     },
     onSuccess: () => invalidate(queryClient),
   });

@@ -13,7 +13,7 @@ import CustomButton from "../../dms/components/CustomButton";
 import { ModalActions } from "../../components/ModalActions";
 import { formatCurrency } from "../currency";
 import { formatDay, todayLocal } from "../dates";
-import { mayMarkPaid, suggestTransfers } from "./groupSettlement";
+import { mayManageGroup, mayMarkPaid, mayRunGroup, suggestTransfers } from "./groupSettlement";
 import { SettleTransferRow } from "./SettleTransferRow";
 // The repayment rows reuse the remove button styled there.
 import "../savings/savingsGoals.css";
@@ -40,10 +40,15 @@ export function AdminExpenseGroupSettleUp({ group, afterStats, beforeActions }: 
   const sendSplitEmail = useSendGroupSplitEmail();
 
   const isClosed = group.closedAt !== null;
+  const canManage = mayManageGroup(admin, group);
+  const canRun = mayRunGroup(admin, group);
   const balances = group.balances;
   const transfers = suggestTransfers(balances);
   const totalCents = group.totalCents;
   const pendingCents = balances.reduce((sum, b) => sum + Math.max(0, b.pendingCents), 0);
+  const fund = group.fund;
+  const fundLeftCents = fund ? fund.putInCents - fund.spentCents : 0;
+  const holderName = fund ? balances.find((b) => b.adminUserId === fund.holderAdminUserId)?.name : undefined;
 
   async function handleDeleteSettlement(settlementId: number) {
     if (await confirmDelete("settlement")) {
@@ -91,7 +96,7 @@ export function AdminExpenseGroupSettleUp({ group, afterStats, beforeActions }: 
     <div className="admin-settle">
       <div className="admin-settle-stats">
         <div>
-          <span className="admin-settle-stat-label">Total spent</span>
+          <span className="admin-settle-stat-label">Total</span>
           <strong>{formatCurrency(fromCents(totalCents))}</strong>
         </div>
         <div>
@@ -99,16 +104,45 @@ export function AdminExpenseGroupSettleUp({ group, afterStats, beforeActions }: 
           <strong>{group.expenseCount}</strong>
         </div>
         <div>
-          <span className="admin-settle-stat-label">Still pending</span>
+          <span className="admin-settle-stat-label">Pending</span>
           <strong className={pendingCents > 0 ? "admin-settle-owes" : "admin-settle-gets"}>
             {pendingCents > 0 ? formatCurrency(fromCents(pendingCents)) : "All settled"}
           </strong>
         </div>
         <div>
           <span className="admin-settle-stat-label">Status</span>
-          <strong>{isClosed ? `Closed ${new Date(group.closedAt!).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}` : "Open"}</strong>
+          <strong
+            title={isClosed ? `Closed ${new Date(group.closedAt!).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}` : undefined}
+          >
+            {isClosed ? "Closed" : "Open"}
+          </strong>
         </div>
       </div>
+
+      {fund && (
+        <div className="admin-settle-fund">
+          <span className="admin-settle-fund-name">
+            <i className="fa-solid fa-people-group" aria-hidden="true"></i> {fund.name}
+          </span>
+          <span>
+            In <b>{formatCurrency(fromCents(fund.putInCents))}</b> · Spent <b>{formatCurrency(fromCents(fund.spentCents))}</b>
+            {" · "}
+            {fundLeftCents >= 0 ? (
+              <>
+                <b>{formatCurrency(fromCents(fundLeftCents))}</b> left{holderName && ` with ${holderName}`}
+              </>
+            ) : (
+              <span className="admin-settle-owes">
+                Over by {formatCurrency(fromCents(-fundLeftCents))}
+                {holderName && `, covered by ${holderName}`}
+              </span>
+            )}
+          </span>
+          <small>
+            Paid and Share below include the fund: what each person put in, and their part of what it paid for.
+          </small>
+        </div>
+      )}
 
       {afterStats}
 
@@ -130,11 +164,38 @@ export function AdminExpenseGroupSettleUp({ group, afterStats, beforeActions }: 
             <tbody>
               {balances.map((b) => {
                 const settledCents = b.sentCents - b.receivedCents;
+                const paid = b.paidCents + b.fundPutInCents;
+                const share = b.shareCents + b.fundShareCents;
                 return (
                   <tr key={b.adminUserId}>
-                    <td>{b.name}</td>
-                    <td>{formatCurrency(fromCents(b.paidCents))}</td>
-                    <td>{formatCurrency(fromCents(b.shareCents))}</td>
+                    <td>
+                      {b.name}
+                      {b.fundHeldCents !== 0 && (
+                        <small className="admin-settle-held">
+                          {b.fundHeldCents > 0
+                            ? `Holds ${formatCurrency(fromCents(b.fundHeldCents))} of the fund`
+                            : `Covered ${formatCurrency(fromCents(-b.fundHeldCents))} over the fund`}
+                        </small>
+                      )}
+                    </td>
+                    <td
+                      title={
+                        fund
+                          ? `Own money ${formatCurrency(fromCents(b.paidCents))} · into the fund ${formatCurrency(fromCents(b.fundPutInCents))}`
+                          : undefined
+                      }
+                    >
+                      {formatCurrency(fromCents(paid))}
+                    </td>
+                    <td
+                      title={
+                        fund
+                          ? `Own-money expenses ${formatCurrency(fromCents(b.shareCents))} · from the fund ${formatCurrency(fromCents(b.fundShareCents))}`
+                          : undefined
+                      }
+                    >
+                      {formatCurrency(fromCents(share))}
+                    </td>
                     <td title={`Paid back ${formatCurrency(fromCents(b.sentCents))} · received ${formatCurrency(fromCents(b.receivedCents))}`}>
                       {settledCents === 0
                         ? "—"
@@ -193,10 +254,15 @@ export function AdminExpenseGroupSettleUp({ group, afterStats, beforeActions }: 
           <ul className="admin-settle-list admin-settle-repayments">
             {group.settlements.map((s) => (
               <li key={s.id}>
-                <span>
-                  {s.fromAdminUser.name || s.fromAdminUser.email} paid {s.toAdminUser.name || s.toAdminUser.email}{" "}
-                  <strong>{formatCurrency(s.amount)}</strong> · {formatDay(s.date)}
+                <span className="admin-settle-repayment-main">
+                  <span className="admin-settle-who">
+                    {s.fromAdminUser.name || s.fromAdminUser.email}
+                    <i className="fa-solid fa-arrow-right" aria-label="paid"></i>
+                    {s.toAdminUser.name || s.toAdminUser.email}
+                  </span>
+                  <small>{formatDay(s.date)}</small>
                 </span>
+                <strong className="admin-settle-amount">{formatCurrency(s.amount)}</strong>
                 {!isClosed && mayMarkPaid(admin, s.toAdminUser.id) && (
                   <button
                     type="button"
@@ -217,7 +283,7 @@ export function AdminExpenseGroupSettleUp({ group, afterStats, beforeActions }: 
       {beforeActions}
 
       <ModalActions>
-        {group.expenseCount > 0 && (
+        {canManage && group.expenseCount > 0 && (
           <CustomButton
             variant="outline"
             className="m-0"
@@ -227,15 +293,17 @@ export function AdminExpenseGroupSettleUp({ group, afterStats, beforeActions }: 
             <i className="fa-solid fa-paper-plane" aria-hidden="true"></i> Email split-up
           </CustomButton>
         )}
-        <CustomButton
-          variant={isClosed ? "normal" : "outline"}
-          className="m-0"
-          loading={setGroupClosed.isPending}
-          onClick={handleToggleClosed}
-        >
-          <i className={`fa-solid ${isClosed ? "fa-lock-open" : "fa-lock"}`}></i>{" "}
-          {isClosed ? "Reopen group" : "Close group"}
-        </CustomButton>
+        {canRun && (
+          <CustomButton
+            variant={isClosed ? "normal" : "outline"}
+            className="m-0"
+            loading={setGroupClosed.isPending}
+            onClick={handleToggleClosed}
+          >
+            <i className={`fa-solid ${isClosed ? "fa-lock-open" : "fa-lock"}`}></i>{" "}
+            {isClosed ? "Reopen group" : "Close group"}
+          </CustomButton>
+        )}
       </ModalActions>
     </div>
   );

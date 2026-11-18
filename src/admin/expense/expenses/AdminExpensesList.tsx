@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useDirectBalances, useExpenses, useDeleteExpense, useUpdateExpense } from "../../../api/hooks/expense/useExpenses";
 import { useDeleteExpenseGroup, useExpenseGroups } from "../../../api/hooks/expense/useExpenseGroups";
 import type { Expense, ExpenseGroup } from "../../../api/types";
 import { useAdminAuth } from "../../../context/AdminAuthContext";
 import { ListCard } from "../../components/ListCard";
-import { Button } from "../../components/Button";
 import { RowActions } from "../../components/RowActions";
 import { confirmDelete } from "../../components/confirmDelete";
 import { DetailView } from "../../components/DetailView";
@@ -16,15 +16,20 @@ import { AdminExpenseBulkMoveForm } from "./AdminExpenseBulkMoveForm";
 import { AdminExpenseGroupDetails } from "./AdminExpenseGroupDetails";
 import { AdminDirectSettleUp } from "./AdminDirectSettleUp";
 import { PillSelect } from "../../../components/PillSelect";
-import { formatCurrency } from "../currency";
-import { formatDay as formatDate } from "../dates";
+import { formatCompactCurrency, formatCurrency } from "../currency";
+import { formatDay as formatDate, todayLocal } from "../dates";
 import { CategoryIcon } from "../categories/CategoryIcon";
+import { mayRunGroup } from "./groupSettlement";
+import { ExpenseDisputePanel, isDisputed } from "./ExpenseDisputePanel";
+import { HistoryButton, HistorySection } from "../activity/ActivityHistory";
 import { resolveCategoryIcon } from "../categories/categoryIcons";
 import "../../dms/css/adminDisplays.css";
 import "../../admin.css";
 import "./expenseFilters.css";
+import "./expensesList.css";
+import { SearchBox } from "../../components/SearchBox";
 
-type ModalState = { mode: "new" } | { mode: "edit"; id: number } | null;
+type ModalState = { mode: "new"; groupId?: number } | { mode: "edit"; id: number } | null;
 
 // Buckets expenses by their trip/event group, in the order each group's
 // most recent expense appears (items already come sorted date-desc) — any
@@ -89,6 +94,38 @@ function searchableText(item: Expense) {
     .toLowerCase();
 }
 
+// Consecutive same-day runs (items arrive date-desc), each with its total.
+function bucketByDay(items: Expense[]) {
+  const days: { key: string; total: number; items: Expense[] }[] = [];
+  for (const item of items) {
+    const key = item.date.slice(0, 10);
+    const last = days[days.length - 1];
+    if (last && last.key === key) {
+      last.items.push(item);
+      last.total += Number(item.amount);
+    } else {
+      days.push({ key, total: Number(item.amount), items: [item] });
+    }
+  }
+  return days;
+}
+
+// "Today", "Yesterday", or "Mon, 12 Nov" (with the year when it isn't this one).
+function dayLabel(day: string) {
+  const today = todayLocal();
+  const yesterday = new Date(today + "T00:00:00");
+  yesterday.setDate(yesterday.getDate() - 1);
+  const y = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, "0")}-${String(yesterday.getDate()).padStart(2, "0")}`;
+  if (day === today) return "Today";
+  if (day === y) return "Yesterday";
+  return new Date(day + "T00:00:00").toLocaleDateString(undefined, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    ...(day.slice(0, 4) !== today.slice(0, 4) ? { year: "numeric" } : {}),
+  });
+}
+
 export function AdminExpensesList() {
   const { admin } = useAdminAuth();
   const myId = admin?.sub ? Number(admin.sub) : null;
@@ -99,7 +136,10 @@ export function AdminExpensesList() {
   const deleteExpenseGroup = useDeleteExpenseGroup();
   const { data: directBalances } = useDirectBalances();
 
-  const [modal, setModal] = useState<ModalState>(null);
+  // Links from the dashboard: ?new=1 opens the add form, ?month=YYYY-MM and
+  // ?category=<id> start with that filter on.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [modal, setModal] = useState<ModalState>(() => (searchParams.get("new") ? { mode: "new" } : null));
   const [viewId, setViewId] = useState<number | null>(null);
   // "new" = create a group; a group = rename that one.
   const [groupModal, setGroupModal] = useState<"new" | ExpenseGroup | null>(null);
@@ -109,8 +149,40 @@ export function AdminExpensesList() {
   const [settleGroupId, setSettleGroupId] = useState<number | null>(null);
   const [directSettleOpen, setDirectSettleOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [month, setMonth] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
+  // Sections start folded and open one at a time (by group key): opening one
+  // folds whichever was open.
+  const [openKey, setOpenKey] = useState<string | null>(null);
+  function toggleSection(key: string) {
+    setOpenKey((current) => (current === key ? null : key));
+  }
+  // The "+" menu: create an expense or an expense group.
+  const [addMenuOpen, setAddMenuOpen] = useState(false);
+  const addMenuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!addMenuOpen) return;
+    const close = (e: MouseEvent | KeyboardEvent) => {
+      if (e instanceof KeyboardEvent ? e.key === "Escape" : !addMenuRef.current?.contains(e.target as Node)) {
+        setAddMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", close);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", close);
+    };
+  }, [addMenuOpen]);
+  const [month, setMonth] = useState(() => {
+    const value = searchParams.get("month") ?? "";
+    return /^\d{4}-\d{2}$/.test(value) ? value : "";
+  });
+  const [categoryFilter, setCategoryFilter] = useState(() => searchParams.get("category") ?? "all");
+
+  // Read once, then dropped, so a refresh or Back doesn't reopen the form.
+  useEffect(() => {
+    if (searchParams.size > 0) setSearchParams({}, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const filtersActive = search.trim() !== "" || month !== "" || categoryFilter !== "all";
   const query = search.trim().toLowerCase();
@@ -127,6 +199,17 @@ export function AdminExpensesList() {
     ...Array.from(new Map((items ?? []).map((item) => [item.categoryId, item.category.name])))
       .sort((a, b) => a[1].localeCompare(b[1]))
       .map(([id, name]) => ({ value: String(id), label: name })),
+  ];
+  // Months that have expenses (newest first), plus the chosen one if a link
+  // picked a month with none.
+  const monthOptions = [
+    { value: "", label: "All months" },
+    ...Array.from(new Set([...(items ?? []).map((item) => item.date.slice(0, 7)), ...(month ? [month] : [])]))
+      .sort((a, b) => b.localeCompare(a))
+      .map((value) => ({
+        value,
+        label: new Date(value + "-01T00:00:00").toLocaleDateString(undefined, { month: "short", year: "numeric" }),
+      })),
   ];
 
   const directTransfers = directBalances?.transfers ?? [];
@@ -209,75 +292,111 @@ export function AdminExpensesList() {
     }
   }
 
+  const thisMonth = todayLocal().slice(0, 7);
+  const monthItems = (items ?? []).filter((item) => item.date.slice(0, 7) === thisMonth);
+  const monthTotal = monthItems.reduce((sum, item) => sum + Number(item.amount), 0);
+  const payerName = (item: Expense) =>
+    item.paidByAdminUserId === myId ? "You" : item.paidBy.name || item.paidBy.email;
+
   return (
     <ListCard
       title="Expenses"
       action={
-        <div className="d-flex gap-2 flex-wrap">
-          <Button variant="outline" onClick={() => setGroupModal("new")}>
-            <i className="fa-solid fa-suitcase-rolling"></i> New Expense Group
-          </Button>
-          <Button variant="primary" onClick={() => setModal({ mode: "new" })}>
-            + New
-          </Button>
+        <div className="exl-head-actions">
+          <HistoryButton filter={{ area: "expenses" }} title="Expenses history" iconClassName="exl-icon-btn" />
+          <div className="exl-add" ref={addMenuRef}>
+            <button
+              type="button"
+              className={`exl-add-btn ${addMenuOpen ? "is-open" : ""}`}
+              onClick={() => setAddMenuOpen((open) => !open)}
+              aria-label="Create"
+              aria-haspopup="menu"
+              aria-expanded={addMenuOpen}
+              title="Create"
+            >
+              <i className="fa-solid fa-plus"></i>
+            </button>
+            {addMenuOpen && (
+              <div className="exl-add-menu" role="menu">
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setAddMenuOpen(false);
+                    setModal({ mode: "new" });
+                  }}
+                >
+                  <i className="fa-solid fa-receipt"></i> Create expense
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setAddMenuOpen(false);
+                    setGroupModal("new");
+                  }}
+                >
+                  <i className="fa-solid fa-suitcase-rolling"></i> Create expense group
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       }
-      className="admin-card-scrollable"
+      className="admin-card-scrollable exl"
       bodyClassName="admin-card-body-compact admin-card-body-scroll"
     >
-      {(!!expenseGroups?.length || hasDirectActivity) && (
-        <div className="admin-group-tiles" aria-label="Expense groups">
+      {!!(items?.length || expenseGroups?.length) && (
+        <div className="exl-strip" aria-label="Summary">
+          <button
+            type="button"
+            className="exl-tile exl-tile-hero"
+            onClick={() => changeFilter(() => setMonth(month === thisMonth ? "" : thisMonth))}
+            title={month === thisMonth ? "Show all months" : "Show only this month"}
+          >
+            <span className="exl-tile-label">
+              <i className="fa-solid fa-calendar"></i> This month
+            </span>
+            <span className="exl-tile-value" title={formatCurrency(monthTotal)}>{formatCompactCurrency(monthTotal)}</span>
+            <span className="exl-tile-meta">
+              {monthItems.length} expense{monthItems.length === 1 ? "" : "s"}
+            </span>
+          </button>
           {hasDirectActivity && (
             <button
               type="button"
-              className="admin-group-tile"
+              className="exl-tile"
               onClick={() => setDirectSettleOpen(true)}
               title="Settle splits on Daily Expenses"
             >
-              <span className="admin-group-tile-head">
-                <span className="admin-group-tile-name">Daily splits</span>
+              <span className="exl-tile-label">
+                <i className="fa-solid fa-scale-balanced"></i> Daily splits
               </span>
-              <span className="admin-group-tile-total">
-                {directPendingCents > 0 ? formatCurrency(directPendingCents / 100) : "All settled"}
+              <span className="exl-tile-value">
+                {directPendingCents > 0 ? formatCompactCurrency(directPendingCents / 100) : "Settled"}
               </span>
-              <span className="admin-group-tile-meta">
-                <span>
-                  <i className="fa-solid fa-scale-balanced"></i>{" "}
-                  {directTransfers.length > 0
-                    ? `${directTransfers.length} to settle`
-                    : "Nothing pending"}
-                </span>
+              <span className="exl-tile-meta">
+                {directTransfers.length > 0 ? `${directTransfers.length} to settle` : "Nothing pending"}
               </span>
             </button>
           )}
           {(expenseGroups ?? []).map((g) => {
-            const dateRange = formatWindow(g);
+            const people = g.members.length || g.balances.length;
             return (
               <button
                 type="button"
                 key={g.id}
-                className={`admin-group-tile ${g.closedAt ? "admin-group-tile-closed" : ""}`}
+                className={`exl-tile ${g.closedAt ? "exl-tile-closed" : ""}`}
                 onClick={() => setSettleGroupId(g.id)}
                 title={`Open ${g.name}`}
               >
-                <span className="admin-group-tile-head">
-                  <span className="admin-group-tile-name">{g.name}</span>
-                  {g.closedAt && <i className="fa-solid fa-lock" title="Closed"></i>}
+                <span className="exl-tile-label">
+                  <i className={g.closedAt ? "fa-solid fa-lock" : "fa-solid fa-suitcase-rolling"}></i> {g.name}
                 </span>
-                {dateRange && (
-                  <span className="admin-group-tile-dates">
-                    <i className="fa-solid fa-calendar-days"></i> {dateRange}
-                  </span>
-                )}
-                <span className="admin-group-tile-total">{formatCurrency(g.totalCents / 100)}</span>
-                <span className="admin-group-tile-meta">
-                  <span>
-                    <i className="fa-solid fa-users"></i> {g.members.length || g.balances.length}{" "}
-                    {(g.members.length || g.balances.length) === 1 ? "person" : "people"}
-                  </span>
-                  <span>
-                    <i className="fa-solid fa-receipt"></i> {g.expenseCount} expense{g.expenseCount === 1 ? "" : "s"}
-                  </span>
+                <span className="exl-tile-value" title={formatCurrency(g.totalCents / 100)}>{formatCompactCurrency(g.totalCents / 100)}</span>
+                <span className="exl-tile-meta">
+                  {people} {people === 1 ? "person" : "people"} · {g.expenseCount} expense
+                  {g.expenseCount === 1 ? "" : "s"}
                 </span>
               </button>
             );
@@ -286,21 +405,18 @@ export function AdminExpensesList() {
       )}
 
       {!!items?.length && (
-        <div className="admin-expense-filters" role="search" aria-label="Filter expenses">
-          <input
-            type="search"
-            className="form-control shadow-none admin-expense-filter-search"
-            placeholder="Search description, category, person…"
-            aria-label="Search expenses"
+        <div className="exl-toolbar" role="search" aria-label="Filter expenses">
+          <SearchBox
+            className="exl-search"
+            placeholder="Search expenses…"
             value={search}
-            onChange={(e) => changeFilter(() => setSearch(e.target.value))}
+            onChange={(value) => changeFilter(() => setSearch(value))}
           />
-          <input
-            type="month"
-            className="form-control shadow-none admin-expense-filter-month"
-            aria-label="Filter by month"
+          <PillSelect
+            label="Filter by month"
             value={month}
-            onChange={(e) => changeFilter(() => setMonth(e.target.value))}
+            options={monthOptions}
+            onChange={(value) => changeFilter(() => setMonth(value))}
           />
           <PillSelect
             label="Filter by category"
@@ -308,21 +424,23 @@ export function AdminExpensesList() {
             options={categoryOptions}
             onChange={(value) => changeFilter(() => setCategoryFilter(value))}
           />
-          {filtersActive && (
-            <span className="admin-expense-filter-summary">
-              {visibleItems.length} expense{visibleItems.length === 1 ? "" : "s"} · {formatCurrency(visibleTotal)}
-              <Button variant="link" onClick={clearFilters}>
-                Clear
-              </Button>
+          <span className="exl-summary" title={`${visibleItems.length} expenses shown`}>
+            <span>
+              <strong>{visibleItems.length}</strong> · <strong>{formatCurrency(visibleTotal)}</strong>
             </span>
-          )}
+            {filtersActive && (
+              <button type="button" className="exl-link" onClick={clearFilters}>
+                Clear
+              </button>
+            )}
+          </span>
         </div>
       )}
 
       {selectedIds.size > 0 && (
-        <div className="admin-txn-bulk-bar">
-          <span className="admin-txn-bulk-bar-count">{selectedIds.size} selected</span>
-          <div className="admin-txn-bulk-bar-actions">
+        <div className="exl-bulk">
+          <span>{selectedIds.size} selected</span>
+          <div className="exl-bulk-actions">
             <CustomButton
               size="sm"
               bg="primary"
@@ -346,16 +464,16 @@ export function AdminExpensesList() {
             >
               <i className="fa-solid fa-trash" aria-hidden="true"></i>
             </CustomButton>
-            <Button variant="link" onClick={clearSelection}>
+            <button type="button" className="exl-link" onClick={clearSelection}>
               Clear
-            </Button>
+            </button>
           </div>
         </div>
       )}
 
-      <div className="admin-txn-scroll-area">
+      <div className={`admin-txn-scroll-area ${selectedIds.size > 0 ? "exl-selecting" : ""}`}>
       {isLoading ? (
-        <p>Loading...</p>
+        <p className="exl-empty">Loading...</p>
       ) : !items?.length && !expenseGroups?.length ? (
         <div className="admin-empty-state">No expenses logged yet.</div>
       ) : filtersActive && visibleItems.length === 0 ? (
@@ -371,167 +489,176 @@ export function AdminExpensesList() {
           const total = useGroupTotals ? groupRecord.totalCents / 100 : shownTotal;
           const count = useGroupTotals ? groupRecord.expenseCount : group.items.length;
           const hiddenCount = count - group.items.length;
+          const dateWindow = groupRecord ? formatWindow(groupRecord) : null;
+          // A search shows every match, folded or not.
+          const isCollapsed = openKey !== group.key && !query;
           return (
-            <div
-              className={`admin-expense-group ${groupClosed ? "admin-expense-group-closed" : ""}`}
+            <section
+              className={`exl-section ${groupClosed ? "exl-section-closed" : ""} ${isCollapsed ? "is-collapsed" : ""}`}
               key={group.key}
               id={`expense-group-${group.key}`}
             >
-              <div className="admin-expense-group-header">
-                <h4 className="admin-expense-group-title">
+              <header className="exl-section-head" onClick={() => toggleSection(group.key)}>
+                <span className="exl-section-icon">
                   <i className={group.key === "daily" ? "fa-solid fa-calendar-day" : "fa-solid fa-suitcase-rolling"}></i>
-                  {groupRecord ? (
-                    <button
-                      type="button"
-                      className="admin-expense-group-name-btn"
-                      onClick={() => setSettleGroupId(groupRecord.id)}
-                      title={`Open ${group.label}`}
-                    >
-                      {group.label}
-                    </button>
-                  ) : (
-                    group.label
-                  )}
-                  {groupRecord && formatWindow(groupRecord) && (
-                    <span className="admin-expense-group-dates">{formatWindow(groupRecord)}</span>
-                  )}
-                  {groupClosed && (
-                    <span className="admin-closed-badge">
-                      <i className="fa-solid fa-lock"></i> Closed
-                    </span>
-                  )}
-                </h4>
-                <span className="admin-expense-group-stats">
-                  {formatCurrency(total)} · {count} expense{count === 1 ? "" : "s"}
-                  {hiddenCount > 0 && ` (${group.items.length} shown)`}
+                </span>
+                <div className="exl-section-title">
+                  <button
+                    type="button"
+                    className="exl-section-name"
+                    aria-expanded={!isCollapsed}
+                    title={isCollapsed ? "Expand" : "Collapse"}
+                  >
+                    <span className="exl-section-label">{group.label}</span>
+                    {groupClosed && <i className="fa-solid fa-lock exl-lock" title="Closed"></i>}
+                  </button>
+                </div>
+                <div className="exl-section-tools" onClick={(e) => e.stopPropagation()}>
                   {group.key === "daily" && hasDirectActivity && (
                     <button
                       type="button"
-                      className="admin-expense-group-settle-btn"
+                      className="exl-chip-btn"
                       onClick={() => setDirectSettleOpen(true)}
+                      title="Settle up"
                     >
-                      <i className="fa-solid fa-scale-balanced"></i> Settle up
+                      <i className="fa-solid fa-scale-balanced"></i>
+                      <span className="exl-chip-label">Settle</span>
+                    </button>
+                  )}
+                  {groupRecord && !groupClosed && (
+                    <button
+                      type="button"
+                      className="exl-chip-btn"
+                      onClick={() => setModal({ mode: "new", groupId: groupRecord.id })}
+                      title={`Add an expense to ${groupRecord.name}`}
+                      aria-label={`Add an expense to ${groupRecord.name}`}
+                    >
+                      <i className="fa-solid fa-plus"></i>
                     </button>
                   )}
                   {groupRecord && (
                     <button
                       type="button"
-                      className="admin-expense-group-settle-btn"
+                      className="exl-chip-btn"
                       onClick={() => setSettleGroupId(groupRecord.id)}
+                      title={groupClosed ? "Summary" : "Settle up"}
                     >
-                      <i className="fa-solid fa-scale-balanced"></i> {groupClosed ? "Summary" : "Settle up"}
+                      <i className="fa-solid fa-scale-balanced"></i>
+                      <span className="exl-chip-label">{groupClosed ? "Summary" : "Settle"}</span>
                     </button>
                   )}
-                  {groupRecord && (
-                    <span className="d-inline-flex align-items-center gap-1">
-                      <RowActions
-                        onEdit={() => setGroupModal(groupRecord)}
-                        onDelete={groupRecord.expenseCount === 0 ? () => handleDeleteGroup(groupRecord) : undefined}
-                      />
-                      {/* Only an empty group can be deleted (the server enforces this too). */}
-                      {groupRecord.expenseCount > 0 && (
-                        <span title="Move or delete this group's expenses before deleting it">
-                          <CustomButton
-                            size="sm"
-                            bg="danger"
-                            rounded
-                            disabled
-                            className="m-0 admin-row-action-btn"
-                            aria-label="Delete group (disabled — group still has expenses)"
-                          >
-                            <i className="fa-solid fa-trash" aria-hidden="true"></i>
-                          </CustomButton>
-                        </span>
-                      )}
-                    </span>
+                  {groupRecord && mayRunGroup(admin, groupRecord) && (
+                    <RowActions
+                      onEdit={() => setGroupModal(groupRecord)}
+                      // Only an empty group can be deleted (the server enforces this too).
+                      onDelete={groupRecord.expenseCount === 0 ? () => handleDeleteGroup(groupRecord) : undefined}
+                    />
                   )}
-                </span>
-              </div>
+                </div>
+                <i className="fa-solid fa-chevron-down exl-chevron" aria-hidden="true"></i>
+                <div className="exl-section-meta">
+                  <b className="exl-section-total" title={formatCurrency(total)}>{formatCompactCurrency(total)}</b>
+                  {" · "}
+                  {count} expense{count === 1 ? "" : "s"}
+                  {hiddenCount > 0 && ` (${group.items.length} shown)`}
+                  {dateWindow && ` · ${dateWindow}`}
+                  {groupClosed && " · Closed"}
+                </div>
+              </header>
+              {!isCollapsed && (
+              <>
               {group.items.length === 0 && (
-                <p className="admin-expense-group-empty">
+                <p className="exl-empty">
                   {hiddenCount > 0
                     ? "Its expenses are private to the people involved in them."
                     : "No expenses in this group yet."}
                 </p>
               )}
-              <div className="admin-txn-list">
-                {group.items.map((item) => {
-                  const isSelected = selectedIds.has(item.id);
-                  const closed = isInClosedGroup(item);
-                  const locked = closed || !mayChange(item);
-                  return (
-                    <div
-                      className={`admin-txn-row ${isSelected ? "selected" : ""}`}
-                      key={item.id}
-                      onClick={() => (locked ? setViewId(item.id) : setModal({ mode: "edit", id: item.id }))}
-                    >
-                      <input
-                        type="checkbox"
-                        className="admin-txn-checkbox"
-                        disabled={locked}
-                        title={
-                          closed
-                            ? "This group is closed"
-                            : locked
-                              ? "Only the person who paid or logged this can change it"
-                              : undefined
-                        }
-                        checked={isSelected}
-                        onChange={() => toggleSelected(item.id)}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      <CategoryIcon
-                        name={item.category.name}
-                        {...resolveCategoryIcon(item.category)}
-                        className="admin-txn-icon"
-                      />
-
-                      <div className="admin-txn-main">
-                        <p className="admin-txn-title">{item.category.name}</p>
-                        <div className="admin-txn-tags">
-                          {item.savingsGoal && (
-                            <span
-                              className="admin-txn-tag admin-txn-tag-savings"
-                              title={`From savings: ${item.savingsGoal.name}`}
-                            >
-                              <i className="fa-solid fa-piggy-bank"></i>
-                              <span className="admin-txn-tag-label">{item.savingsGoal.name}</span>
-                            </span>
-                          )}
-                          {item.splitParticipants.length > 0 && (
-                            <span
-                              className="admin-txn-tag admin-txn-tag-split"
-                              title={splitLabel(item)}
-                            >
-                              <i className="fa-solid fa-users"></i>
-                              <span className="admin-txn-tag-label">{splitLabel(item)}</span>
-                            </span>
-                          )}
-                        </div>
-                        {item.description && <p className="admin-txn-desc">{item.description}</p>}
-                      </div>
-
-                      <div className="admin-txn-right">
-                        <span className="admin-txn-amount">− {formatCurrency(item.amount)}</span>
-                        <span className="admin-txn-date">{formatDate(item.date)}</span>
-                      </div>
-
-                      <div className="admin-txn-actions-col">
-                        <RowActions
-                          onView={() => setViewId(item.id)}
-                          onEdit={locked ? undefined : () => setModal({ mode: "edit", id: item.id })}
-                          onDelete={locked ? undefined : () => handleDelete(item.id)}
+              {bucketByDay(group.items).map((day) => (
+                <div key={day.key}>
+                  <div className="exl-day">
+                    <span>{dayLabel(day.key)}</span>
+                    <span>{formatCurrency(day.total)}</span>
+                  </div>
+                  {day.items.map((item) => {
+                    const isSelected = selectedIds.has(item.id);
+                    const closed = isInClosedGroup(item);
+                    const locked = closed || !mayChange(item);
+                    return (
+                      <div
+                        className={`exl-row ${isSelected ? "selected" : ""}`}
+                        key={item.id}
+                        onClick={() => (locked ? setViewId(item.id) : setModal({ mode: "edit", id: item.id }))}
+                      >
+                        <input
+                          type="checkbox"
+                          className="exl-check"
+                          disabled={locked}
+                          aria-label={`Select ${item.category.name} expense`}
+                          title={
+                            closed
+                              ? "This group is closed"
+                              : locked
+                                ? "Only the person who paid or logged this can change it"
+                                : undefined
+                          }
+                          checked={isSelected}
+                          onChange={() => toggleSelected(item.id)}
+                          onClick={(e) => e.stopPropagation()}
                         />
-                        <span className="admin-txn-creator" title={`Paid by ${item.paidBy.name || item.paidBy.email}`}>
-                          <i className="fa-solid fa-user"></i>
-                          <span className="admin-txn-creator-name">{item.paidBy.name || item.paidBy.email}</span>
-                        </span>
+                        <CategoryIcon
+                          name={item.category.name}
+                          {...resolveCategoryIcon(item.category)}
+                          className="admin-txn-icon"
+                        />
+                        <div className="exl-row-main">
+                          <p className="exl-row-title">
+                            <span title={item.description || item.category.name}>
+                              {item.description || item.category.name}
+                            </span>
+                            {item.savingsGoal && (
+                              <span className="admin-txn-tag admin-txn-tag-savings" title={`From savings: ${item.savingsGoal.name}`}>
+                                <i className="fa-solid fa-piggy-bank"></i>
+                                <span className="admin-txn-tag-label">{item.savingsGoal.name}</span>
+                              </span>
+                            )}
+                            {item.splitParticipants.length > 0 && (
+                              <span className="admin-txn-tag admin-txn-tag-split" title={splitLabel(item)}>
+                                <i className="fa-solid fa-users"></i>
+                                <span className="admin-txn-tag-label">{splitLabel(item)}</span>
+                              </span>
+                            )}
+                            {isDisputed(item) && (
+                              <span
+                                className="admin-txn-tag admin-txn-tag-disputed"
+                                title="Someone says their share isn't right"
+                              >
+                                <i className="fa-solid fa-flag"></i>
+                                <span className="admin-txn-tag-label">Disputed</span>
+                              </span>
+                            )}
+                          </p>
+                          <p className="exl-row-sub">
+                            {item.description ? `${item.category.name} · ` : ""}
+                            <b>{payerName(item)}</b> paid
+                          </p>
+                        </div>
+                        <span className="exl-row-amount">−{formatCurrency(item.amount)}</span>
+                        <div className="exl-row-actions">
+                          <RowActions
+                            onView={() => setViewId(item.id)}
+                            onEdit={locked ? undefined : () => setModal({ mode: "edit", id: item.id })}
+                            onDelete={locked ? undefined : () => handleDelete(item.id)}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+                    );
+                  })}
+                </div>
+              ))}
+              </>
+              )}
+            </section>
           );
         })
       )}
@@ -544,7 +671,11 @@ export function AdminExpensesList() {
           showFooter={false}
           size="lg"
           component={
-            <AdminExpenseForm id={modal.mode === "edit" ? modal.id : undefined} onSaved={() => setModal(null)} />
+            <AdminExpenseForm
+              id={modal.mode === "edit" ? modal.id : undefined}
+              groupId={modal.mode === "new" ? modal.groupId : undefined}
+              onSaved={() => setModal(null)}
+            />
           }
         />
       )}
@@ -556,6 +687,7 @@ export function AdminExpensesList() {
           showFooter={false}
           size="md"
           component={
+            <>
             <DetailView
               fields={[
                 { label: "Amount", value: formatCurrency(viewItem.amount) },
@@ -583,6 +715,9 @@ export function AdminExpensesList() {
                 { label: "Description", value: viewItem.description },
               ]}
             />
+            <ExpenseDisputePanel expense={viewItem} />
+            <HistorySection filter={{ expenseId: viewItem.id }} />
+            </>
           }
         />
       )}
@@ -594,7 +729,13 @@ export function AdminExpensesList() {
           showFooter={false}
           size="lg"
           component={
-            <AdminExpenseGroupDetails group={settleGroup} />
+            <AdminExpenseGroupDetails
+              group={settleGroup}
+              onAddExpense={() => {
+                setSettleGroupId(null);
+                setModal({ mode: "new", groupId: settleGroup.id });
+              }}
+            />
           }
         />
       )}

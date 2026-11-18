@@ -12,14 +12,14 @@ import { useIsAdminDark } from "../../useAdminTheme";
 createTheme(
     "admin-dark",
     {
-        text: { primary: "#c9c7de", secondary: "#a3a2bf", disabled: "rgba(255,255,255,0.3)" },
-        background: { default: "#0e1030" },
-        context: { background: "#171a42", text: "#f1eff9" },
+        text: { primary: "#c9c8c2", secondary: "#a3a4a9", disabled: "rgba(255,255,255,0.3)" },
+        background: { default: "#1b1c20" },
+        context: { background: "#25262b", text: "#efeeea" },
         divider: { default: "rgba(255,255,255,0.09)" },
-        button: { default: "#c9c7de", hover: "rgba(255,255,255,0.08)", focus: "rgba(255,255,255,0.12)", disabled: "rgba(255,255,255,0.25)" },
-        selected: { default: "rgba(99,102,241,0.15)", text: "#f1eff9" },
-        highlightOnHover: { default: "#171a42", text: "#f1eff9" },
-        striped: { default: "#11133a", text: "#c9c7de" },
+        button: { default: "#c9c8c2", hover: "rgba(255,255,255,0.08)", focus: "rgba(255,255,255,0.12)", disabled: "rgba(255,255,255,0.25)" },
+        selected: { default: "rgba(217,144,26,0.15)", text: "#efeeea" },
+        highlightOnHover: { default: "#25262b", text: "#efeeea" },
+        striped: { default: "#202126", text: "#c9c8c2" },
     },
     "dark",
 );

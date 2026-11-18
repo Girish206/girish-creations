@@ -15,6 +15,8 @@ import { toast } from "sonner";
 import { messageFor } from "../../../api/mutationErrors";
 import { useAdminAuth } from "../../../context/AdminAuthContext";
 import { normalizeMobile } from "../../../utils/mobile";
+import "../../admin.css";
+import "./accountForm.css";
 
 const schema = z
   .object({
@@ -60,9 +62,9 @@ export interface AdminAccountFormProps {
 }
 
 const ACCESS_CHECKBOXES = [
-  { name: "hasPortfolioAccess" as const, label: "Portfolio module access" },
-  { name: "hasExpensesAccess" as const, label: "Expenses access" },
-  { name: "hasSavingsAccess" as const, label: "Savings access" },
+  { name: "hasPortfolioAccess" as const, label: "Portfolio", icon: "fa-briefcase" },
+  { name: "hasExpensesAccess" as const, label: "Expenses", icon: "fa-receipt" },
+  { name: "hasSavingsAccess" as const, label: "Savings", icon: "fa-piggy-bank" },
 ];
 
 // Rendered inside a DefaultModal by AdminAccountsList. A member can be added
@@ -104,6 +106,10 @@ export function AdminAccountForm({ id, startWithLogin = false, scope, onSaved }:
   // deactivated account), shown in the form as well as the toast.
   const [saveError, setSaveError] = useState("");
   const alreadyHasLogin = Boolean(existing?.hasLogin);
+  // Once someone signs in on their own, how they sign in is theirs: whoever
+  // added them can't change it any more (the server enforces this too).
+  const signInLocked =
+    isEdit && alreadyHasLogin && !admin?.isSuperAdmin && existing?.id !== Number(admin?.sub);
   // The server spots someone who already has an account, who keeps their
   // password if this is left blank. It asks for one if they turn out to be new.
   const passwordOptional = alreadyHasLogin || !isEdit;
@@ -225,192 +231,195 @@ export function AdminAccountForm({ id, startWithLogin = false, scope, onSaved }:
 
   if (isEdit && !existing) return <p>Loading...</p>;
 
+  const showSuperAdmin = Boolean(admin?.isSuperAdmin) && !moneyHubOnly && wantsLogin && !removeLogin;
+
   return (
     <ModalForm onSubmit={handleSubmit(onSubmit)}>
-      <Controller
-        name="name"
-        control={control}
-        defaultValue=""
-        render={({ field }) => <InputComp label="Name" required {...field} error={errors.name?.message} />}
-      />
-      <Controller
-        name="mobile"
-        control={control}
-        defaultValue=""
-        render={({ field }) => (
-          <InputComp
-            label="Mobile number (optional — can be used to sign in)"
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel"
-            {...field}
-            error={errors.mobile?.message}
-          />
-        )}
-      />
-
-      <Controller
-        name="wantsLogin"
-        control={control}
-        render={({ field }) => (
-          <div className="form-check mb-2">
-            <input
-              type="checkbox"
-              className="form-check-input"
-              id="wantsLogin"
-              checked={field.value ?? false}
-              disabled={alreadyHasLogin}
-              onChange={(e) => field.onChange(e.target.checked)}
-            />
-            <label className="form-check-label" htmlFor="wantsLogin">
-              Grant login access (email or mobile number, and a password)
-            </label>
-          </div>
-        )}
-      />
-      {!wantsLogin && (
-        <p className="text-muted small mb-3">
-          Without login access, this person is still listed in expense-split and savings-account-holder pickers —
-          you can grant login access later at any time.
-        </p>
-      )}
-
-      {alreadyHasLogin && !existing?.isOwner && (
+      <div className="acct-form-pair">
         <Controller
-          name="removeLogin"
+          name="name"
           control={control}
+          defaultValue=""
           render={({ field }) => (
-            <div className="form-check mb-2">
-              <input
-                type="checkbox"
-                className="form-check-input"
-                id="removeLogin"
-                checked={field.value ?? false}
-                onChange={(e) => field.onChange(e.target.checked)}
-              />
-              <label className="form-check-label" htmlFor="removeLogin">
-                Remove login access (keep them as a guest in pickers)
-              </label>
-            </div>
+            <InputComp
+              inputSize="sm"
+              placeholder="Name *"
+              aria-label="Name"
+              autoFocus={!isEdit}
+              {...field}
+              error={errors.name?.message}
+            />
           )}
         />
-      )}
+        <Controller
+          name="mobile"
+          control={control}
+          defaultValue=""
+          render={({ field }) => (
+            <InputComp
+              inputSize="sm"
+              placeholder="Mobile (optional)"
+              aria-label="Mobile"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              readOnly={signInLocked}
+              {...field}
+              error={errors.mobile?.message}
+            />
+          )}
+        />
+      </div>
+
+      <div className="acct-form-section">
+        <Controller
+          name="wantsLogin"
+          control={control}
+          render={({ field }) => (
+            <Switch
+              label="Can sign in"
+              checked={field.value ?? false}
+              disabled={alreadyHasLogin}
+              onChange={field.onChange}
+            />
+          )}
+        />
+        {alreadyHasLogin && !existing?.isOwner && !signInLocked && (
+          <Controller
+            name="removeLogin"
+            control={control}
+            render={({ field }) => (
+              <Switch label="Remove login" checked={field.value ?? false} onChange={field.onChange} />
+            )}
+          />
+        )}
+      </div>
+      <p className="acct-form-hint">
+        {signInLocked
+          ? "They sign in on their own now, so only they or a super admin can change their password, email or mobile."
+          : !wantsLogin
+            ? "Without sign-in they're still listed in split and savings pickers. You can give login later."
+            : removeLogin
+              ? "They'll stay as a guest in the pickers."
+              : alreadyHasLogin
+                ? "Signs in with email or mobile. Leave the password blank to keep theirs."
+                : passwordOptional
+                  ? "Signs in with email or mobile. Leave the password blank if they already have an account."
+                  : "Signs in with email or mobile, and a password."}
+      </p>
 
       {wantsLogin && !removeLogin && (
-        <>
+        <div className="acct-form-pair">
           <Controller
             name="email"
             control={control}
             defaultValue=""
             render={({ field }) => (
               <InputComp
-                label="Email (optional if a mobile number is set)"
+                inputSize="sm"
+                placeholder="Email"
+                aria-label="Email"
                 type="email"
                 inputMode="email"
                 autoCapitalize="none"
                 spellCheck={false}
-                readOnly={alreadyHasLogin && Boolean(existing?.email)}
+                readOnly={signInLocked || (alreadyHasLogin && Boolean(existing?.email))}
                 {...field}
                 error={errors.email?.message}
               />
             )}
           />
-          <Controller
-            name="password"
-            control={control}
-            defaultValue=""
-            render={({ field }) => (
-              <InputComp
-                label={
-                  alreadyHasLogin
-                    ? "New Password (leave blank to keep current)"
-                    : !isEdit
-                      ? "Password (leave blank if they already have an account)"
-                      : "Password"
-                }
-                type={showPassword ? "text" : "password"}
-                icon={`fa-solid ${showPassword ? "fa-eye-slash" : "fa-eye"}`}
-                iconOnClick={() => setShowPassword((shown) => !shown)}
-                autoCapitalize="none"
-                spellCheck={false}
-                required={!passwordOptional}
-                {...field}
-                error={errors.password?.message}
-              />
-            )}
-          />
-        </>
+          {!signInLocked && (
+            <Controller
+              name="password"
+              control={control}
+              defaultValue=""
+              render={({ field }) => (
+                <InputComp
+                  inputSize="sm"
+                  placeholder={alreadyHasLogin ? "New password" : passwordOptional ? "Password (optional)" : "Password *"}
+                  aria-label="Password"
+                  type={showPassword ? "text" : "password"}
+                  icon={`fa-solid ${showPassword ? "fa-eye-slash" : "fa-eye"}`}
+                  iconOnClick={() => setShowPassword((shown) => !shown)}
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  required={!passwordOptional}
+                  {...field}
+                  error={errors.password?.message}
+                />
+              )}
+            />
+          )}
+        </div>
       )}
 
-      <div className="mb-3 d-flex flex-column gap-2">
-        {accessCheckboxes.map((checkbox) => (
-          <Controller
-            key={checkbox.name}
-            name={checkbox.name}
-            control={control}
-            render={({ field }) => (
-              <div className="form-check">
-                <input
-                  type="checkbox"
-                  className="form-check-input"
-                  id={checkbox.name}
-                  checked={field.value ?? false}
-                  onChange={(e) => field.onChange(e.target.checked)}
-                />
-                <label className="form-check-label" htmlFor={checkbox.name}>
-                  {checkbox.label}
-                </label>
-              </div>
-            )}
-          />
-        ))}
-        {admin?.isSuperAdmin && !moneyHubOnly && wantsLogin && !removeLogin && (
-          <Controller
-            name="isSuperAdmin"
-            control={control}
-            render={({ field }) => (
-              <div className="form-check">
-                <input
-                  type="checkbox"
-                  className="form-check-input"
-                  id="isSuperAdmin"
+      {accessCheckboxes.length > 0 && (
+        <div className="acct-form-access">
+          <span className="acct-form-label">Access</span>
+          <div className="acct-form-chips">
+            {accessCheckboxes.map((checkbox) => (
+              <Controller
+                key={checkbox.name}
+                name={checkbox.name}
+                control={control}
+                render={({ field }) => (
+                  <label className={`acct-form-chip${field.value ? " is-on" : ""}`}>
+                    <input
+                      type="checkbox"
+                      checked={field.value ?? false}
+                      onChange={(e) => field.onChange(e.target.checked)}
+                    />
+                    <i className={`fa-solid ${checkbox.icon}`} aria-hidden="true"></i>
+                    {checkbox.label}
+                  </label>
+                )}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {(showSuperAdmin || isEdit) && (
+        <div className="acct-form-section">
+          {showSuperAdmin && (
+            <Controller
+              name="isSuperAdmin"
+              control={control}
+              render={({ field }) => (
+                <Switch
+                  label="Super admin"
+                  title={
+                    "Sees every user's data and manages accounts" +
+                    (canSetSuperAdmin ? "" : " (only the owner can change this)")
+                  }
                   checked={field.value ?? false}
                   disabled={!canSetSuperAdmin || existing?.isOwner}
-                  onChange={(e) => field.onChange(e.target.checked)}
+                  onChange={field.onChange}
                 />
-                <label className="form-check-label" htmlFor="isSuperAdmin">
-                  Super admin — sees every user's data and manages accounts
-                  {!canSetSuperAdmin && " (only the owner can change this)"}
-                </label>
-              </div>
-            )}
-          />
-        )}
-        {isEdit && (
-          <Controller
-            name="isActive"
-            control={control}
-            render={({ field }) => (
-              <div className="form-check">
-                <input
-                  type="checkbox"
-                  className="form-check-input"
-                  id="isActive"
+              )}
+            />
+          )}
+          {isEdit && (
+            <Controller
+              name="isActive"
+              control={control}
+              render={({ field }) => (
+                <Switch
+                  label="Active"
+                  title="Turning this off blocks sign-in"
                   checked={field.value ?? false}
                   disabled={existing?.isOwner}
-                  onChange={(e) => field.onChange(e.target.checked)}
+                  onChange={field.onChange}
                 />
-                <label className="form-check-label" htmlFor="isActive">
-                  Active (unchecking disables sign-in)
-                </label>
-              </div>
-            )}
-          />
-        )}
-      </div>
+              )}
+            />
+          )}
+        </div>
+      )}
 
       {saveError && (
-        <div className="admin-banner admin-banner-error mb-3" role="alert">
+        <div className="admin-banner admin-banner-error mb-2" role="alert">
           <i className="fa-solid fa-circle-exclamation me-2" aria-hidden="true"></i>
           {saveError}
         </div>
@@ -418,5 +427,34 @@ export function AdminAccountForm({ id, startWithLogin = false, scope, onSaved }:
 
       <SubmitButton loading={isSubmitting}>Save</SubmitButton>
     </ModalForm>
+  );
+}
+
+// A small on/off switch (the expense form's style) in place of a checkbox.
+function Switch({
+  label,
+  title,
+  checked,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  title?: string;
+  checked: boolean;
+  disabled?: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <label className={`admin-exp-switch acct-form-switch${disabled ? " is-disabled" : ""}`} title={title}>
+      <input
+        type="checkbox"
+        role="switch"
+        checked={checked}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.checked)}
+      />
+      <span className="admin-exp-switch-track" aria-hidden="true"></span>
+      <span>{label}</span>
+    </label>
   );
 }

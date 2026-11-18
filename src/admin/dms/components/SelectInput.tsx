@@ -1,6 +1,7 @@
 import React from "react";
 import Select from "react-select";
 import CreatableSelect from "react-select/creatable";
+import { FilterSelect } from "./filters";
 import "../css/components/SelectInput.css";
 
 interface Option {
@@ -28,6 +29,9 @@ interface SelectProps {
     isLoading?: boolean;
 }
 
+const labelNode = (label: string | React.ReactNode) =>
+    typeof label === "string" ? <span dangerouslySetInnerHTML={{ __html: label }} /> : label;
+
 const SelectInput: React.FC<SelectProps> = ({
     options = [],
     label = "",
@@ -47,25 +51,51 @@ const SelectInput: React.FC<SelectProps> = ({
     creatable = false,
     isLoading = false,
 }) => {
-    const sizeClass = `select-${size}`;
     const [isFocused, setIsFocused] = React.useState(false);
 
+    // Every normal dropdown is drm-react's FilterSelect (./filters): one 38px
+    // box, label inside on the left, value on the right, "First +N" for a
+    // multi-select with a card listing everything picked.
+    if (!floating) {
+        return (
+            <FilterSelect
+                id={id || undefined}
+                label={
+                    label ? (
+                        <>
+                            {labelNode(label)}
+                            {required && <span className="text-danger-brand">*</span>}
+                        </>
+                    ) : undefined
+                }
+                options={options}
+                value={value}
+                onChange={onChange}
+                isMulti={isMulti}
+                placeholder={placeholder || "Select"}
+                clearable={clearable}
+                isLoading={isLoading}
+                disabled={readOnly}
+                error={error || undefined}
+                className={className}
+                creatable={creatable}
+            />
+        );
+    }
+
+    const sizeClass = `select-${size}`;
     const hasValue = isMulti
         ? Array.isArray(value) && value.length > 0
         : value !== null && value !== undefined && value !== "";
-
     const isLabelFloating = isFocused || hasValue;
 
-    // Shared react-select props
     const sharedProps = {
         name,
         inputId: id,
         classNamePrefix: "select",
-        className: floating ? "select-floating" : "",
-        // In floating mode: always use a space so the control never looks empty
-        // when there's no real placeholder needed (label covers it).
-        // In normal mode: use the real placeholder.
-        placeholder: floating ? (isFocused ? placeholder : " ") : placeholder,
+        className: "select-floating",
+        // Always a space so the control never looks empty (the label covers it).
+        placeholder: isFocused ? placeholder : " ",
         options,
         isClearable: clearable,
         isMulti,
@@ -124,24 +154,7 @@ const SelectInput: React.FC<SelectProps> = ({
 
     return (
         <div className={`m-1 text-start ${className}`}>
-            <div
-                className={`${sizeClass} ${floating ? "form-floating" : ""
-                    } select-wrapper`}
-            >
-                {/* Normal mode label */}
-                {!floating && label && (
-                    <label htmlFor={id} className="pb-0 ps-1 select-label">
-                        {typeof label === "string" ? (
-                            <span dangerouslySetInnerHTML={{ __html: label }} />
-                        ) : (
-                            label
-                        )}
-                        {required && (
-                            <span className="text-theme-primary">&nbsp;*</span>
-                        )}
-                    </label>
-                )}
-
+            <div className={`${sizeClass} form-floating select-wrapper`}>
                 {creatable ? (
                     <CreatableSelect
                         {...sharedProps}
@@ -159,26 +172,21 @@ const SelectInput: React.FC<SelectProps> = ({
                     />
                 )}
 
-                {/* Floating mode label */}
-                {floating && label && (
+                {label && (
                     <label
                         htmlFor={id}
                         className={`select-floating-label ${isLabelFloating ? "floating-label-active" : ""
                             }`}
                     >
-                        {typeof label === "string" ? (
-                            <span dangerouslySetInnerHTML={{ __html: label }} />
-                        ) : (
-                            label
-                        )}
+                        {labelNode(label)}
                         {required && (
-                            <span className="text-theme-primary">&nbsp;*</span>
+                            <span className="text-danger-brand">&nbsp;*</span>
                         )}
                     </label>
                 )}
             </div>
             {error && (
-                <small className="text-theme-primary ms-1">{error}</small>
+                <small className="text-danger-brand ms-1">{error}</small>
             )}
         </div>
     );

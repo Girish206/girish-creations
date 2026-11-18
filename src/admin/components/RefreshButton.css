@@ -1,0 +1,95 @@
+/* Round refresh icon button (RefreshButton.tsx). */
+
+.admin-refresh-btn {
+  flex-shrink: 0;
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--bs-body-bg, #fff);
+  color: var(--muted-color);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.admin-refresh-btn:hover:not(:disabled) {
+  color: var(--primary-dark-1);
+  border-color: rgba(var(--primary-rgb), 0.4);
+  background: rgba(var(--primary-rgb), 0.06);
+}
+.admin-refresh-btn:active:not(:disabled) {
+  transform: scale(0.92);
+}
+.admin-refresh-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.admin-refresh-btn:disabled {
+  cursor: default;
+}
+
+.admin-refresh-btn.is-refreshing {
+  color: var(--primary);
+}
+.admin-refresh-btn.is-refreshing i {
+  animation: admin-refresh-spin 0.8s linear infinite;
+}
+.admin-refresh-btn.is-done {
+  color: #15803d;
+  border-color: rgba(21, 128, 61, 0.35);
+}
+.admin-refresh-btn.is-done i {
+  animation: admin-refresh-pop 0.25s ease-out;
+}
+
+/* On the gradient heroes. */
+.admin-refresh-btn.is-on-dark {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+.admin-refresh-btn.is-on-dark:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.26);
+  color: #fff;
+}
+.admin-refresh-btn.is-on-dark.is-done {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+:root[data-bs-theme="dark"] .admin-refresh-btn.is-default {
+  background: var(--adm-raised);
+  border-color: var(--adm-line-strong);
+}
+:root[data-bs-theme="dark"] .admin-refresh-btn.is-default.is-done {
+  color: #4ade80;
+}
+
+@keyframes admin-refresh-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes admin-refresh-pop {
+  from { transform: scale(0.4); }
+  to { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-refresh-btn.is-refreshing i {
+    animation-duration: 2s;
+  }
+  .admin-refresh-btn.is-done i {
+    animation: none;
+  }
+}
+
+/* Touch screens refresh by pulling down (PullToRefresh), so no button. */
+@media (pointer: coarse) {
+  .admin-refresh-btn {
+    display: none;
+  }
+}

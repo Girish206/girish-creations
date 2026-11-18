@@ -28,6 +28,7 @@ function invalidate(queryClient: ReturnType<typeof useQueryClient>) {
   queryClient.invalidateQueries({ queryKey: ["expense-groups"] });
   // Expense list embeds expenseGroup — refresh it too so renames/deletes show up.
   queryClient.invalidateQueries({ queryKey: ["expenses"] });
+  queryClient.invalidateQueries({ queryKey: ["expense-activity"] });
 }
 
 export interface ExpenseGroupInput {

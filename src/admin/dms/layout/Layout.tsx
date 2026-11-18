@@ -1,8 +1,10 @@
 import { useState } from "react";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
+import BottomNav from "./BottomNav";
 import { useAdminAuth } from "../../../context/AdminAuthContext";
 import { useAdminBodyClass } from "../../useAdminBodyClass";
+import { PullToRefresh } from "../../refresh/PullToRefresh";
 import "../global.css";
 import "../css/components/Layout.css";
 
@@ -66,6 +68,7 @@ const Layout = ({
         >
             <div className="admin-bg-shape admin-bg-shape-1" aria-hidden="true" />
             <div className="admin-bg-shape admin-bg-shape-2" aria-hidden="true" />
+            <PullToRefresh />
 
             <Navbar
                 toggleSidebar={toggleSidebar}
@@ -113,6 +116,8 @@ const Layout = ({
             >
                 {children}
             </main>
+
+            <BottomNav activeItem={activeItem} onMore={() => setSidebarOpen(true)} />
         </div>
     );
 };

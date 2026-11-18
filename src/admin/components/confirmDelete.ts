@@ -17,7 +17,7 @@ export async function confirmDelete(itemLabel: string, itemName?: string): Promi
     theme: document.documentElement.getAttribute("data-bs-theme") === "dark" ? "dark" : "light",
     showCancelButton: true,
     confirmButtonColor: themeColor("--primary"),
-    cancelButtonColor: themeColor("--muted-color"),
+    customClass: { cancelButton: "admin-swal-cancel" },
     confirmButtonText: "Yes, delete it",
   });
   return result.isConfirmed;
@@ -33,7 +33,7 @@ export async function confirmAction(title: string, text: string, confirmButtonTe
     theme: document.documentElement.getAttribute("data-bs-theme") === "dark" ? "dark" : "light",
     showCancelButton: true,
     confirmButtonColor: themeColor("--primary"),
-    cancelButtonColor: themeColor("--muted-color"),
+    customClass: { cancelButton: "admin-swal-cancel" },
     confirmButtonText,
   });
   return result.isConfirmed;
