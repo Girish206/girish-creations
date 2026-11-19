@@ -28,6 +28,9 @@ export default defineConfig({
     adminHtmlFallback(),
     VitePWA({
       registerType: 'autoUpdate',
+      // Registered from src/pwa/serviceWorker.ts, which also checks for and
+      // reloads into new deploys.
+      injectRegister: false,
       includeAssets: ['logo/favicon.ico', 'logo/apple-touch-icon-180x180.png'],
       // The site installs as two apps: index.html links
       // public/portfolio.webmanifest and admin.html (served for /admin/*)

@@ -9,6 +9,7 @@ import { showMutationError } from "./api/mutationErrors";
 import { AppToaster } from "./components/AppToaster";
 import { setupAppManifest } from "./pwa/appManifest";
 import { reloadForNewBuild } from "./utils/staleBuild";
+import { setupServiceWorker } from "./pwa/serviceWorker";
 
 const queryClient = new QueryClient({
   mutationCache: new MutationCache({
@@ -27,6 +28,8 @@ const queryClient = new QueryClient({
 });
 
 setupAppManifest();
+
+setupServiceWorker();
 
 // A chunk from an older build failed to load (it's gone after a deploy):
 // reload into the new build instead of showing an error.
