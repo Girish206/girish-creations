@@ -7,15 +7,15 @@ import {
   type AccountScope,
   useCreateAdminUser,
   useUpdateAdminUser,
-} from "../../../api/hooks/expense/useAdminUsers";
-import { ModalForm } from "../../components/ModalForm";
-import { SubmitButton } from "../../components/SubmitButton";
-import InputComp from "../../dms/components/InputComp";
+} from "../../api/hooks/admin/useAdminUsers";
+import { ModalForm } from "../components/ModalForm";
+import { SubmitButton } from "../components/SubmitButton";
+import InputComp from "../dms/components/InputComp";
 import { toast } from "sonner";
-import { messageFor } from "../../../api/mutationErrors";
-import { useAdminAuth } from "../../../context/AdminAuthContext";
-import { normalizeMobile } from "../../../utils/mobile";
-import "../../admin.css";
+import { messageFor } from "../../api/mutationErrors";
+import { useAdminAuth } from "../../context/AdminAuthContext";
+import { normalizeMobile } from "../../utils/mobile";
+import "../admin.css";
 import "./accountForm.css";
 
 const schema = z
@@ -28,8 +28,6 @@ const schema = z
     removeLogin: z.boolean(),
     isActive: z.boolean(),
     hasPortfolioAccess: z.boolean(),
-    hasExpensesAccess: z.boolean(),
-    hasSavingsAccess: z.boolean(),
     isSuperAdmin: z.boolean(),
   })
   .superRefine((values, ctx) => {
@@ -54,22 +52,17 @@ export interface AdminAccountFormProps {
   id?: number;
   // Opened from a guest's "Grant login" action: start with login ticked.
   startWithLogin?: boolean;
-  // Adding from the Money Hub: portfolio and super admin access stay as they
-  // are, and are managed from Admin Accounts on the portfolio side. Adding from
-  // there starts with portfolio access ticked.
+  // Adding from Admin Accounts starts with portfolio access ticked.
   scope?: AccountScope;
   onSaved: () => void;
 }
 
 const ACCESS_CHECKBOXES = [
   { name: "hasPortfolioAccess" as const, label: "Portfolio", icon: "fa-briefcase" },
-  { name: "hasExpensesAccess" as const, label: "Expenses", icon: "fa-receipt" },
-  { name: "hasSavingsAccess" as const, label: "Savings", icon: "fa-piggy-bank" },
 ];
 
 // Rendered inside a DefaultModal by AdminAccountsList. A member can be added
-// as a "guest" — just a name, no email/password — purely so they show up in
-// expense-split and savings-account-holder pickers. Checking "Grant login
+// as a "guest" — just a name, no email/password. Checking "Grant login
 // access" reveals email/password to turn them into a real account; once an
 // account already has login, its email is locked (it's the login
 // identifier) but the password can still be rotated (leave blank to keep).
@@ -78,16 +71,8 @@ export function AdminAccountForm({ id, startWithLogin = false, scope, onSaved }:
   const { admin } = useAdminAuth();
   // Only the owner hands out super admin (the server enforces it too).
   const canSetSuperAdmin = Boolean(admin?.isOwner);
-  // Members without super admin add people for the Money Hub only: no
-  // portfolio access, and at most the access they have themselves.
-  const moneyHubOnly = scope === "money-hub";
-  const accessCheckboxes = admin?.isSuperAdmin && !moneyHubOnly
-    ? ACCESS_CHECKBOXES
-    : ACCESS_CHECKBOXES.filter(
-        (checkbox) =>
-          (checkbox.name === "hasExpensesAccess" && admin?.hasExpensesAccess) ||
-          (checkbox.name === "hasSavingsAccess" && admin?.hasSavingsAccess),
-      );
+  // Only super admins hand out portfolio access.
+  const accessCheckboxes = admin?.isSuperAdmin ? ACCESS_CHECKBOXES : [];
   const { data: items } = useAdminUsers(scope);
   const existing = isEdit ? items?.find((item) => item.id === id) : undefined;
 
@@ -125,8 +110,6 @@ export function AdminAccountForm({ id, startWithLogin = false, scope, onSaved }:
         removeLogin: false,
         isActive: existing.isActive,
         hasPortfolioAccess: existing.hasPortfolioAccess,
-        hasExpensesAccess: existing.hasExpensesAccess,
-        hasSavingsAccess: existing.hasSavingsAccess,
         isSuperAdmin: existing.isSuperAdmin,
       });
     } else {
@@ -139,8 +122,6 @@ export function AdminAccountForm({ id, startWithLogin = false, scope, onSaved }:
         removeLogin: false,
         isActive: true,
         hasPortfolioAccess: scope === "portfolio",
-        hasExpensesAccess: false,
-        hasSavingsAccess: false,
         isSuperAdmin: false,
       });
     }
@@ -161,21 +142,9 @@ export function AdminAccountForm({ id, startWithLogin = false, scope, onSaved }:
       return;
     }
 
-    // A login with neither gives them nothing here, and they'd drop off People.
-    if (
-      moneyHubOnly &&
-      values.wantsLogin &&
-      !values.removeLogin &&
-      !values.hasExpensesAccess &&
-      !values.hasSavingsAccess
-    ) {
-      setSaveError("Give them Expenses or Savings access so they can use Pocket, or untick login access.");
-      return;
-    }
-
     // They wouldn't show up in the list they're being added from.
     if (scope === "portfolio" && !isEdit && !values.hasPortfolioAccess) {
-      setSaveError("Tick Portfolio module access to add them here, or add them from People in Pocket.");
+      setSaveError("Tick Portfolio access to add them here.");
       return;
     }
 
@@ -191,8 +160,6 @@ export function AdminAccountForm({ id, startWithLogin = false, scope, onSaved }:
   async function save(values: FormValues) {
     const accessFlags = {
       hasPortfolioAccess: values.hasPortfolioAccess,
-      hasExpensesAccess: values.hasExpensesAccess,
-      hasSavingsAccess: values.hasSavingsAccess,
       // A guest can't sign in, so super admin only applies with login.
       ...(canSetSuperAdmin && !existing?.isOwner
         ? { isSuperAdmin: values.wantsLogin && !values.removeLogin && values.isSuperAdmin }
@@ -231,7 +198,7 @@ export function AdminAccountForm({ id, startWithLogin = false, scope, onSaved }:
 
   if (isEdit && !existing) return <p>Loading...</p>;
 
-  const showSuperAdmin = Boolean(admin?.isSuperAdmin) && !moneyHubOnly && wantsLogin && !removeLogin;
+  const showSuperAdmin = Boolean(admin?.isSuperAdmin) && wantsLogin && !removeLogin;
 
   return (
     <ModalForm onSubmit={handleSubmit(onSubmit)}>
@@ -298,9 +265,9 @@ export function AdminAccountForm({ id, startWithLogin = false, scope, onSaved }:
         {signInLocked
           ? "They sign in on their own now, so only they or a super admin can change their password, email or mobile."
           : !wantsLogin
-            ? "Without sign-in they're still listed in split and savings pickers. You can give login later."
+            ? "Without sign-in they're kept as a guest. You can give login later."
             : removeLogin
-              ? "They'll stay as a guest in the pickers."
+              ? "They'll stay as a guest."
               : alreadyHasLogin
                 ? "Signs in with email or mobile. Leave the password blank to keep theirs."
                 : passwordOptional
@@ -430,7 +397,7 @@ export function AdminAccountForm({ id, startWithLogin = false, scope, onSaved }:
   );
 }
 
-// A small on/off switch (the expense form's style) in place of a checkbox.
+// A small on/off switch in place of a checkbox.
 function Switch({
   label,
   title,

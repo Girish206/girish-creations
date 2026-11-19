@@ -1,19 +1,19 @@
-import { PillSelect } from "../../../components/PillSelect";
+import { PillSelect } from "../../components/PillSelect";
 import { useState } from "react";
-import { useAdminUsers } from "../../../api/hooks/expense/useAdminUsers";
-import type { AdminUserAccount } from "../../../api/types";
-import { ListCard } from "../../components/ListCard";
-import { Button } from "../../components/Button";
-import { RowActions } from "../../components/RowActions";
-import CustomButton from "../../dms/components/CustomButton";
-import DefaultModal from "../../dms/components/DefaultModal";
+import { useAdminUsers } from "../../api/hooks/admin/useAdminUsers";
+import type { AdminUserAccount } from "../../api/types";
+import { ListCard } from "../components/ListCard";
+import { Button } from "../components/Button";
+import { RowActions } from "../components/RowActions";
+import CustomButton from "../dms/components/CustomButton";
+import DefaultModal from "../dms/components/DefaultModal";
 import { AdminAccountForm } from "./AdminAccountForm";
 import { canManageAccount, canSendWelcome, useAccountActions, welcomeSentOn } from "./useAccountActions";
-import { avatarColorFor } from "../avatarColor";
-import "../../dms/css/adminDisplays.css";
-import "../../admin.css";
-import { useAdminAuth } from "../../../context/AdminAuthContext";
-import { SearchBox } from "../../components/SearchBox";
+import { avatarColorFor } from "./avatarColor";
+import "../dms/css/adminDisplays.css";
+import "../admin.css";
+import { useAdminAuth } from "../../context/AdminAuthContext";
+import { SearchBox } from "../components/SearchBox";
 
 type ModalState = { mode: "new" } | { mode: "edit"; id: number; grantLogin?: boolean } | null;
 
@@ -36,7 +36,7 @@ const STATS: { label: string; icon: string; tone: string; matches: (item: AdminU
 
 export function AdminAccountsList() {
   const { admin } = useAdminAuth();
-  // Super admins get this app's accounts here, and the Money Hub's under People.
+  // Super admins see the accounts with portfolio access.
   const scope = admin?.isSuperAdmin ? "portfolio" : undefined;
   const { data: items, isLoading } = useAdminUsers(scope);
   const {
@@ -71,7 +71,7 @@ export function AdminAccountsList() {
         <div className="admin-empty-state">
           {admin?.isSuperAdmin
             ? "No admin accounts yet."
-            : "No members yet. Add the people you share expenses or savings with."}
+            : "No members yet."}
         </div>
       ) : (
         <>
@@ -117,8 +117,6 @@ export function AdminAccountsList() {
                 const canManage = canManageAccount(item, admin);
                 const access = [
                   { on: item.hasPortfolioAccess, icon: "fa-briefcase", label: "Portfolio", tone: "portfolio" },
-                  { on: item.hasExpensesAccess, icon: "fa-receipt", label: "Expenses", tone: "expenses" },
-                  { on: item.hasSavingsAccess, icon: "fa-piggy-bank", label: "Savings", tone: "savings" },
                 ];
                 return (
                   <article

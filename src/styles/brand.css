@@ -111,3 +111,18 @@
 .text-danger-brand {
   color: var(--danger-text) !important;
 }
+
+/* Phones and tablets: scroll by swiping, with no scrollbar showing (they
+   appeared as grey bars on tables, strips, sheets and the page). Scrolling
+   still works; computers with a mouse keep their scrollbars. `!important`
+   beats the few elements that ask for a thin scrollbar. */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  * {
+    scrollbar-width: none !important;
+  }
+  *::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+}

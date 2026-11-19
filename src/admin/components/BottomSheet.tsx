@@ -62,6 +62,7 @@ export function BottomSheet({
 }: BottomSheetProps) {
   const [closing, setClosing] = useState(false);
   const [footerSlot, setFooterSlot] = useState<HTMLDivElement | null>(null);
+  const [headerSlot, setHeaderSlot] = useState<HTMLDivElement | null>(null);
   const [dragY, setDragY] = useState(0);
   const drag = useRef<{ startY: number; startT: number } | null>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -134,13 +135,15 @@ export function BottomSheet({
               <h5>{title}</h5>
               {subtitle && <small>{subtitle}</small>}
             </div>
+            {/* Buttons the content puts here , e.g. Share. */}
+            <div className="admin-sheet-header-actions" ref={setHeaderSlot} />
             <button type="button" className="admin-sheet-close" onClick={close} aria-label="Close">
               <i className="fa-solid fa-xmark" aria-hidden="true"></i>
             </button>
           </div>
         </div>
 
-        <ModalContext.Provider value={{ footer: footerSlot, close }}>
+        <ModalContext.Provider value={{ footer: footerSlot, header: headerSlot, close }}>
           <div className="admin-sheet-body">{children}</div>
         </ModalContext.Provider>
         {footer ? (

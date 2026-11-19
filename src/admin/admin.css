@@ -364,9 +364,8 @@ body.admin-page h6 {
   }
 }
 
-/* Denser variant for pages built around a tight row list (e.g. the
-   Expenses transaction list) rather than spaced-out cards — the standard
-   24px/16px padding looks oversized around 8px-padded rows. */
+/* Denser card body — the standard 24px/16px padding looks oversized
+   around tight lists and grids. */
 .admin-card-body-compact {
   padding: 16px;
 }
@@ -416,15 +415,8 @@ body.admin-page h6 {
   overflow: hidden;
 }
 
-.admin-card-body-scroll > .admin-page-header,
-.admin-card-body-scroll > .admin-txn-bulk-bar {
+.admin-card-body-scroll > .admin-page-header {
   flex-shrink: 0;
-}
-
-.admin-txn-scroll-area {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
 }
 
 .admin-page-header {
@@ -868,75 +860,6 @@ body.admin-page h6 {
   }
 }
 
-/* Expense form: each split participant's equal share (AdminExpenseForm). */
-.admin-split-shares {
-  list-style: none;
-  margin: 8px 4px 0;
-  padding: 4px 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  background: var(--background-color);
-}
-.admin-split-shares li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 0;
-  font-size: 0.9rem;
-  color: var(--theme-text-dark);
-}
-.admin-split-shares li + li {
-  border-top: 1px dashed var(--border-color);
-}
-.admin-split-shares strong {
-  font-variant-numeric: tabular-nums;
-}
-.admin-split-payer {
-  margin-left: 8px;
-  padding: 1px 8px;
-  border-radius: 999px;
-  background: rgba(var(--primary-rgb), 0.12);
-  color: var(--primary-dark-1);
-  font-size: 0.72rem;
-  font-weight: 600;
-}
-
-/* Two-option switch (savings goal visibility). */
-.admin-segmented {
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  background: var(--background-color);
-}
-.admin-segmented button {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 6px 12px;
-  border: 0;
-  border-radius: 9px;
-  background: transparent;
-  color: var(--muted-color);
-  font-size: 0.88rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-.admin-segmented button:hover {
-  color: var(--theme-text-dark);
-}
-.admin-segmented button.active {
-  background: var(--primary-gradient);
-  color: var(--on-primary);
-  box-shadow: 0 4px 12px -4px rgba(var(--primary-rgb), 0.6);
-}
-
 /* ===== Admin Accounts list (AdminAccountsList) ===== */
 
 .admin-accounts-toolbar {
@@ -1156,8 +1079,7 @@ body.admin-page h6 {
   text-decoration: none;
 }
 .admin-user-access-portfolio.is-on { background: rgba(122, 90, 248, 0.14); color: #5925dc; }
-.admin-user-access-expenses.is-on { background: rgba(46, 144, 250, 0.12); color: #175cd3; }
-.admin-user-access-savings.is-on { background: rgba(18, 183, 106, 0.12); color: #067647; }
+
 .admin-user-card-foot {
   display: flex;
   justify-content: flex-end;
@@ -1183,10 +1105,9 @@ body.admin-page h6 {
   background: var(--adm-hover);
 }
 :root[data-bs-theme="dark"] .admin-user-badge.is-success,
-:root[data-bs-theme="dark"] .admin-user-access-savings.is-on,
 :root[data-bs-theme="dark"] .admin-user-stat-active .admin-user-stat-icon { color: #4ade80; }
 :root[data-bs-theme="dark"] .admin-user-badge.is-danger { color: #ff7b72; }
-:root[data-bs-theme="dark"] .admin-user-access-expenses.is-on { color: #7cb4ff; }
+
 :root[data-bs-theme="dark"] .admin-user-access-portfolio.is-on { color: #b9a4ff; }
 :root[data-bs-theme="dark"] .admin-user-owner,
 :root[data-bs-theme="dark"] .admin-user-stat-login .admin-user-stat-icon { color: #fbbf5a; }
@@ -1248,91 +1169,6 @@ body.admin-page h6 {
   }
 }
 
-/* ---------- Expense category icons (CategoryIcon + picker) ---------- */
-.admin-category-icon {
-  flex-shrink: 0;
-  display: inline-grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  overflow: hidden;
-  color: #fff;
-  font-size: 0.9rem;
-  font-weight: 700;
-  line-height: 1;
-}
-.admin-category-icon-image {
-  background: rgba(0, 0, 0, 0.05);
-}
-.admin-category-icon img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.admin-category-icon-text {
-  font-size: 0.78em;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-}
-.admin-category-icon.is-large {
-  width: 72px;
-  height: 72px;
-  font-size: 1.7rem;
-}
-.admin-category-icon-empty {
-  border: 2px dashed var(--border-color);
-  color: var(--muted-color);
-}
-/* Inside the dense expense rows it takes the 32px .admin-txn-icon size. */
-.admin-category-icon.admin-txn-icon {
-  font-size: 0.8rem;
-}
-.admin-category-icon-field {
-  margin-bottom: 1rem;
-}
-.admin-category-icon-field-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-.admin-category-icon-editor {
-  display: flex;
-  gap: 16px;
-  padding: 14px;
-  border: 1px solid var(--border-color);
-  border-radius: 14px;
-}
-.admin-category-icon-preview {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  color: var(--muted-color);
-  font-size: 0.7rem;
-}
-.admin-category-icon-options {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.admin-category-icon-hint {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  font-size: 0.75rem;
-  color: var(--muted-color);
-}
-.admin-category-icon-hint > span {
-  margin-right: auto;
-}
 .admin-link-btn {
   display: inline-flex;
   align-items: center;
@@ -1347,226 +1183,6 @@ body.admin-page h6 {
 }
 .admin-link-btn:hover {
   text-decoration: underline;
-}
-.admin-icon-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
-  gap: 6px;
-  max-height: 176px;
-  overflow-y: auto;
-  padding: 2px;
-}
-.admin-icon-grid button {
-  display: grid;
-  place-items: center;
-  aspect-ratio: 1;
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  background: transparent;
-  color: var(--muted-color);
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-}
-.admin-icon-grid button:hover {
-  border-color: var(--primary);
-  color: var(--primary-text);
-}
-.admin-icon-grid button.active {
-  border-color: transparent;
-  background: var(--primary-gradient);
-  color: var(--on-primary);
-}
-:root[data-bs-theme="dark"] .admin-category-icon-editor,
-:root[data-bs-theme="dark"] .admin-icon-grid button {
-  border-color: var(--adm-line);
-}
-:root[data-bs-theme="dark"] .admin-category-icon-image {
-  background: var(--adm-hover);
-}
-@media (max-width: 480px) {
-  .admin-category-icon-editor {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
-.admin-category-icon-field-head .admin-segmented button {
-  min-height: 32px;
-  padding: 4px 12px;
-  font-size: 0.8rem;
-}
-
-/* ---------- Expense Categories page ---------- */
-.admin-cat-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 16px;
-}
-.admin-cat-count {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: rgba(var(--primary-rgb), 0.1);
-  color: var(--primary);
-  font-size: 0.8rem;
-  font-weight: 700;
-}
-.admin-cat-card {
-  position: relative;
-}
-.admin-cat-card-more {
-  display: none;
-}
-/* Refresh + New as one capsule on the right of the header: a tinted pill
-   holding a borderless refresh icon, a hairline divider, then the filled
-   New button. */
-.admin-cat-header-actions {
-  display: inline-flex;
-  align-items: center;
-  flex-shrink: 0;
-  gap: 4px;
-  padding: 3px;
-  border-radius: 999px;
-  border: 1px solid rgba(var(--primary-rgb), 0.28);
-  background: rgba(var(--primary-rgb), 0.08);
-}
-.admin-cat-header-actions .admin-refresh-btn {
-  width: 34px;
-  height: 34px;
-  border: 0;
-  background: transparent;
-  color: var(--primary);
-  font-size: 0.85rem;
-}
-.admin-cat-header-actions .admin-refresh-btn:hover:not(:disabled) {
-  background: rgba(var(--primary-rgb), 0.14);
-  color: var(--primary);
-}
-.admin-cat-header-divider {
-  width: 1px;
-  height: 18px;
-  background: rgba(var(--primary-rgb), 0.3);
-}
-/* New matches the refresh icon: no fill, primary colour, soft hover. */
-.admin-cat-new {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 34px;
-  padding: 0 14px 0 12px;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--primary);
-  font-size: 0.84rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.15s ease, transform 0.1s ease;
-  -webkit-tap-highlight-color: transparent;
-}
-.admin-cat-new i {
-  font-size: 0.8rem;
-}
-.admin-cat-new:hover {
-  background: rgba(var(--primary-rgb), 0.14);
-}
-.admin-cat-new:active {
-  transform: scale(0.95);
-}
-.admin-cat-new:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
-}
-
-/* Phone: a 3-up grid of icon tiles (big badge, name underneath). The
-   per-tile actions move into a bottom sheet (CategoryActionSheet.tsx). */
-@media (max-width: 640px) {
-  /* Keep title, refresh and + New on one row instead of the shared
-     stacked header. */
-  .admin-cat-page > .admin-page-header {
-    flex-direction: row;
-    flex-wrap: nowrap;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 14px;
-  }
-  .admin-cat-page > .admin-page-header h1 {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-}
-
-@media (max-width: 560px) {
-  .admin-cat-toolbar {
-    margin-bottom: 10px;
-  }
-  .admin-cat-search {
-    width: 100%;
-  }
-
-  .admin-card-grid.admin-cat-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
-  }
-  .card.admin-item-card-compact.admin-cat-card {
-    padding: 14px 6px 12px;
-    border-radius: 18px !important;
-    border-width: 1px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06) !important;
-    -webkit-tap-highlight-color: transparent;
-    transition: transform 0.12s ease, box-shadow 0.12s ease;
-  }
-  .admin-cat-card.is-tappable {
-    cursor: pointer;
-  }
-  .admin-cat-card.is-tappable:active {
-    transform: scale(0.96);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
-  }
-  .admin-cat-card .admin-item-card-header,
-  .admin-cat-card .admin-item-card-heading {
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    min-width: 0;
-    width: 100%;
-  }
-  .admin-cat-card .admin-category-icon {
-    width: 50px;
-    height: 50px;
-    font-size: 1.25rem;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
-  }
-  .admin-cat-card .admin-item-card-title {
-    width: 100%;
-    margin: 0;
-    font-size: 0.78rem;
-    font-weight: 600;
-    line-height: 1.25;
-    text-align: center;
-    overflow-wrap: normal;
-    word-break: normal;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  .admin-cat-card-more {
-    display: block;
-    position: absolute;
-    top: 6px;
-    right: 9px;
-    color: var(--muted-color);
-    font-size: 0.75rem;
-    opacity: 0.7;
-  }
 }
 
 /* ---------- Generic bottom sheet (BottomSheet.tsx) ---------- */
@@ -1672,6 +1288,14 @@ body.admin-page h6 {
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
+/* Slot for buttons the content puts in the sheet header, beside the close button. */
+.admin-sheet-header-actions {
+  display: flex;
+  gap: 6px;
+}
+.admin-sheet-header-actions:empty {
+  display: none;
+}
 .admin-sheet-close:hover {
   background: rgba(var(--primary-rgb), 0.12);
   color: var(--primary);
@@ -1735,167 +1359,6 @@ body.admin-page h6 {
   }
 }
 
-/* ---------- Compact category form (AdminExpenseCategoryForm) ---------- */
-.admin-cat-form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.admin-cat-form .m-1 {
-  margin: 0 !important;
-}
-.admin-cat-form-top {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-.admin-cat-form-preview.admin-category-icon {
-  width: 42px;
-  height: 42px;
-  font-size: 1rem;
-}
-.admin-cat-form-name {
-  flex: 1;
-  min-width: 0;
-}
-.admin-cat-form-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-.admin-cat-form-bar .admin-segmented {
-  padding: 3px;
-  gap: 2px;
-  border-radius: 10px;
-}
-.admin-cat-form-bar .admin-segmented button {
-  flex: 0 0 auto;
-  min-height: 28px;
-  padding: 3px 10px;
-  gap: 5px;
-  border-radius: 7px;
-  font-size: 0.76rem;
-}
-.admin-cat-form-tools {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-/* One scroll area only: the grid grows and the sheet body scrolls. */
-.admin-icon-grid.admin-cat-form-grid {
-  grid-template-columns: repeat(auto-fill, minmax(34px, 1fr));
-  gap: 5px;
-  max-height: none;
-  overflow: visible;
-  padding: 0;
-}
-.admin-cat-form-grid button {
-  border-radius: 8px;
-  font-size: 0.82rem;
-}
-.admin-cat-form-image {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.admin-cat-form-image .form-control:not(textarea) {
-  height: auto !important;
-  min-height: 36px !important;
-}
-
-/* Bottom sheet */
-.admin-cat-sheet-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1070;
-  display: flex;
-  align-items: flex-end;
-  background: rgba(15, 23, 42, 0.45);
-  animation: admin-cat-fade 0.18s ease;
-}
-.admin-cat-sheet {
-  width: 100%;
-  padding: 8px 16px calc(16px + env(safe-area-inset-bottom));
-  border-radius: 22px 22px 0 0;
-  background: var(--bs-body-bg, #fff);
-  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.18);
-  animation: admin-cat-slide 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-.admin-cat-sheet-grabber {
-  display: block;
-  width: 40px;
-  height: 4px;
-  margin: 0 auto 14px;
-  border-radius: 999px;
-  background: var(--border-color, #d0d4dc);
-}
-.admin-cat-sheet-head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 4px 14px;
-  border-bottom: 1px solid rgba(var(--primary-rgb), 0.12);
-}
-.admin-cat-sheet-head .admin-category-icon {
-  width: 44px;
-  height: 44px;
-  font-size: 1.1rem;
-}
-.admin-cat-sheet-head strong {
-  font-size: 1.02rem;
-  color: var(--theme-text-dark);
-  overflow-wrap: anywhere;
-}
-.admin-cat-sheet-actions {
-  display: flex;
-  flex-direction: column;
-  padding: 6px 0;
-}
-.admin-cat-sheet-actions button,
-.admin-cat-sheet-cancel {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  min-height: 50px;
-  padding: 0 8px;
-  border: 0;
-  border-radius: 12px;
-  background: none;
-  color: var(--theme-text-dark);
-  font-size: 0.95rem;
-  font-weight: 600;
-  text-align: left;
-}
-.admin-cat-sheet-actions button:active {
-  background: rgba(var(--primary-rgb), 0.08);
-}
-.admin-cat-sheet-actions button i {
-  width: 34px;
-  height: 34px;
-  display: inline-grid;
-  place-items: center;
-  border-radius: 50%;
-  background: rgba(var(--primary-rgb), 0.1);
-  color: var(--primary);
-  font-size: 0.85rem;
-}
-.admin-cat-sheet-actions button.is-danger {
-  color: var(--brand-danger);
-}
-.admin-cat-sheet-actions button.is-danger i {
-  background: rgba(220, 38, 38, 0.1);
-  color: var(--brand-danger);
-}
-.admin-cat-sheet-cancel {
-  justify-content: center;
-  margin-top: 4px;
-  background: transparent;
-  border: 1px solid var(--primary);
-  color: var(--primary-text);
-}
-
 /* Cancel is always an outline button — in SweetAlert dialogs too. */
 .swal2-popup .swal2-cancel.admin-swal-cancel {
   background: transparent !important;
@@ -1906,190 +1369,16 @@ body.admin-page h6 {
 .swal2-popup .swal2-cancel.admin-swal-cancel:hover {
   background: rgba(var(--primary-rgb), 0.1) !important;
 }
-:root[data-bs-theme="dark"] .admin-cat-sheet {
-  background: var(--adm-surface);
-}
+
 @keyframes admin-cat-fade {
   from { opacity: 0; }
 }
 @keyframes admin-cat-slide {
   from { transform: translateY(100%); }
 }
-@media (prefers-reduced-motion: reduce) {
-  .admin-cat-sheet,
-  .admin-cat-sheet-backdrop {
-    animation: none;
-  }
-}
 
-/* ---------- Compact expense form (AdminExpenseForm) ---------- */
-.admin-exp-form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.admin-exp-form .m-1,
-.admin-exp-form .mt-2.mb-2 {
-  margin: 0 !important;
-}
-.admin-exp-label {
-  display: block;
-  margin: 0 0 5px 2px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--muted-color);
-}
-.admin-exp-error {
-  display: block;
-  margin: -4px 0 0 2px;
-  font-size: 0.76rem;
-  color: var(--danger-text);
-}
-
-/* Amount (big) + date pill */
-.admin-exp-hero {
-  display: flex;
-  align-items: stretch;
-  gap: 8px;
-}
-.admin-exp-amount {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin: 0;
-  padding: 0 12px;
-  height: 46px;
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  background: var(--background-color);
-  cursor: text;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-.admin-exp-amount:focus-within {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-light-6);
-}
-.admin-exp-amount > span {
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: var(--muted-color);
-}
-.admin-exp-amount input {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: var(--theme-text-dark);
-  font-size: 1.5rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  -moz-appearance: textfield;
-}
-.admin-exp-amount input::-webkit-outer-spin-button,
-.admin-exp-amount input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-.admin-exp-date {
-  flex: 0 0 auto;
-  width: 150px;
-  padding: 0 10px;
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  background: var(--background-color);
-  color: var(--theme-text-dark);
-  font-size: 0.86rem;
-  font-weight: 600;
-  outline: 0;
-}
-.admin-exp-date:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-light-6);
-}
-.admin-exp-amount.has-error,
-.admin-exp-date.has-error {
-  border-color: var(--brand-danger);
-}
-
-/* Note */
-.admin-exp-note.form-control {
-  min-height: 38px;
-  height: 38px;
-  padding: 8px 10px;
-  font-size: 0.88rem !important;
-  resize: vertical;
-}
-
-/* Two fields side by side, stacking on phones */
-.admin-exp-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-.admin-exp-row > * {
-  min-width: 0;
-}
-.admin-exp-row > :only-child {
-  grid-column: 1 / -1;
-}
-/* Split panel */
-.admin-exp-split {
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 8px 10px;
-}
-.admin-exp-split.open {
-  background: var(--background-color);
-}
-.admin-exp-split-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  min-height: 30px;
-}
-.admin-exp-split-head .admin-segmented {
-  padding: 2px;
-  gap: 2px;
-  border-radius: 9px;
-}
-.admin-exp-split-head .admin-segmented button {
-  flex: 0 0 auto;
-  min-height: 26px;
-  padding: 2px 10px;
-  gap: 5px;
-  border-radius: 7px;
-  font-size: 0.76rem;
-}
 /* "Paid from: Fund / Own money" in a shared fund's trip — one compact row. */
-.admin-exp-paidfrom {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  min-height: 30px;
-}
-.admin-exp-paidfrom-label {
-  font-size: 0.86rem;
-  font-weight: 600;
-  color: var(--theme-text-dark);
-}
-.admin-exp-paidfrom .admin-segmented {
-  padding: 2px;
-  gap: 2px;
-  border-radius: 9px;
-}
-.admin-exp-paidfrom .admin-segmented button {
-  flex: 0 0 auto;
-  min-height: 26px;
-  padding: 2px 10px;
-  gap: 5px;
-  border-radius: 7px;
-  font-size: 0.76rem;
-}
+
 .admin-exp-switch {
   display: inline-flex;
   align-items: center;
@@ -2105,17 +1394,7 @@ body.admin-page h6 {
 .admin-exp-switch-track {
   flex-shrink: 0;
 }
-.admin-exp-split-head .admin-segmented button {
-  white-space: nowrap;
-}
-@media (max-width: 480px) {
-  .admin-exp-split-head .admin-segmented button {
-    padding: 2px 8px;
-  }
-  .admin-exp-split-head .admin-segmented button i {
-    display: none;
-  }
-}
+
 .admin-exp-switch input {
   position: absolute;
   opacity: 0;
@@ -2149,86 +1428,4 @@ body.admin-page h6 {
 }
 .admin-exp-switch input:focus-visible + .admin-exp-switch-track {
   box-shadow: 0 0 0 3px var(--primary-light-6);
-}
-.admin-exp-split-body {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 8px;
-}
-/* In a column, flex: 1 would override the amount box's height and squash it. */
-.admin-exp-split-body .admin-exp-amount {
-  flex: none;
-}
-.admin-exp-split-body .admin-split-shares {
-  margin: 0;
-  padding: 0 10px;
-}
-.admin-exp-split-body .admin-split-shares li {
-  padding: 5px 0;
-  font-size: 0.84rem;
-}
-.admin-exp-split-body .admin-split-share-input {
-  width: 96px;
-}
-.admin-exp-split.open .admin-split-shares {
-  background: transparent;
-}
-
-@media (max-width: 420px) {
-  .admin-exp-date {
-    width: 128px;
-  }
-}
-
-/* Shared compact text/date inputs and multi-select chips inside .admin-exp-form
-   (expense form + expense group form). */
-.admin-exp-form .form-control-label {
-  margin-bottom: 3px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--muted-color);
-}
-.admin-exp-form .form-control-sm:not(textarea) {
-  height: 38px !important;
-  min-height: 38px !important;
-  padding: 4px 10px;
-  font-size: 0.86rem !important;
-}
-
-/* Full-width type switch at the top of a compact form (savings goal form). */
-.admin-exp-seg {
-  padding: 3px;
-  gap: 3px;
-  border-radius: 10px;
-}
-.admin-exp-seg button {
-  min-height: 32px;
-  padding: 4px 10px;
-  gap: 6px;
-  border-radius: 8px;
-  font-size: 0.82rem;
-}
-.admin-exp-paidfrom .admin-segmented button {
-  white-space: nowrap;
-}
-@media (max-width: 420px) {
-  .admin-exp-paidfrom .admin-segmented button i {
-    display: none;
-  }
-}
-
-/* Group split: every group member listed, ticked if in the split. */
-.admin-split-tick {
-  margin: 0 8px 0 0;
-  vertical-align: -2px;
-  cursor: pointer;
-}
-.admin-split-shares li.is-out > span:first-child {
-  opacity: 0.5;
-}
-.admin-split-out {
-  font-size: 0.75rem;
-  color: var(--theme-text-light, inherit);
-  opacity: 0.6;
 }

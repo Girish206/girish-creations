@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
 import { useRefreshData } from "./useRefreshData";
-import { doneMessage, loadingMessage, sectionFor } from "./refreshMessages";
+import { doneMessage, loadingMessage } from "./refreshMessages";
 import "./pullToRefresh.css";
 
 // Finger travel is halved, then capped, so the pull feels like it has weight.
@@ -20,7 +19,7 @@ const PILL_TOP = 76;
 
 // Nothing to pull when a modal, the mobile sidebar or a text field is in play,
 // or when the touch starts inside something that is itself scrolled down
-// (e.g. the expenses list's own scroll area).
+// (e.g. a list's own scroll area).
 function canStartPull(target: EventTarget | null): boolean {
   if (window.scrollY > 0) return false;
   if (document.body.classList.contains("modal-open")) return false;
@@ -39,7 +38,6 @@ function canStartPull(target: EventTarget | null): boolean {
 // Slack-style message pill under the navbar while a pull's refresh runs.
 export function PullToRefresh() {
   const { refresh, status, seed, source } = useRefreshData();
-  const section = sectionFor(useLocation().pathname);
   const [pull, setPull] = useState(0);
   const [dragging, setDragging] = useState(false);
 
@@ -132,9 +130,9 @@ export function PullToRefresh() {
     : source !== "pull"
       ? null
       : refreshing
-      ? loadingMessage(section, seed)
+      ? loadingMessage(seed)
       : status === "done"
-        ? doneMessage(section, seed)
+        ? doneMessage(seed)
         : null;
   const pillTop = visible ? INDICATOR_TOP + pull + CIRCLE + 8 : PILL_TOP;
 

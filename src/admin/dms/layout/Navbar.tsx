@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { LuSun } from "react-icons/lu";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useAdminAuth, type AdminModule } from "../../../context/AdminAuthContext";
+import { Link, useNavigate } from "react-router-dom";
+import { useAdminAuth } from "../../../context/AdminAuthContext";
 import { useAdminTheme } from "../../useAdminTheme";
 import "../css/Navbar.css";
 
@@ -27,16 +27,10 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
     const navigate = useNavigate();
-    const location = useLocation();
     const [scrolled, setScrolled] = useState(false);
     const { isDark, toggle: toggleTheme } = useAdminTheme();
 
-    const { logout, admin, setActiveModule } = useAdminAuth();
-    const canSwitchModules = Boolean(
-        admin?.hasPortfolioAccess &&
-            (admin?.hasExpensesAccess || admin?.hasSavingsAccess),
-    );
-    const currentModule: AdminModule = location.pathname.startsWith("/admin/expense") ? "expense" : "portfolio";
+    const { logout, admin } = useAdminAuth();
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -47,12 +41,6 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
     const handleLogout = () => {
         logout();
         navigate("/admin/login", { replace: true });
-    };
-
-    const goToModule = (targetModule: AdminModule) => {
-        if (targetModule === currentModule) return;
-        setActiveModule(targetModule);
-        navigate(targetModule === "expense" ? "/admin/expense" : "/admin");
     };
 
     return (
@@ -86,33 +74,6 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
                             </div>
                         </div>
                     </div>
-
-                    {/* Module switcher — only shown when the account can see
-                        both the portfolio and expense-tracker modules. */}
-                    {canSwitchModules && (
-                        <div className="navbar-module-switcher" role="tablist" aria-label="Admin module">
-                            <button
-                                type="button"
-                                role="tab"
-                                aria-selected={currentModule === "portfolio"}
-                                className={`navbar-module-switcher-btn ${currentModule === "portfolio" ? "active" : ""}`}
-                                onClick={() => goToModule("portfolio")}
-                            >
-                                <i className="fa-solid fa-briefcase"></i>
-                                <span className="d-none d-md-inline">Portfolio</span>
-                            </button>
-                            <button
-                                type="button"
-                                role="tab"
-                                aria-selected={currentModule === "expense"}
-                                className={`navbar-module-switcher-btn ${currentModule === "expense" ? "active" : ""}`}
-                                onClick={() => goToModule("expense")}
-                            >
-                                <i className="fa-solid fa-sack-dollar"></i>
-                                <span className="d-none d-md-inline">Pocket</span>
-                            </button>
-                        </div>
-                    )}
 
                     {/* Right side: admin identity + direct sign-out (profile
                         sidebar is commented out below for now) */}

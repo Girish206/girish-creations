@@ -23,8 +23,8 @@ export async function confirmDelete(itemLabel: string, itemName?: string): Promi
   return result.isConfirmed;
 }
 
-// Same themed dialog for non-destructive-but-significant actions (closing a
-// savings goal or expense group) — confirm text supplied by the caller.
+// Same themed dialog for non-destructive-but-significant actions — confirm
+// text supplied by the caller.
 export async function confirmAction(title: string, text: string, confirmButtonText: string): Promise<boolean> {
   const result = await Swal.fire({
     title,

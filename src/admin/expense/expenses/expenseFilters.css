@@ -1,6 +1,0 @@
-/* One person's amount in a custom split (AdminExpenseForm). */
-.admin-split-share-input {
-  width: 110px;
-  flex-shrink: 0;
-  text-align: right;
-}

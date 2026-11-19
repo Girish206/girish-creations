@@ -1,9 +1,11 @@
 import { createContext, useContext } from "react";
 
 // Lets content rendered inside a DefaultModal reach the modal's footer slot
-// (to portal its action buttons there) and close the modal.
+// (to portal its action buttons there), the header's slot beside the close
+// button, and close the modal.
 export interface ModalSlot {
   footer: HTMLElement | null;
+  header: HTMLElement | null;
   close: () => void;
 }
 

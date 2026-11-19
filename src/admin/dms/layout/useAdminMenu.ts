@@ -1,4 +1,3 @@
-import { useLocation } from "react-router-dom";
 import { useAdminAuth } from "../../../context/AdminAuthContext";
 
 export type AdminMenuItem = {
@@ -13,23 +12,16 @@ export type AdminMenuItem = {
 
 export type AdminMenuGroup = { label: string; items: AdminMenuItem[] };
 
-/** Ids shown in the mobile bottom nav, in order, for each module. Anything
-    else is reached through the sidebar drawer ("More" tab in portfolio, the
-    top-bar menu button in both). */
-const BOTTOM_NAV_IDS = {
-    portfolio: ["dashboard", "profile", "projects", "contact"],
-    // No "More" here, so four tabs with the centre "+" between them.
-    expense: ["expense-dashboard", "expense-expenses", "expense-savings", "expense-admin-users"],
-};
+/** Ids shown in the mobile bottom nav, in order. Anything else is reached
+    through the sidebar drawer ("More" tab, or the top-bar menu button). */
+const BOTTOM_NAV_IDS = ["dashboard", "profile", "projects", "contact"];
 
-/** The sidebar menu for the current module (portfolio or expense), shared by
-    Sidebar and BottomNav so both always list the same pages. */
+/** The admin sidebar menu, shared by Sidebar and BottomNav so both always
+    list the same pages. */
 export function useAdminMenu() {
     const { admin } = useAdminAuth();
-    const location = useLocation();
-    const isExpenseModule = location.pathname.startsWith("/admin/expense");
 
-    const portfolioMenuGroups: AdminMenuGroup[] = [
+    const allMenuGroups: AdminMenuGroup[] = [
         {
             label: "Main",
             items: [
@@ -65,52 +57,10 @@ export function useAdminMenu() {
             : []),
     ];
 
-    const expenseMenuGroups: AdminMenuGroup[] = [
-        {
-            label: "Main",
-            items: [
-                { id: "expense-dashboard", label: "Dashboard", shortLabel: "Home", icon: "fa-solid fa-chart-pie", link: "/admin/expense", submenu: [] },
-            ],
-        },
-        {
-            // Each item gated by its own independent access flag — one
-            // member might have Savings only, another Expenses only, etc.
-            label: "Tracking",
-            items: [
-                ...(admin?.hasExpensesAccess
-                    ? [
-                          { id: "expense-categories", label: "Categories", icon: "fa-solid fa-tags", link: "/admin/expense/categories", submenu: [] },
-                          { id: "expense-expenses", label: "Expenses", icon: "fa-solid fa-receipt", link: "/admin/expense/expenses", submenu: [] },
-                      ]
-                    : []),
-                ...(admin?.hasSavingsAccess
-                    ? [{ id: "expense-savings", label: "Savings", icon: "fa-solid fa-piggy-bank", link: "/admin/expense/savings", submenu: [] }]
-                    : []),
-            ],
-        },
-        // Super admins manage every account; other members get "Members" —
-        // the same page, limited to people they add for expenses/savings.
-        {
-            label: "People",
-            items: [
-                {
-                    id: "expense-admin-users",
-                    label: "People",
-                    icon: admin?.isSuperAdmin ? "fa-solid fa-user-shield" : "fa-solid fa-users",
-                    link: "/admin/expense/admin-users",
-                    submenu: [],
-                },
-            ],
-        },
-    ];
-
-    const menuGroups = (isExpenseModule ? expenseMenuGroups : portfolioMenuGroups).filter(
-        (group) => group.items.length > 0,
-    );
+    const menuGroups = allMenuGroups.filter((group) => group.items.length > 0);
 
     const allItems = menuGroups.flatMap((group) => group.items);
-    const bottomIds = BOTTOM_NAV_IDS[isExpenseModule ? "expense" : "portfolio"];
-    const bottomItems = bottomIds
+    const bottomItems = BOTTOM_NAV_IDS
         .map((id) => allItems.find((item) => item.id === id))
         .filter((item): item is AdminMenuItem => Boolean(item));
     const overflowItems = allItems.filter((item) => !bottomItems.includes(item));

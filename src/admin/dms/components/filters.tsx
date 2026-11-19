@@ -10,7 +10,7 @@
  *   <FilterText label="PAN" value={pan} onChange={setPan} />
  *
  * Copied from drm-react (shared with pbmt-dms and dms). Local additions: `creatable`, so a
- * typed-in name can be added (the expense group / people pickers).
+ * typed-in name can be added.
  */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";

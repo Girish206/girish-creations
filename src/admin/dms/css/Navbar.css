@@ -546,40 +546,6 @@
   background: var(--primary-dark-1);
 }
 
-/* Portfolio / Expense Tracker segmented switcher — only rendered for
-   accounts that have access to both modules. */
-.navbar-module-switcher {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 3px;
-  border-radius: 999px;
-  background: var(--background-color);
-}
-
-.navbar-module-switcher-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 6px 14px;
-  border: none;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--muted-color);
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.navbar-module-switcher-btn:hover {
-  color: var(--primary-dark-1);
-}
-
-.navbar-module-switcher-btn.active {
-  background: var(--primary);
-  color: var(--on-primary);
-}
 /* Keep the navbar on one row. Bootstrap's .navbar and its .container-fluid
    default to flex-wrap: wrap, which pushed the theme/avatar/sign-out group
    onto a second line on phones. */
@@ -615,10 +581,6 @@
   .navbar-logo-box {
     width: 36px;
     height: 36px;
-  }
-
-  .navbar-module-switcher-btn {
-    padding: 6px 10px;
   }
 
   .navbar-theme-btn {

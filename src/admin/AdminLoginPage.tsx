@@ -1,4 +1,5 @@
-import { useEffect, useLayoutEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import { LuSun } from "react-icons/lu";
 import { isAxiosError } from "axios";
 import { useNavigate } from "react-router-dom";
 import { apiClient } from "../api/client";
@@ -9,12 +10,13 @@ import { NoAdminModuleError, useAdminAuth } from "../context/AdminAuthContext";
 import InputComp from "./dms/components/InputComp";
 import CustomButton from "./dms/components/CustomButton";
 import { useAdminBodyClass } from "./useAdminBodyClass";
+import { useAdminTheme } from "./useAdminTheme";
 import "./dms/global.css";
 import "./dms/css/Login.css";
 
-// A bold, single-focus centered login screen: a white card on the brand
-// gradient, whichever theme is saved, so the login always pins Bootstrap's
-// light palette instead of using useAdminTheme. Still built entirely from
+// A bold, single-focus centered login screen: a card on the brand gradient
+// that follows the admin's saved light/dark theme (useAdminTheme), with its
+// own toggle in the corner. Still built entirely from
 // the ported DMS components (InputComp/CustomButton); only the layout and
 // ./dms/css/Login.css's styling are new.
 type LoginField = "identifier" | "password" | "code" | "newPassword" | "confirm";
@@ -66,14 +68,7 @@ function identifierProblem(identifier: string) {
 
 export function AdminLoginPage() {
   useAdminBodyClass();
-  useLayoutEffect(() => {
-    const root = document.documentElement;
-    root.setAttribute("data-bs-theme", "light");
-    // Left behind when arriving from a dark page; the next page's useDarkTheme
-    // sets it again.
-    document.body.classList.remove("dark-theme");
-    return () => root.removeAttribute("data-bs-theme");
-  }, []);
+  const { isDark, toggle: toggleTheme } = useAdminTheme();
   const { login, loginWithCode, resetPassword } = useAdminAuth();
   const navigate = useNavigate();
 
@@ -201,6 +196,17 @@ export function AdminLoginPage() {
     <div className="admin-login-shell">
       <div className="admin-login-ash admin-login-ash-1" aria-hidden="true" />
       <div className="admin-login-ash admin-login-ash-2" aria-hidden="true" />
+      <button
+        type="button"
+        className="navbar-theme-btn admin-login-theme-btn"
+        onClick={toggleTheme}
+        title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+        aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      >
+        <span key={isDark ? "sun" : "moon"} className="theme-toggle-icon" aria-hidden="true">
+          {isDark ? <LuSun /> : <i className="fa-solid fa-moon"></i>}
+        </span>
+      </button>
 
       <div className="admin-login-card animated fadeInUp">
         <div className="admin-login-logo-ring">

@@ -256,29 +256,16 @@
 :root[data-bs-theme="dark"] .admin-profile-avatar-edit {
   border-color: var(--adm-surface);
 }
-:root[data-bs-theme="dark"] .admin-detail-row,
-:root[data-bs-theme="dark"] .admin-txn-row {
+:root[data-bs-theme="dark"] .admin-detail-row {
   border-color: var(--adm-line);
 }
 
 /* Status colours: the light-theme shades are too dark to read on navy. */
-:root[data-bs-theme="dark"] .admin-txn-tag-savings,
 :root[data-bs-theme="dark"] .admin-profile-status-saved i,
 :root[data-bs-theme="dark"] .admin-banner-success {
   color: #4ade80;
 }
-:root[data-bs-theme="dark"] .admin-txn-tag-split,
-:root[data-bs-theme="dark"] .admin-txn-tag-expenses {
-  color: #7cb4ff;
-}
-:root[data-bs-theme="dark"] .admin-txn-tag-owner {
-  color: #fbbf5a;
-}
-:root[data-bs-theme="dark"] .admin-txn-tag-portfolio {
-  color: #b9a4ff;
-}
-:root[data-bs-theme="dark"] .admin-txn-tag-danger,
-:root[data-bs-theme="dark"] .admin-txn-amount,
+
 :root[data-bs-theme="dark"] .admin-profile-status-error {
   color: #ff7b72;
 }

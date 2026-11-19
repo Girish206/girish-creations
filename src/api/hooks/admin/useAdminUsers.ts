@@ -3,7 +3,7 @@ import { apiClient } from "../../client";
 import type { AdminUserAccount, ApiEnvelope } from "../../types";
 
 export interface AdminUserCreateInput {
-  // Omit both for a guest member (listed in pickers, can't log in).
+  // Omit both for a guest member (can't log in).
   email?: string | null;
   // Digits only; also a sign-in.
   mobile?: string | null;
@@ -13,8 +13,6 @@ export interface AdminUserCreateInput {
   grantLogin?: boolean;
   name?: string | null;
   hasPortfolioAccess: boolean;
-  hasExpensesAccess: boolean;
-  hasSavingsAccess: boolean;
   // Only the owner may send this.
   isSuperAdmin?: boolean;
 }
@@ -31,15 +29,12 @@ export interface AdminUserUpdateInput {
   removeLogin?: boolean;
   isActive?: boolean;
   hasPortfolioAccess?: boolean;
-  hasExpensesAccess?: boolean;
-  hasSavingsAccess?: boolean;
   // Only the owner may send this.
   isSuperAdmin?: boolean;
 }
 
-// "money-hub" leaves out accounts that only use the portfolio, or have no
-// access at all; "portfolio" is only the accounts with portfolio access.
-export type AccountScope = "money-hub" | "portfolio";
+// "portfolio" is only the accounts with portfolio access.
+export type AccountScope = "portfolio";
 
 export function useAdminUsers(scope?: AccountScope) {
   return useQuery({
@@ -55,8 +50,6 @@ export function useAdminUsers(scope?: AccountScope) {
 
 function invalidate(queryClient: ReturnType<typeof useQueryClient>) {
   queryClient.invalidateQueries({ queryKey: ["admin-users"] });
-  // New and renamed people have to show up in the Money Hub's pickers too.
-  queryClient.invalidateQueries({ queryKey: ["expense-members"] });
 }
 
 export function useCreateAdminUser() {
@@ -107,7 +100,7 @@ export function useSendWelcomeEmail() {
 }
 
 // Removes the account entirely — the server only allows it when nothing
-// (expenses, savings, splits…) points at this person.
+// points at this person.
 export function useDeleteAdminUserPermanently() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -115,17 +108,5 @@ export function useDeleteAdminUserPermanently() {
       await apiClient.delete(`/admin/admin-users/${id}`, { params: { permanent: true } });
     },
     onSuccess: () => invalidate(queryClient),
-  });
-}
-
-// Owner only: folds a duplicate guest into the person to keep. Their expenses,
-// splits, groups and savings all move over, so everything is refetched.
-export function useMergeAdminUser() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id, intoId }: { id: number; intoId: number }) => {
-      await apiClient.post(`/admin/admin-users/${id}/merge`, { intoId });
-    },
-    onSuccess: () => queryClient.invalidateQueries(),
   });
 }

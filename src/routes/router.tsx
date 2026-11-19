@@ -14,7 +14,7 @@ import { BlogListPage } from "../pages/blog/BlogListPage";
 import { BlogDetailPage } from "../pages/blog/BlogDetailPage";
 import { ProjectDetailPage } from "../pages/projects/ProjectDetailPage";
 import { NotFoundPage } from "../pages/NotFoundPage";
-import { ProtectedRoute, RequireModuleAccess, RequireSubModuleAccess } from "../admin/ProtectedRoute";
+import { ProtectedRoute, RequirePortfolioAccess } from "../admin/ProtectedRoute";
 
 // Every admin route below is lazy-loaded. The DMS-ported admin CSS (e.g.
 // Navbar.css's bare `.navbar { ... }`, cards.css's bare `.card { ... }`)
@@ -26,10 +26,9 @@ import { ProtectedRoute, RequireModuleAccess, RequireSubModuleAccess } from "../
 // React Router's route-level `lazy()` defers the import (and therefore the
 // CSS) until an /admin/* route actually matches.
 //
-// Two module trees share the same LayoutWrapper/Sidebar shell (which reads
-// the URL to pick the right menu) but are each wrapped in RequireModuleAccess
-// so an account without that module's access flag gets redirected rather
-// than seeing a 403 from every request.
+// The admin tree is wrapped in RequirePortfolioAccess so an account without
+// portfolio access gets sent back to sign-in rather than seeing a 403 from
+// every request.
 export const router = createBrowserRouter([
   {
     // Catches anything that fails to load or render below, including a
@@ -74,7 +73,7 @@ export const router = createBrowserRouter([
         element: <ProtectedRoute />,
         children: [
           {
-            element: <RequireModuleAccess module="portfolio" />,
+            element: <RequirePortfolioAccess />,
             children: [
               {
                 path: "/admin",
@@ -149,77 +148,12 @@ export const router = createBrowserRouter([
                     },
                   },
                   {
-                    // Same page as /admin/expense/admin-users, reachable from the
-                    // portfolio module (super admins only — the Sidebar shows the
-                    // link only to them and the server enforces it).
+                    // Super admins only — the Sidebar shows the link only to
+                    // them and the server enforces it.
                     path: "admin-users",
                     lazy: async () => {
-                      const { AdminAccountsList } = await import("../admin/expense/admin-users/AdminAccountsList");
+                      const { AdminAccountsList } = await import("../admin/admin-users/AdminAccountsList");
                       return { Component: AdminAccountsList };
-                    },
-                  },
-                ],
-              },
-            ],
-          },
-          {
-            element: <RequireModuleAccess module="expense" />,
-            children: [
-              {
-                path: "/admin/expense",
-                lazy: async () => {
-                  const { default: AdminLayoutWrapper } = await import("../admin/dms/layout/LayoutWrapper");
-                  return { Component: AdminLayoutWrapper };
-                },
-                children: [
-                  {
-                    index: true,
-                    lazy: async () => {
-                      const { ExpenseDashboardPage } = await import("../admin/expense/dashboard/ExpenseDashboardPage");
-                      return { Component: ExpenseDashboardPage };
-                    },
-                  },
-                  {
-                    // Categories + Expenses share the "expenses" sub-access flag.
-                    element: <RequireSubModuleAccess subModule="expenses" />,
-                    children: [
-                      {
-                        path: "categories",
-                        lazy: async () => {
-                          const { AdminExpenseCategoriesList } =
-                            await import("../admin/expense/categories/AdminExpenseCategoriesList");
-                          return { Component: AdminExpenseCategoriesList };
-                        },
-                      },
-                      {
-                        path: "expenses",
-                        lazy: async () => {
-                          const { AdminExpensesList } = await import("../admin/expense/expenses/AdminExpensesList");
-                          return { Component: AdminExpensesList };
-                        },
-                      },
-                    ],
-                  },
-                  {
-                    element: <RequireSubModuleAccess subModule="savings" />,
-                    children: [
-                      {
-                        path: "savings",
-                        lazy: async () => {
-                          const { AdminSavingsGoalsList } =
-                            await import("../admin/expense/savings/AdminSavingsGoalsList");
-                          return { Component: AdminSavingsGoalsList };
-                        },
-                      },
-                    ],
-                  },
-                  {
-                    // Just the Money Hub's people, without accounts it has no use for.
-                    // The server scopes what each person sees and may change.
-                    path: "admin-users",
-                    lazy: async () => {
-                      const { MoneyHubPeopleList } = await import("../admin/expense/admin-users/MoneyHubPeopleList");
-                      return { Component: MoneyHubPeopleList };
                     },
                   },
                 ],

@@ -28,19 +28,10 @@ const LayoutWrapper = () => {
         [portfolioTarget],
     );
     const path = location.pathname;
-    const isExpenseModule = path.startsWith("/admin/expense");
     const isDashboard = path === "/admin" || path === "/admin/";
-    const showPicker = admin?.isSuperAdmin && !isExpenseModule;
+    const showPicker = admin?.isSuperAdmin;
 
     const getActiveItem = () => {
-        if (isExpenseModule) {
-            if (path.includes("/admin/expense/categories")) return "expense-categories";
-            if (path.includes("/admin/expense/expenses")) return "expense-expenses";
-            if (path.includes("/admin/expense/savings")) return "expense-savings";
-            if (path.includes("/admin/expense/admin-users")) return "expense-admin-users";
-            return "expense-dashboard";
-        }
-
         if (path.includes("/admin/profile")) return "profile";
         if (path.includes("/admin/experience")) return "experience";
         if (path.includes("/admin/education")) return "education";

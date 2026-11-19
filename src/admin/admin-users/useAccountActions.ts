@@ -5,9 +5,9 @@ import {
   useDeleteAdminUserPermanently,
   useSendWelcomeEmail,
   useUpdateAdminUser,
-} from "../../../api/hooks/expense/useAdminUsers";
-import { messageFor } from "../../../api/mutationErrors";
-import type { AdminUserAccount } from "../../../api/types";
+} from "../../api/hooks/admin/useAdminUsers";
+import { messageFor } from "../../api/mutationErrors";
+import type { AdminUserAccount } from "../../api/types";
 
 function themedDialog() {
   return document.documentElement.getAttribute("data-bs-theme") === "dark" ? "dark" : "light";
@@ -84,12 +84,12 @@ export function useAccountActions() {
 
   // Resolves to whether it was deleted, so a details view can close itself.
   async function deletePermanently(item: AdminUserAccount): Promise<boolean> {
-    // The server refuses to delete anyone with records, since that would lose
-    // shared expense or savings history.
+    // The server refuses to delete anyone other records point at, since that
+    // would lose their history.
     if (item.linkedRecords > 0) {
       const result = await Swal.fire({
         title: `Can't delete ${item.name || item.email || "this account"}`,
-        text: `They're on ${item.linkedRecords} expense or savings record${item.linkedRecords === 1 ? "" : "s"}, so deleting them would break that history. Deactivate them instead to hide them from new splits.`,
+        text: `They're on ${item.linkedRecords} record${item.linkedRecords === 1 ? "" : "s"}, so deleting them would break that history. Deactivate them instead.`,
         icon: "info",
         theme: themedDialog(),
         showCancelButton: item.isActive,
@@ -101,7 +101,7 @@ export function useAccountActions() {
     }
     const result = await Swal.fire({
       title: `Delete ${item.name || item.email || "this account"} permanently?`,
-      text: "They have no expenses or savings records, so the account can be removed completely. This can't be undone.",
+      text: "Nothing points at this account, so it can be removed completely. This can't be undone.",
       icon: "warning",
       theme: themedDialog(),
       showCancelButton: true,

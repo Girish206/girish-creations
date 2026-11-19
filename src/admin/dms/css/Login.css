@@ -1,5 +1,6 @@
-/* Admin login screen: always a white card on the brand gradient, in either
-   theme (AdminLoginPage pins the light palette). Two soft white glows add depth
+/* Admin login screen: a white card on the brand gradient in light mode; a
+   graphite card on graphite with amber glows in dark mode (bottom of file).
+   Two soft glows add depth
    to the gradient; they are CSS radial gradients, sized large so they still
    span most of the page. */
 
@@ -225,4 +226,61 @@
   font-size: 0.8rem;
   text-align: center;
   overflow-wrap: anywhere;
+}
+
+/* Theme toggle in the top-right corner of the page. */
+.admin-login-theme-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(255, 255, 255, 0.6);
+  color: var(--brand-navy);
+  box-shadow: 0 4px 14px rgba(var(--brand-navy-rgb), 0.18);
+}
+.admin-login-theme-btn:hover {
+  background: #ffffff;
+}
+
+/* ---------- Dark theme ---------- */
+
+:root[data-bs-theme="dark"] .admin-login-shell {
+  background:
+    radial-gradient(circle at 50% 40%, rgba(var(--brand-primary-rgb), 0.14), transparent 60%),
+    var(--brand-navy-night);
+}
+:root[data-bs-theme="dark"] .admin-login-ash {
+  background: radial-gradient(circle, rgba(var(--brand-primary-rgb), 0.16) 0%, rgba(var(--brand-primary-rgb), 0.05) 40%, transparent 70%);
+}
+:root[data-bs-theme="dark"] .admin-login-card {
+  background: var(--brand-navy-surface);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 30px 70px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(var(--brand-primary-rgb), 0.06);
+}
+:root[data-bs-theme="dark"] .admin-login-badge {
+  color: var(--brand-accent-bright);
+  background: rgba(var(--brand-primary-rgb), 0.12);
+}
+:root[data-bs-theme="dark"] .admin-login-heading {
+  background-image: linear-gradient(90deg, var(--brand-accent-bright) 0%, var(--brand-primary-bright) 55%, var(--brand-highlight-bright) 100%);
+}
+:root[data-bs-theme="dark"] .admin-login-subtitle,
+:root[data-bs-theme="dark"] .admin-login-footnote,
+:root[data-bs-theme="dark"] .admin-login-note {
+  color: #a3a4a9;
+}
+:root[data-bs-theme="dark"] .admin-login-sent {
+  color: #4ade80;
+}
+:root[data-bs-theme="dark"] .admin-login-theme-btn {
+  background: var(--brand-navy-raised);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--brand-accent-bright);
+  box-shadow: none;
+}
+:root[data-bs-theme="dark"] .admin-login-theme-btn:hover {
+  background: #2e2f35;
 }
