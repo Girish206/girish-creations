@@ -50,9 +50,9 @@
     </style>
   </head>
   <body>
-    <!-- Splash: the logo reveal shown on the first visit only while the app
+    <!-- Splash: the logo reveal shown every time while the app
          loads. Plain HTML + CSS so it paints before any JS; the script below
-         skips it on later loads and for reduced motion, and removes it when
+         skips it for reduced motion, and removes it when
          the animation ends (or on tap). Paths match scripts/generate-logo.mjs. -->
     <style>
       #gc-splash {
@@ -122,9 +122,8 @@
     <script>
       (function () {
         var el = document.getElementById("gc-splash");
-        var seen = false;
-        try { seen = localStorage.getItem("gc-splash") === "1"; localStorage.setItem("gc-splash", "1"); } catch (e) {}
-        if (seen || matchMedia("(prefers-reduced-motion: reduce)").matches) return el.remove();
+        try { localStorage.removeItem("gc-splash"); } catch (e) {} // old "seen" flag, no longer used
+        if (matchMedia("(prefers-reduced-motion: reduce)").matches) return el.remove();
         var done = function () { if (el.parentNode) el.remove(); };
         el.addEventListener("animationend", function (e) { if (e.target === el) done(); });
         el.addEventListener("click", function () { el.style.animation = "gcs-out 0.3s ease-in forwards"; });
